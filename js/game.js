@@ -288,6 +288,50 @@ window.Game = {
             this.touchActive = false;
             this.touchDirection = 0;
         });
+        this.setupIOSAccelerometer();
+    },
+
+    setupIOSAccelerometer() {
+        
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        
+        if (isIOS && typeof DeviceOrientationEvent !== 'undefined') {
+            
+            const requestAccelerometerAccess = () => {
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission()
+                        .then(permissionState => {
+                            if (permissionState === 'granted') {
+                                console.log('Accelerometer permission granted on iOS');
+                                window.addEventListener('deviceorientation', (e) => {
+                                    this.handleDeviceOrientation(e);
+                                });
+                            } else {
+                                console.log('Accelerometer permission denied on iOS');
+                            }
+                        })
+                        .catch(console.error);
+                } else {
+                    
+                    window.addEventListener('deviceorientation', (e) => {
+                        this.handleDeviceOrientation(e);
+                    });
+                }
+
+                
+                document.removeEventListener('click', requestAccelerometerAccess);
+                document.removeEventListener('touchstart', requestAccelerometerAccess);
+            };
+
+            
+            document.addEventListener('click', requestAccelerometerAccess, { once: true });
+            document.addEventListener('touchstart', requestAccelerometerAccess, { once: true });
+        } else {
+            
+            window.addEventListener('deviceorientation', (e) => {
+                this.handleDeviceOrientation(e);
+            });
+        }
     },
     
     handleTouchStart(e) {

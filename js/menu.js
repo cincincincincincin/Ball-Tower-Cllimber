@@ -485,6 +485,28 @@ const Menu = {
                 this.showNotification('All data has been reset', 'warning');
             }
         };
+        
+        document.getElementById('request-accelerometer-btn').onclick = async () => {
+            if (typeof DeviceOrientationEvent !== 'undefined' && 
+                typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === 'granted') {
+                        this.showNotification('Accelerometer access granted!', 'success');
+                        if (window.Game && Game.setupIOSAccelerometer) {
+                            Game.setupIOSAccelerometer();
+                        }
+                    } else {
+                        this.showNotification('Accelerometer access denied', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error requesting accelerometer permission:', error);
+                    this.showNotification('Failed to request access', 'error');
+                }
+            } else {
+                this.showNotification('Accelerometer already available', 'info');
+            }
+        };
     },
 
     
