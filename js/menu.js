@@ -32,6 +32,8 @@ const Menu = {
     
     init() {
         console.log('Menu.init() - Menu initialization');
+
+        this.setupEventListenersEarly();
         
         this.checkMobile();
         this.loadData();
@@ -44,6 +46,76 @@ const Menu = {
         } else {
             this.initializeAfterDOM();
         }
+    },
+
+    setupEventListenersEarly() {
+        console.log('Setting up early event listeners for standalone mode');
+        
+        // Wczesna inicjalizacja dla przycisku play
+        const playBtn = document.getElementById('play-btn');
+        if (playBtn) {
+            // Usuń stare event listeners
+            const newPlayBtn = playBtn.cloneNode(true);
+            playBtn.parentNode.replaceChild(newPlayBtn, playBtn);
+
+            newPlayBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Play button clicked (early)');
+                this.startGame();
+                return false;
+            });
+
+            // Touch event dla standalone
+            newPlayBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                newPlayBtn.click();
+                return false;
+            }, { passive: false });
+        }
+
+        // To samo dla innych głównych przycisków
+        const buttonsToFix = ['balls-btn', 'upgrades-btn', 'settings-btn', 'pause-btn'];
+
+        buttonsToFix.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+
+                newBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    switch(btnId) {
+                        case 'balls-btn':
+                            this.switchScreen('balls');
+                            break;
+                        case 'upgrades-btn':
+                            this.switchScreen('upgrades');
+                            break;
+                        case 'settings-btn':
+                            this.switchScreen('settings');
+                            break;
+                        case 'pause-btn':
+                            this.togglePause();
+                            break;
+                    }
+
+                    return false;
+                });
+
+                newBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    newBtn.click();
+                    return false;
+                }, { passive: false });
+            }
+        });
+
+        console.log('Early event listeners setup complete');
     },
     
     initializeAfterDOM() {
