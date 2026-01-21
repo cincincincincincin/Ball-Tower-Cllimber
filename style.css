@@ -16,8 +16,8 @@ html, body {
 
 :root {
     --vh: 1vh;
-    --safe-area-inset-top: env(safe-area-inset-top, 47px);
-    --safe-area-inset-bottom: env(safe-area-inset-bottom, 34px);
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-inset-left: env(safe-area-inset-left, 0px);
     --safe-area-inset-right: env(safe-area-inset-right, 0px);
 }
@@ -46,12 +46,12 @@ body {
 
 #game-container {
     position: absolute;
-    top: var(--safe-area-inset-top);
-    left: var(--safe-area-inset-left);
-    right: var(--safe-area-inset-right);
-    bottom: var(--safe-area-inset-bottom);
-    width: calc(100% - var(--safe-area-inset-left) - var(--safe-area-inset-right));
-    height: calc(100% - var(--safe-area-inset-top) - var(--safe-area-inset-bottom));
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
     margin: 0;
     border-radius: 0;
     overflow: hidden;
@@ -59,6 +59,11 @@ body {
     background: #000;
     max-width: 100%;
     max-height: 100%;
+}
+
+/* Tylko dla trybu standalone (PWA) dodajemy padding na górze */
+body.standalone #game-container {
+    padding-top: env(safe-area-inset-top);
 }
 
 .screen {
@@ -77,6 +82,8 @@ body {
 
 #game-screen {
     padding: 0 !important;
+    /* Tylko dla standalone dodajemy padding na górze */
+    padding-top: env(safe-area-inset-top) !important;
 }
 
 .screen.active {
@@ -88,6 +95,8 @@ body {
     align-items: center;
     text-align: center;
     padding: 20px;
+    /* Tylko dla standalone dodajemy padding na górze */
+    padding-top: calc(20px + env(safe-area-inset-top)) !important;
 }
 
 .title-container {
@@ -188,6 +197,7 @@ body {
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    /* Użyj var z fallbackiem */
     padding-bottom: calc(2vh + var(--safe-area-inset-bottom, 0px));
 }
 
@@ -723,8 +733,9 @@ input:checked + .slider:before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 3vh 3vw;
-    padding-top: calc(3vh + var(--safe-area-inset-top, 0px));
+    padding: 10px 3vw;
+    /* Tylko dla standalone dodajemy padding na górze */
+    padding-top: calc(10px + env(safe-area-inset-top)) !important;
 }
 
 .hud-left,
@@ -805,8 +816,8 @@ input:checked + .slider:before {
 
 @media (min-width: 768px) and (min-height: 500px) {
     .hud-top {
-        padding: 20px 25px;
-        padding-top: calc(20px + var(--safe-area-inset-top, 0px));
+        padding: 10px 25px;
+        padding-top: calc(10px + env(safe-area-inset-top)) !important;
     }
     
     .hud-btn {
@@ -840,17 +851,19 @@ input:checked + .slider:before {
 
 .overlay-menu {
     position: absolute;
-    top: var(--safe-area-inset-top);
-    left: var(--safe-area-inset-left);
-    right: var(--safe-area-inset-right);
-    bottom: var(--safe-area-inset-bottom);
-    width: calc(100% - var(--safe-area-inset-left) - var(--safe-area-inset-right));
-    height: calc(100% - var(--safe-area-inset-top) - var(--safe-area-inset-bottom));
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
     background: rgba(0, 0, 0, 0.85);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 200;
+    /* Tylko dla standalone dodajemy padding na górze */
+    padding-top: env(safe-area-inset-top);
 }
 
 .overlay-menu.hidden {
@@ -969,7 +982,7 @@ input:checked + .slider:before {
 
 #notification-container {
     position: fixed;
-    top: calc(20px + var(--safe-area-inset-top, 0px));
+    top: calc(20px + env(safe-area-inset-top));
     right: 20px;
     z-index: 1000;
     display: flex;
@@ -1082,60 +1095,19 @@ input:checked + .slider:before {
     }
 }
 
-@supports (padding: max(0px)) {
-    .stats-bar {
-        padding-bottom: max(2vh, var(--safe-area-inset-bottom));
-    }
-}
-
 .hidden {
     display: none !important;
 }
 
+/* Usuń nadmierne paddings dla trybu standalone */
+body.standalone::after {
+    display: none;
+}
+
 body.standalone #game-container {
-    top: var(--safe-area-inset-top);
-    bottom: var(--safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
 }
 
 body.standalone .hud-top {
-    padding-top: calc(3vh + var(--safe-area-inset-top));
-}
-
-@media only screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
-    :root {
-        --safe-area-inset-top: 59px;
-        --safe-area-inset-bottom: 34px;
-    }
-}
-
-/* iPhone 14/15 Pro z Dynamic Island */
-@media only screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) {
-    body.standalone {
-        --safe-area-inset-top: 59px;
-        --safe-area-inset-bottom: 34px;
-    }
-}
-
-/* iPhone 14/15 Pro Max z Dynamic Island */
-@media only screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
-    body.standalone {
-        --safe-area-inset-top: 59px;
-        --safe-area-inset-bottom: 34px;
-    }
-}
-
-/* iPhone bez notch (SE, starsze) */
-@media only screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2),
-       only screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) {
-    body.standalone {
-        --safe-area-inset-top: 20px;
-        --safe-area-inset-bottom: 0px;
-    }
-}
-
-/* Android - różne urządzenia */
-@media (max-width: 600px) and (orientation: portrait) {
-    body:not(.standalone) {
-        --safe-area-inset-top: 20px;
-    }
+    padding-top: calc(10px + env(safe-area-inset-top)) !important;
 }

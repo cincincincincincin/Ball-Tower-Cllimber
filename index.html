@@ -350,12 +350,6 @@
             const vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
             
-            const computedStyle = getComputedStyle(document.documentElement);
-            const safeAreaTop = computedStyle.getPropertyValue('--safe-area-inset-top').trim();
-            const safeAreaBottom = computedStyle.getPropertyValue('--safe-area-inset-bottom').trim();
-            
-            console.log('Safe Area - Top:', safeAreaTop, 'Bottom:', safeAreaBottom);
-            
             const isStandalone = window.navigator.standalone || 
                                 (window.matchMedia('(display-mode: standalone)').matches);
             
@@ -363,8 +357,19 @@
                 document.body.classList.add('standalone');
                 console.log('Running in standalone mode');
                 
-                const iosStandaloneTop = '59px';
-                document.documentElement.style.setProperty('--safe-area-inset-top', iosStandaloneTop);
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                if (isIOS) {
+                    const width = window.screen.width;
+                    const height = window.screen.height;
+                    
+                    if ((width === 393 && height === 852) || (width === 430 && height === 932)) {
+                        document.documentElement.style.setProperty('--safe-area-inset-top', '59px');
+                        document.documentElement.style.setProperty('--safe-area-inset-bottom', '34px');
+                    } else {
+                        document.documentElement.style.setProperty('--safe-area-inset-top', '47px');
+                        document.documentElement.style.setProperty('--safe-area-inset-bottom', '34px');
+                    }
+                }
             } else {
                 document.body.classList.remove('standalone');
             }
