@@ -14,8 +14,13 @@
     <meta name="msapplication-TileColor" content="#1a1a2e">
     <meta name="theme-color" content="#1a1a2e">
 
-    <!-- Manifest dla PWA -->
+    <!-- Zmień sekcję PWA w head -->
     <link rel="manifest" href="manifest.json">
+    <!-- Dodaj fallback dla iOS -->
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ball Tower Jumper">
     <title>Ball Tower Jumper</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -388,7 +393,7 @@
                     });
             });
         }
-        
+
         // Rozwiązanie dla fullscreen na iOS
         document.addEventListener('DOMContentLoaded', () => {
             // Fix dla iOS scroll
@@ -396,18 +401,18 @@
                 if(e.target.type === 'range') return;
                 e.preventDefault();
             }, { passive: false });
-            
+
             // Fix dla iOS zoom
             document.addEventListener('gesturestart', function(e) {
                 e.preventDefault();
             });
-            
+
             // Dodaj do ekranu głównego iOS
             if (window.navigator.standalone) {
                 document.body.classList.add('standalone');
             }
         });
-        
+
         // Rozwiązanie dla safe area dynamicznie
         function updateSafeArea() {
             const vh = window.innerHeight * 0.01;
@@ -415,10 +420,84 @@
             document.documentElement.style.setProperty('--safe-area-inset-top', env('safe-area-inset-top'));
             document.documentElement.style.setProperty('--safe-area-inset-bottom', env('safe-area-inset-bottom'));
         }
-        
+
         window.addEventListener('resize', updateSafeArea);
         window.addEventListener('orientationchange', updateSafeArea);
         updateSafeArea();
+    </script>
+    <script>
+        const CACHE_NAME = 'ball-tower-v1.1';
+        const urlsToCache = [
+          './',
+          './index.html',
+          './style.css',
+          './js/config.js',
+          './js/game.js',
+          './js/menu.js',
+          './manifest.json',
+          './icon-192.png',
+          './icon-512.png'
+        ];
+            
+        self.addEventListener('install', event => {
+          event.waitUntil(
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                console.log('Caching app shell');
+                return cache.addAll(urlsToCache);
+              })
+          );
+        });
+        
+        self.addEventListener('fetch', event => {
+          event.respondWith(
+            caches.match(event.request)
+              .then(response => {
+                // Cache hit - return response
+                if (response) {
+                  return response;
+                }
+                
+                // Clone the request
+                const fetchRequest = event.request.clone();
+                
+                return fetch(fetchRequest).then(
+                  response => {
+                    // Check if we received a valid response
+                    if(!response || response.status !== 200 || response.type !== 'basic') {
+                      return response;
+                    }
+                    
+                    // Clone the response
+                    const responseToCache = response.clone();
+                    
+                    caches.open(CACHE_NAME)
+                      .then(cache => {
+                        cache.put(event.request, responseToCache);
+                      });
+                  
+                    return response;
+                  }
+                );
+              })
+          );
+        });
+        
+        // Clean up old caches
+        self.addEventListener('activate', event => {
+          event.waitUntil(
+            caches.keys().then(cacheNames => {
+              return Promise.all(
+                cacheNames.map(cacheName => {
+                  if (cacheName !== CACHE_NAME) {
+                    console.log('Deleting old cache:', cacheName);
+                    return caches.delete(cacheName);
+                  }
+                })
+              );
+            })
+          );
+        });
     </script>
     
     <!-- Initialization after page load -->

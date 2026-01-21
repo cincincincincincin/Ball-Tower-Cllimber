@@ -1,5 +1,5 @@
 
-/* ===== BASE STYLES ===== */
+
 * {
     margin: 0;
     padding: 0;
@@ -16,11 +16,13 @@ html, body {
     overflow: hidden;
 }
 
-/* DODAJ TUTAJ NOWE ZMIENNE CSS */
+
 :root {
     --vh: 1vh;
     --safe-area-inset-top: env(safe-area-inset-top, 0px);
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
 }
 
 body {
@@ -29,31 +31,32 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    min-height: calc(var(--vh, 1vh) * 100);
     font-family: 'Roboto', sans-serif;
     color: white;
     padding: 0;
-    touch-action: none;
+    touch-action: manipulation;
     width: 100vw;
-    height: 100vh; /* ZMIEŃ TĘ LINIJKĘ */
-    height: calc(var(--vh, 1vh) * 100); /* NA TĘ */
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    /* DODAJ TUTAJ: */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    
+    /* Zaktualizowane paddingi safe-area */
+    padding-top: max(0px, env(safe-area-inset-top));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
 }
 
 #game-container {
     position: relative;
-    width: 100vw; /* ZMIEŃ TĘ LINIJKĘ */
-    width: 100%; /* NA TĄ */
-    height: 100vh; /* ZMIEŃ TĘ LINIJKĘ */
-    height: 100%; /* NA TĄ */
+    width: 100vw;
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
     margin: 0;
     border-radius: 0;
     overflow: hidden;
@@ -61,13 +64,13 @@ body {
     background: #000;
     max-width: 100%;
     max-height: 100%;
-    /* DODAJ TUTAJ: */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    
+    /* Usuń paddingi z game-container, ustaw je w body */
+    padding: 0;
 }
 
 
-/* ===== SCREEN MANAGEMENT ===== */
+
 .screen {
     position: absolute;
     top: 0;
@@ -83,7 +86,7 @@ body {
 }
 
 #game-screen {
-    padding: 0 !important; /* DODAJ TUTAJ */
+    padding: 0 !important;
     padding-top: env(safe-area-inset-top) !important;
     padding-bottom: env(safe-area-inset-bottom) !important;
 }
@@ -170,7 +173,7 @@ body {
     justify-content: center;
     gap: 10px;
     backdrop-filter: blur(10px);
-    min-height: 44px; /* DODAJ TĄ LINIJKĘ */
+    min-height: 44px;
 }
 
 .menu-btn:hover {
@@ -199,7 +202,7 @@ body {
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    /* DODAJ TUTAJ: */
+   
     padding-bottom: max(2vh, env(safe-area-inset-bottom));
 }
 
@@ -383,7 +386,7 @@ body {
     justify-content: center;
     gap: 8px;
     font-size: clamp(14px, 3.5vw, 16px);
-    min-height: 44px; /* DODAJ TĄ LINIJKĘ */
+    min-height: 44px;
 }
 
 .select-ball-btn {
@@ -749,8 +752,8 @@ input:checked + .slider:before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 3vh 3vw; /* ZMIEŃ TĘ LINIJKĘ */
-    padding: max(3vh, env(safe-area-inset-top)) 3vw 2vh 3vw; /* NA TĄ */
+    padding: 3vh 3vw;
+    padding: max(3vh, env(safe-area-inset-top)) 3vw 2vh 3vw;
 }
 
 .hud-left,
@@ -783,7 +786,7 @@ input:checked + .slider:before {
     pointer-events: auto;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    min-height: 44px; /* DODAJ TĄ LINIJKĘ */
+    min-height: 44px;
 }
 
 .hud-btn:hover {
@@ -891,7 +894,7 @@ input:checked + .slider:before {
     text-align: center;
     border: 2px solid rgba(74, 159, 255, 0.3);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-    /* DODAJ TUTAJ: */
+   
     margin-top: env(safe-area-inset-top);
     margin-bottom: env(safe-area-inset-bottom);
 }
@@ -1105,7 +1108,7 @@ input:checked + .slider:before {
 }
 
 
-/* Wsparcie dla safe areas (iPhone z wycięciem) */
+
 @supports (padding: max(0px)) {
     body {
         padding-left: min(0px, env(safe-area-inset-left));
@@ -1121,6 +1124,19 @@ input:checked + .slider:before {
     .hud-top {
         padding-top: max(3vh, env(safe-area-inset-top));
     }
+        body.standalone {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+    
+    body.standalone #game-container {
+        padding-top: 0;
+        padding-bottom: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
 }
 
 
@@ -1129,8 +1145,8 @@ input:checked + .slider:before {
 }
 
 
-/* ===== PWA / STANDALONE MODE ===== */
-/* Dla aplikacji dodanej do ekranu głównego */
+
+
 body.standalone #game-container {
     padding-top: 0;
     padding-bottom: 0;
@@ -1145,22 +1161,22 @@ body.standalone .hud-top {
     padding-top: calc(env(safe-area-inset-top) + 10px);
 }
 
-/* Ukryj adres URL w standalone mode */
+
 body.standalone::after {
     display: none;
 }
 
-/* ===== IPHONE 15 PRO MAX SPECIFIC ===== */
+
 @media only screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
-    /* iPhone 15 Pro Max ma dokładnie te wymiary co nasz oryginalny design */
+   
     #game-container {
         max-width: 430px;
         max-height: 932px;
     }
     
-    /* Specjalne ustawienia dla safe areas na iPhone 15 Pro Max */
+   
     :root {
-        --safe-area-inset-top: 59px; /* Wartość dla iPhone 15 Pro Max */
-        --safe-area-inset-bottom: 34px; /* Wartość dla dynamicznej wyspy */
+        --safe-area-inset-top: 59px;
+        --safe-area-inset-bottom: 34px;
     }
 }

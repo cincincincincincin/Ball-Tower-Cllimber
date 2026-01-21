@@ -292,42 +292,40 @@ window.Game = {
     },
 
     setupIOSAccelerometer() {
-        
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         
         if (isIOS && typeof DeviceOrientationEvent !== 'undefined') {
-            
-            const requestAccelerometerAccess = () => {
-                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    DeviceOrientationEvent.requestPermission()
-                        .then(permissionState => {
-                            if (permissionState === 'granted') {
-                                console.log('Accelerometer permission granted on iOS');
-                                window.addEventListener('deviceorientation', (e) => {
-                                    this.handleDeviceOrientation(e);
-                                });
-                            } else {
-                                console.log('Accelerometer permission denied on iOS');
+            // Natychmiastowe żądanie dostępu do żyroskopu
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // Nie czekamy na interakcję - próbujemy od razu
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            console.log('Accelerometer permission granted on iOS');
+                            window.addEventListener('deviceorientation', (e) => {
+                                this.handleDeviceOrientation(e);
+                            });
+                        } else {
+                            console.log('Accelerometer permission denied on iOS');
+                            this.useAccelerometer = false; // Wyłącz jeśli odmówiono
+                            if (window.Menu) {
+                                window.Menu.state.settings.accelerometer = false;
+                                window.Menu.saveData();
                             }
-                        })
-                        .catch(console.error);
-                } else {
-                    
-                    window.addEventListener('deviceorientation', (e) => {
-                        this.handleDeviceOrientation(e);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Accelerometer permission error:', error);
+                        this.useAccelerometer = false;
                     });
-                }
-
-                
-                document.removeEventListener('click', requestAccelerometerAccess);
-                document.removeEventListener('touchstart', requestAccelerometerAccess);
-            };
-
-            
-            document.addEventListener('click', requestAccelerometerAccess, { once: true });
-            document.addEventListener('touchstart', requestAccelerometerAccess, { once: true });
+            } else {
+                // Android/Desktop - od razu dodajemy listener
+                window.addEventListener('deviceorientation', (e) => {
+                    this.handleDeviceOrientation(e);
+                });
+            }
         } else {
-            
+            // Non-iOS devices
             window.addEventListener('deviceorientation', (e) => {
                 this.handleDeviceOrientation(e);
             });
