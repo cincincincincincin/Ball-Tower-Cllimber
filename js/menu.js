@@ -328,6 +328,12 @@ const Menu = {
         if (targetScreen) {
             targetScreen.scrollTop = 0;
         }
+        
+        setTimeout(() => {
+            if (window.isStandalone) {
+                this.updateStandaloneButtons();
+            }
+        }, 200);
     },
 
     
@@ -1146,7 +1152,19 @@ const Menu = {
         } else {
             this.showNotification('Accelerometer already available', 'info');
         }
+    },
+
+    // Dodaj do obiektu Menu:
+    updateStandaloneButtons: function() {
+        // Ta funkcja jest wywoływana po każdej zmianie ekranu
+        if (window.isStandalone && window.StandaloneFix && window.StandaloneFix.fixAllButtons) {
+            setTimeout(() => {
+                window.StandaloneFix.fixAllButtons();
+                window.StandaloneFix.fixSliders();
+            }, 100);
+        }
     }
+
 };
 
 
