@@ -12,15 +12,15 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #000;
+    position: fixed;
 }
 
 :root {
     --vh: 1vh;
-    --safe-area-inset-top: env(safe-area-inset-top, 0px);
-    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-area-inset-left: env(safe-area-inset-left, 0px);
-    --safe-area-inset-right: env(safe-area-inset-right, 0px);
+    --safe-area-inset-top: 0px;
+    --safe-area-inset-bottom: 0px;
+    --safe-area-inset-left: 0px;
+    --safe-area-inset-right: 0px;
 }
 
 body {
@@ -32,7 +32,6 @@ body {
     min-height: calc(var(--vh, 1vh) * 100);
     font-family: 'Roboto', sans-serif;
     color: white;
-    padding: 0;
     touch-action: manipulation;
     width: 100vw;
     height: 100vh;
@@ -42,18 +41,29 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    margin: 0;
+    
+    /* Zaktualizowane paddingi safe-area dla iOS */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    
+    /* Fallback dla przeglądarek bez env() */
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
+    padding-left: var(--safe-area-inset-left);
+    padding-right: var(--safe-area-inset-right);
+    
+    /* Zapobiega przesuwaniu się strony na iOS Safari */
     overflow: hidden;
+    position: fixed;
 }
 
 #game-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
     margin: 0;
     border-radius: 0;
     overflow: hidden;
@@ -61,17 +71,26 @@ body {
     background: #000;
     max-width: 100%;
     max-height: 100%;
+    
+    /* W standalone mode używamy całej dostępnej przestrzeni */
+    padding: 0;
 }
 
-/* Tryb standalone (PWA) - używamy safe-area */
 body.standalone #game-container {
-    padding-top: var(--safe-area-inset-top);
-    padding-bottom: var(--safe-area-inset-bottom);
+    /* W standalone mode na iOS, usuń paddingi safe-area z kontenera */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    height: 100% !important;
 }
 
-/* Tryb przeglądarkowy - dodajemy padding na dół dla interfejsu przeglądarki */
-body:not(.standalone) #game-container {
-    padding-bottom: 60px; /* Miejsce na pasek nawigacji przeglądarki */
+body.standalone {
+    /* W standalone mode na iOS, użyj env() bezpośrednio */
+    padding-top: env(safe-area-inset-top) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+    padding-left: env(safe-area-inset-left) !important;
+    padding-right: env(safe-area-inset-right) !important;
 }
 
 .screen {
@@ -86,23 +105,19 @@ body:not(.standalone) #game-container {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     overflow-y: auto;
     overflow-x: hidden;
-    overscroll-behavior-y: contain;
 }
 
-/* Ekran gry - specjalne ustawienia */
 #game-screen {
     padding: 0 !important;
-    background: #000 !important;
+    /* Dodaj padding safe-area tylko dla game screen */
+    padding-top: env(safe-area-inset-top) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
 }
 
-/* W trybie standalone - padding na górze z safe-area */
 body.standalone #game-screen {
-    padding-top: var(--safe-area-inset-top) !important;
-}
-
-/* W trybie przeglądarkowym - padding na górze dla paska adresu */
-body:not(.standalone) #game-screen {
-    padding-top: 40px !important;
+    /* W standalone mode, używamy całej przestrzeni */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
 }
 
 .screen.active {
@@ -114,15 +129,9 @@ body:not(.standalone) #game-screen {
     align-items: center;
     text-align: center;
     padding: 20px;
-}
-
-/* Ustawienia dla trybu standalone */
-body.standalone #start-screen {
-    padding-top: calc(20px + var(--safe-area-inset-top)) !important;
-}
-
-body:not(.standalone) #start-screen {
-    padding-top: 60px !important; /* Więcej miejsca na pasek adresu */
+    /* Dodaj padding safe-area */
+    padding-top: calc(20px + env(safe-area-inset-top)) !important;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
 }
 
 .title-container {
@@ -220,38 +229,18 @@ body:not(.standalone) #start-screen {
     display: flex;
     justify-content: space-around;
     padding: 2vh 20px;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 100;
+   
+    /* Uwzględnij safe-area dla dolnego paska nawigacji */
+    padding-bottom: max(2vh, env(safe-area-inset-bottom));
+    padding-bottom: max(2vh, var(--safe-area-inset-bottom));
 }
 
-/* Dla trybu standalone - użyj safe-area na dole */
 body.standalone .stats-bar {
-    padding-bottom: calc(2vh + var(--safe-area-inset-bottom));
-}
-
-/* Dla trybu przeglądarkowego - standardowy padding */
-body:not(.standalone) .stats-bar {
+    /* W standalone mode, dolny pasek nawigacji jest ukryty */
     padding-bottom: 2vh;
-}
-
-.stat {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: clamp(12px, 3vw, 14px);
-    color: #aaa;
-}
-
-.stat i {
-    color: #4a9eff;
-    font-size: clamp(14px, 4vw, 16px);
-}
-
-.stat span {
-    color: white;
-    font-weight: 500;
 }
 
 .screen-header {
@@ -261,6 +250,7 @@ body:not(.standalone) .stats-bar {
     margin-bottom: 3vh;
     padding-bottom: 2vh;
     border-bottom: 2px solid rgba(74, 159, 255, 0.3);
+    padding-top: env(safe-area-inset-top);
 }
 
 .screen-header h2 {
@@ -316,6 +306,12 @@ body:not(.standalone) .stats-bar {
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
     margin-bottom: 30px;
+}
+
+@media (min-width: 768px) {
+    .balls-container {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }
 
 .ball-card {
@@ -495,7 +491,6 @@ body:not(.standalone) .stats-bar {
     flex: 1;
     overflow-y: auto;
     margin-bottom: 2vh;
-    -webkit-overflow-scrolling: touch;
 }
 
 .upgrade-item {
@@ -592,20 +587,10 @@ body:not(.standalone) .stats-bar {
     color: #aaa;
 }
 
-.settings-scroll-container {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
 .settings-content {
     flex: 1;
     overflow-y: auto;
-    padding-bottom: 20px;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-    touch-action: pan-y;
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 .settings-section {
@@ -732,7 +717,7 @@ input:checked + .slider:before {
 
 #debug-info {
     position: absolute;
-    top: 70px;
+    top: calc(20px + env(safe-area-inset-top));
     left: 10px;
     z-index: 100;
     display: flex;
@@ -782,17 +767,13 @@ input:checked + .slider:before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 3vw;
+    padding: max(2vh, env(safe-area-inset-top)) 3vw 2vh 3vw;
+    pointer-events: none;
 }
 
-/* W trybie standalone - standardowy padding */
 body.standalone .hud-top {
-    padding-top: 10px !important;
-}
-
-/* W trybie przeglądarkowym - padding dla paska adresu */
-body:not(.standalone) .hud-top {
-    padding-top: 50px !important;
+    /* W standalone mode, górny pasek jest bliżej krawędzi */
+    padding-top: max(1vh, env(safe-area-inset-top)) !important;
 }
 
 .hud-left,
@@ -873,11 +854,7 @@ body:not(.standalone) .hud-top {
 
 @media (min-width: 768px) and (min-height: 500px) {
     .hud-top {
-        padding: 10px 25px;
-    }
-    
-    body:not(.standalone) .hud-top {
-        padding-top: 40px !important;
+        padding: 20px 25px;
     }
     
     .hud-btn {
@@ -909,12 +886,48 @@ body:not(.standalone) .hud-top {
         0 0 20px rgba(255, 215, 0, 0.3);
 }
 
+/* Mobile Controls Overlay */
+.mobile-controls-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 30%;
+    pointer-events: auto;
+    display: flex;
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+body.standalone .mobile-controls-overlay {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.control-left,
+.control-right {
+    flex: 1;
+    height: 100%;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+}
+
+.control-left {
+    background: linear-gradient(to right, rgba(74, 159, 255, 0.2), transparent);
+}
+
+.control-right {
+    background: linear-gradient(to left, rgba(74, 159, 255, 0.2), transparent);
+}
+
+.control-left:active,
+.control-right:active {
+    opacity: 0.6;
+}
+
 .overlay-menu {
     position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.85);
@@ -922,16 +935,8 @@ body:not(.standalone) .hud-top {
     align-items: center;
     justify-content: center;
     z-index: 200;
-}
-
-body.standalone .overlay-menu {
-    padding-top: var(--safe-area-inset-top);
-    padding-bottom: var(--safe-area-inset-bottom);
-}
-
-body:not(.standalone) .overlay-menu {
-    padding-top: 40px;
-    padding-bottom: 60px;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 .overlay-menu.hidden {
@@ -948,6 +953,12 @@ body:not(.standalone) .overlay-menu {
     text-align: center;
     border: 2px solid rgba(74, 159, 255, 0.3);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+body.standalone .pause-content,
+body.standalone .game-over-content {
+    margin-top: env(safe-area-inset-top);
+    margin-bottom: env(safe-area-inset-bottom);
 }
 
 .overlay-menu h2 {
@@ -1050,7 +1061,7 @@ body:not(.standalone) .overlay-menu {
 
 #notification-container {
     position: fixed;
-    top: calc(20px + var(--safe-area-inset-top));
+    top: calc(20px + env(safe-area-inset-top));
     right: 20px;
     z-index: 1000;
     display: flex;
@@ -1098,18 +1109,10 @@ body:not(.standalone) .overlay-menu {
     to { opacity: 0; }
 }
 
-/* Responsywność dla dużych ekranów */
 @media (min-height: 1000px) {
     #game-container {
         max-width: 430px;
         max-height: 932px;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: 100%;
-        height: 100%;
-        bottom: auto;
-        right: auto;
     }
 }
 
@@ -1117,13 +1120,6 @@ body:not(.standalone) .overlay-menu {
     #game-container {
         max-width: 430px;
         max-height: 932px;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: 100%;
-        height: 100%;
-        bottom: auto;
-        right: auto;
     }
 }
 
@@ -1141,17 +1137,8 @@ body:not(.standalone) .overlay-menu {
         max-width: min(400px, 60vw);
     }
     
-    .balls-container {
-        grid-template-columns: repeat(4, 1fr);
-    }
-    
-    /* W trybie przeglądarkowym w poziomie - mniej miejsca na dole */
-    body:not(.standalone) #game-container {
-        padding-bottom: 30px;
-    }
-    
-    body:not(.standalone) #game-screen {
-        padding-top: 20px !important;
+    .mobile-controls-overlay {
+        display: none !important;
     }
 }
 
@@ -1172,13 +1159,39 @@ body:not(.standalone) .overlay-menu {
         padding: 10px 15px;
     }
     
-    /* W trybie przeglądarkowym na małych ekranach */
-    body:not(.standalone) #game-screen {
-        padding-top: 30px !important;
+    .mobile-controls-overlay {
+        height: 40%;
+    }
+}
+
+@supports (padding: max(0px)) {
+    body {
+        padding-left: min(0px, env(safe-area-inset-left));
+        padding-right: min(0px, env(safe-area-inset-right));
+        padding-top: min(0px, env(safe-area-inset-top));
+        padding-bottom: min(0px, env(safe-area-inset-bottom));
     }
     
-    body:not(.standalone) #game-container {
-        padding-bottom: 40px;
+    .stats-bar {
+        padding-bottom: max(2vh, env(safe-area-inset-bottom));
+    }
+    
+    .hud-top {
+        padding-top: max(3vh, env(safe-area-inset-top));
+    }
+    
+    body.standalone {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+    
+    body.standalone #game-container {
+        padding-top: 0;
+        padding-bottom: 0;
+        padding-left: 0;
+        padding-right: 0;
     }
 }
 
@@ -1186,44 +1199,62 @@ body:not(.standalone) .overlay-menu {
     display: none !important;
 }
 
-/* Optymalizacja dla iOS - gładkie scrollowanie */
-.balls-container,
-#upgrades-list,
-.settings-content {
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
+body.standalone #game-container {
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
-/* Zapobieganie overscroll na iOS */
-.screen {
-    overscroll-behavior-y: none;
+body.standalone #game-screen {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
 }
 
-/* Poprawki dla landscape na małych ekranach */
-@media (orientation: landscape) and (max-height: 400px) {
-    #start-screen {
-        padding-top: 10px;
+body.standalone .hud-top {
+    padding-top: calc(env(safe-area-inset-top) + 10px);
+}
+
+body.standalone::after {
+    display: none;
+}
+
+/* iPhone 14 Pro/15 Pro with Dynamic Island */
+@media only screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3),
+       only screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
+    :root {
+        --safe-area-inset-top: 59px;
+        --safe-area-inset-bottom: 34px;
     }
     
-    .title-container {
-        margin-bottom: 1vh;
+    body.standalone {
+        padding-top: 59px !important;
+        padding-bottom: 34px !important;
+    }
+}
+
+/* iPhone without Dynamic Island */
+@media only screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
+       only screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) {
+    :root {
+        --safe-area-inset-top: 47px;
+        --safe-area-inset-bottom: 34px;
     }
     
-    .game-title {
-        font-size: 24px;
+    body.standalone {
+        padding-top: 47px !important;
+        padding-bottom: 34px !important;
+    }
+}
+
+/* Older iPhones */
+@media only screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2),
+       only screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) {
+    :root {
+        --safe-area-inset-top: 20px;
+        --safe-area-inset-bottom: 0px;
     }
     
-    .menu-buttons {
-        gap: 5px;
-    }
-    
-    .menu-btn {
-        padding: 6px 10px;
-        font-size: 14px;
-    }
-    
-    .stats-bar {
-        padding: 5px 10px;
-        font-size: 10px;
+    body.standalone {
+        padding-top: 20px !important;
+        padding-bottom: 0px !important;
     }
 }

@@ -2,90 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- W <head> pliku index.html: -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Ball Tower Jumper">
-    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- Dodaj touch icons dla iOS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="mask-icon" href="safari-pinned-tab.svg" color="#1a1a2e">
+    <meta name="msapplication-TileColor" content="#1a1a2e">
+    <meta name="theme-color" content="#1a1a2e">
+
+    <!-- Zmień sekcję PWA w head -->
     <link rel="manifest" href="manifest.json">
+    <!-- Dodaj fallback dla iOS -->
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ball Tower Jumper">
     <title>Ball Tower Jumper</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-    
-    <style>
-        /* Dodatkowe style dla trybu standalone */
-        body.standalone #game-container {
-            transform: translateY(47px) !important;
-            transition: transform 0.3s ease;
-        }
-        
-        /* iPhone 14 Pro i Pro Max */
-        @media (width: 393px) and (height: 852px),
-               (width: 430px) and (height: 932px) {
-            body.standalone #game-container {
-                transform: translateY(59px) !important;
-            }
-        }
-        
-        /* Zapobieganie białemu paskowi u dołu w trybie standalone */
-        body.standalone {
-            background-color: #000 !important;
-        }
-        
-        body.standalone::before {
-            content: '';
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: env(safe-area-inset-bottom);
-            background-color: #000;
-            z-index: 9999;
-        }
-        
-        /* Dla przeglądarki mobilnej (nie standalone) - ekran gry wyżej */
-        body:not(.standalone) #game-screen {
-            padding-top: 40px !important;
-        }
-        
-        /* iOS/iPadOS - gładkie scrollowanie */
-        .settings-scroll-container,
-        #upgrades-list,
-        .balls-container {
-            -webkit-overflow-scrolling: touch !important;
-            scroll-behavior: smooth;
-        }
-        
-        /* Zapobieganie "overscroll" na iOS */
-        .screen {
-            overscroll-behavior-y: contain;
-        }
-        
-        /* Dla scrollowania palcem na iOS */
-        .settings-content,
-        #upgrades-list,
-        .balls-container {
-            overflow-y: scroll !important;
-            -webkit-overflow-scrolling: touch !important;
-        }
-        
-        /* Poprawki dla touch scrolling */
-        #settings-screen,
-        #upgrades-screen {
-            -webkit-overflow-scrolling: touch;
-            overflow-y: auto;
-        }
-        
-        /* Upewnij się, że zawartość jest scrollowalna */
-        .settings-content {
-            min-height: 100%; /* Wymuś minimalną wysokość */
-            padding-bottom: 100px; /* Dodaj padding na dole dla lepszego scrollowania */
-        }
-    </style>
 </head>
 <body>
+    <!-- Game Container -->
     <div id="game-container">
+        <!-- Start Screen (Main Menu) -->
         <div id="start-screen" class="screen active">
             <div class="title-container">
                 <h1 class="game-title">BALL TOWER JUMPER</h1>
@@ -108,6 +52,7 @@
                 </button>
             </div>
             
+            <!-- STATS BAR MOVED TO BOTTOM -->
             <div class="stats-bar">
                 <div class="stat">
                     <i class="fas fa-coins"></i>
@@ -124,6 +69,7 @@
             </div>
         </div>
         
+        <!-- Ball Selection Screen -->
         <div id="balls-screen" class="screen">
             <div class="screen-header">
                 <button class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
@@ -136,6 +82,7 @@
             </div>
             
             <div class="balls-container">
+                <!-- Standard ball -->
                 <div class="ball-card active" data-ball="standard">
                     <div class="ball-preview standard-ball"></div>
                     <h3>Standard</h3>
@@ -145,6 +92,7 @@
                     <button class="select-ball-btn">Selected</button>
                 </div>
                 
+                <!-- Rubber ball -->
                 <div class="ball-card locked" data-ball="rubber">
                     <div class="ball-preview rubber-ball">
                         <i class="fas fa-lock"></i>
@@ -156,6 +104,7 @@
                     <button class="unlock-btn" data-cost="50">Unlock for 50 <i class="fas fa-coins"></i></button>
                 </div>
                 
+                <!-- Beach ball -->
                 <div class="ball-card locked" data-ball="beach">
                     <div class="ball-preview beach-ball">
                         <i class="fas fa-lock"></i>
@@ -165,6 +114,7 @@
                     <button class="unlock-btn" data-cost="100">Unlock for 100 <i class="fas fa-coins"></i></button>
                 </div>
                 
+                <!-- Golf ball -->
                 <div class="ball-card locked" data-ball="golf">
                     <div class="ball-preview golf-ball">
                         <i class="fas fa-lock"></i>
@@ -180,6 +130,7 @@
             </div>
         </div>
         
+        <!-- Upgrades Screen -->
         <div id="upgrades-screen" class="screen">
             <div class="screen-header">
                 <button class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
@@ -194,10 +145,12 @@
             <div class="ball-selector">
                 <h3>Select ball to upgrade:</h3>
                 <div class="ball-selector-buttons">
+                    <!-- Ball selection buttons will be generated dynamically -->
                 </div>
             </div>
             
             <div id="upgrades-list">
+                <!-- Upgrades list will be generated dynamically -->
             </div>
             
             <div class="upgrades-info">
@@ -205,111 +158,114 @@
             </div>
         </div>
         
+        <!-- Settings Screen -->
         <div id="settings-screen" class="screen">
             <div class="screen-header">
                 <button class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
                 <h2><i class="fas fa-sliders-h"></i> Settings</h2>
             </div>
-            <div class="settings-scroll-container">
-                <div class="settings-content">
-                    <div class="settings-section">
-                        <h3><i class="fas fa-gamepad"></i> Controls</h3>
-                        
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h4>Auto jump</h4>
-                                <p>Ball jumps automatically after landing</p>
-                            </div>
-                            <label class="switch">
-                                <input type="checkbox" id="auto-jump-toggle" checked>
-                                <span class="slider"></span>
-                            </label>
+            
+            <div class="settings-content">
+                <div class="settings-section">
+                    <h3><i class="fas fa-gamepad"></i> Controls</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Auto jump</h4>
+                            <p>Ball jumps automatically after landing</p>
                         </div>
-                        
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h4>Mobile controls</h4>
-                                <p>Enable touch controls (left/right side of screen)</p>
-                            </div>
-                            <label class="switch">
-                                <input type="checkbox" id="mobile-controls-toggle" checked>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h4>Accelerometer</h4>
-                                <p>Use device tilt to control</p>
-                            </div>
-                            <label class="switch">
-                                <input type="checkbox" id="accelerometer-toggle" checked>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h4>Show wind</h4>
-                                <p>Display wind direction and strength arrow</p>
-                            </div>
-                            <label class="switch">
-                                <input type="checkbox" id="wind-display-toggle" checked>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="auto-jump-toggle" checked>
+                            <span class="slider"></span>
+                        </label>
                     </div>
                     
-                    <div class="settings-section">
-                        <h3><i class="fas fa-bug"></i> Debug</h3>
-                        
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h4>Show debug info</h4>
-                                <p>Show debugging information during the game</p>
-                            </div>
-                            <label class="switch">
-                                <input type="checkbox" id="debug-info-toggle">
-                                <span class="slider"></span>
-                            </label>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Mobile controls</h4>
+                            <p>Enable touch controls (left/right side of screen)</p>
                         </div>
-                        
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h4>Add coins (debug)</h4>
-                                <p>Add 1000 coins to test purchases</p>
-                            </div>
-                            <button id="add-coins-btn" class="debug-btn">
-                                <i class="fas fa-coins"></i> Add 1000 coins
-                            </button>
+                        <label class="switch">
+                            <input type="checkbox" id="mobile-controls-toggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Accelerometer</h4>
+                            <p>Use device tilt to control</p>
                         </div>
-                        
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h4>Reset progress</h4>
-                                <p>Delete all saved data and start over</p>
-                            </div>
-                            <button id="reset-progress-btn" class="danger-btn">
-                                <i class="fas fa-trash"></i> Reset progress
-                            </button>
+                        <label class="switch">
+                            <input type="checkbox" id="accelerometer-toggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Show wind</h4>
+                            <p>Display wind direction and strength arrow</p>
                         </div>
-                        <div class="setting-item">
-                            <div class="setting-info">
-                                <h4>Request Accelerometer Access</h4>
-                                <p>Tap to enable tilt controls on iOS</p>
-                            </div>
-                            <button id="request-accelerometer-btn" class="debug-btn">
-                                <i class="fas fa-compass"></i> Request Access
-                            </button>
+                        <label class="switch">
+                            <input type="checkbox" id="wind-display-toggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3><i class="fas fa-bug"></i> Debug</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Show debug info</h4>
+                            <p>Show debugging information during the game</p>
                         </div>
+                        <label class="switch">
+                            <input type="checkbox" id="debug-info-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Add coins (debug)</h4>
+                            <p>Add 1000 coins to test purchases</p>
+                        </div>
+                        <button id="add-coins-btn" class="debug-btn">
+                            <i class="fas fa-coins"></i> Add 1000 coins
+                        </button>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Reset progress</h4>
+                            <p>Delete all saved data and start over</p>
+                        </div>
+                        <button id="reset-progress-btn" class="danger-btn">
+                            <i class="fas fa-trash"></i> Reset progress
+                        </button>
+                    </div>
+                    <!-- W pliku index.html, w sekcji ustawień dodaj: -->
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Request Accelerometer Access</h4>
+                            <p>Tap to enable tilt controls on iOS</p>
+                        </div>
+                        <button id="request-accelerometer-btn" class="debug-btn">
+                            <i class="fas fa-compass"></i> Request Access
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
         
+        <!-- Game Screen -->
         <div id="game-screen" class="screen">
             <canvas id="game-canvas"></canvas>
             
+            <!-- Debug elements from the first project -->
             <div id="debug-info" class="debug-info hidden">
                 <div id="height-display">Height: <span id="height">0</span>px</div>
                 <div id="max-height-display">Max height: <span id="max-height">0</span>px</div>
@@ -322,7 +278,9 @@
                 <div id="high-score-display">High score: <span id="high-score">0</span></div>
             </div>
             
+            <!-- SIMPLIFIED GAME HUD -->
             <div id="game-hud">
+                <!-- Top HUD bar -->
                 <div class="hud-top">
                     <div class="hud-left">
                         <button id="pause-btn" class="hud-btn" title="Pause (P)">
@@ -343,9 +301,17 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Mobile Controls Overlay -->
+                <div id="mobile-controls-overlay" class="mobile-controls-overlay">
+                    <div class="control-left" id="control-left"></div>
+                    <div class="control-right" id="control-right"></div>
+                </div>
             </div>
             
+            <!-- Pause menu -->
             <div id="pause-menu" class="overlay-menu hidden">
+                <div class="overlay-background"></div> <!-- Added background -->
                 <div class="pause-content">
                     <h2><i class="fas fa-pause"></i> Game Paused</h2>
                     <div class="pause-stats">
@@ -376,7 +342,9 @@
                 </div>
             </div>
             
+            <!-- Game over screen -->
             <div id="game-over-screen" class="overlay-menu hidden">
+                <div class="overlay-background"></div> <!-- Added background -->
                 <div class="game-over-content">
                     <h2><i class="fas fa-skull-crossbones"></i> Fell!</h2>
                     <div class="game-over-stats">
@@ -411,138 +379,196 @@
         </div>
     </div>
     
+    <!-- Notifications -->
     <div id="notification-container"></div>
     
+    <!-- JavaScript Scripts -->
     <script src="js/config.js"></script>
     <script src="js/menu.js"></script>
     <script src="js/game.js"></script>
     
+    <!-- Enhanced PWA and iOS Standalone Script -->
     <script>
-        function updateSafeArea() {
-            const vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-            
-            const isStandalone = window.navigator.standalone || 
-                                (window.matchMedia('(display-mode: standalone)').matches);
-            
-            if (isStandalone) {
-                document.body.classList.add('standalone');
-                console.log('Running in standalone mode');
-                
-                // Tylko dla standalone - ustaw safe-area dla dołu ekranu
-                const safeAreaBottom = 'env(safe-area-inset-bottom, 0px)';
-                document.documentElement.style.setProperty('--safe-area-inset-bottom', safeAreaBottom);
-                
-                // Upewnij się, że kontener gry ma czarne tło
-                const gameContainer = document.getElementById('game-container');
-                if (gameContainer) {
-                    gameContainer.style.backgroundColor = '#000';
-                }
-            } else {
-                document.body.classList.remove('standalone');
-                // Dla przeglądarki - zeruj safe-area dla dołu
-                document.documentElement.style.setProperty('--safe-area-inset-bottom', '0px');
-                
-                // Dla przeglądarki - ustaw padding na dole dla interfejsu przeglądarki
-                const gameScreen = document.getElementById('game-screen');
-                if (gameScreen) {
-                    gameScreen.style.paddingBottom = '60px';
-                }
-            }
-            
-            // Force reflow for scrolling elements
-            const scrollElements = document.querySelectorAll('.settings-content, #upgrades-list');
-            scrollElements.forEach(el => {
-                if (el.scrollHeight > el.clientHeight) {
-                    el.style.overflowY = 'scroll';
-                } else {
-                    el.style.overflowY = 'auto';
-                }
+        // Rejestracja Service Worker dla PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
             });
         }
 
+        // Rozwiązanie dla fullscreen na iOS
         document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                updateSafeArea();
-                
-                if (window.Menu) Menu.init();
-                
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('./service-worker.js')
-                        .then(registration => {
-                            console.log('ServiceWorker registration successful');
-                        })
-                        .catch(err => {
-                            console.log('ServiceWorker registration failed: ', err);
-                        });
-                }
-                
-                // Inicjalizacja scrollowania po załadowaniu
-                const settingsContent = document.querySelector('.settings-content');
-                if (settingsContent) {
-                    settingsContent.style.overflowY = 'auto';
-                    settingsContent.style.webkitOverflowScrolling = 'touch';
-                }
-                
-                // Dodatkowe zabezpieczenie przed białym paskiem
-                const checkWhiteBar = setInterval(() => {
-                    const body = document.body;
-                    const html = document.documentElement;
-                    
-                    // Sprawdź czy są jakieś białe elementy na dole
-                    const elements = document.querySelectorAll('*');
-                    elements.forEach(el => {
-                        const rect = el.getBoundingClientRect();
-                        if (rect.bottom >= window.innerHeight && 
-                            rect.top < window.innerHeight &&
-                            rect.top > window.innerHeight - 50) {
-                            const style = window.getComputedStyle(el);
-                            if (style.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
-                                style.backgroundColor !== 'transparent') {
-                                el.style.backgroundColor = '#000';
-                            }
-                        }
-                    });
-                }, 1000);
-                
-                setTimeout(() => clearInterval(checkWhiteBar), 5000);
-            }, 100);
-            
+            // Fix dla iOS scroll
             document.addEventListener('touchmove', function(e) {
                 if(e.target.type === 'range') return;
                 e.preventDefault();
             }, { passive: false });
-            
+
+            // Fix dla iOS zoom
             document.addEventListener('gesturestart', function(e) {
                 e.preventDefault();
             });
+
+            // Dodaj do ekranu głównego iOS
+            if (window.navigator.standalone) {
+                document.body.classList.add('standalone');
+                console.log('Running in standalone mode (added to home screen)');
+            } else {
+                console.log('Running in browser mode');
+            }
             
-            // Obsługa touch event dla lepszego scrollowania
-            document.addEventListener('touchstart', function() {}, {passive: true});
-            document.addEventListener('touchmove', function() {}, {passive: true});
+            // Initialize mobile controls overlay
+            initMobileControls();
         });
+
+        // Rozwiązanie dla safe area dynamicznie
+        function updateSafeArea() {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+            
+            // Użyj env() dla safe-area-inset
+            const safeAreaTop = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top') || '0px';
+            const safeAreaBottom = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom') || '0px';
+            
+            // Aktualizuj zmienne CSS z env() jeśli dostępne
+            if (CSS.supports('padding-top: env(safe-area-inset-top)')) {
+                document.documentElement.style.setProperty('--safe-area-inset-top', 'env(safe-area-inset-top)');
+                document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
+                document.documentElement.style.setProperty('--safe-area-inset-left', 'env(safe-area-inset-left)');
+                document.documentElement.style.setProperty('--safe-area-inset-right', 'env(safe-area-inset-right)');
+            } else {
+                // Fallback dla przeglądarek bez env()
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                if (isIOS) {
+                    // Domyślne wartości dla iPhone z dynamic island/notch
+                    document.documentElement.style.setProperty('--safe-area-inset-top', '47px');
+                    document.documentElement.style.setProperty('--safe-area-inset-bottom', '34px');
+                    document.documentElement.style.setProperty('--safe-area-inset-left', '0px');
+                    document.documentElement.style.setProperty('--safe-area-inset-right', '0px');
+                } else {
+                    document.documentElement.style.setProperty('--safe-area-inset-top', '0px');
+                    document.documentElement.style.setProperty('--safe-area-inset-bottom', '0px');
+                    document.documentElement.style.setProperty('--safe-area-inset-left', '0px');
+                    document.documentElement.style.setProperty('--safe-area-inset-right', '0px');
+                }
+            }
+            
+            // Debug safe area
+            console.log('Safe Area - Top:', document.documentElement.style.getPropertyValue('--safe-area-inset-top'),
+                       'Bottom:', document.documentElement.style.getPropertyValue('--safe-area-inset-bottom'),
+                       'Window height:', window.innerHeight, 'vh:', vh);
+        }
+
+        // Initialize mobile controls overlay
+        function initMobileControls() {
+            const controlsOverlay = document.getElementById('mobile-controls-overlay');
+            if (!controlsOverlay) return;
+            
+            const controlLeft = document.getElementById('control-left');
+            const controlRight = document.getElementById('control-right');
+            
+            if (controlLeft && controlRight) {
+                // Add touch event listeners
+                controlLeft.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (window.Game) {
+                        Game.touchActive = true;
+                        Game.touchDirection = -1;
+                    }
+                }, { passive: false });
+                
+                controlLeft.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    if (window.Game) {
+                        Game.touchActive = false;
+                        Game.touchDirection = 0;
+                    }
+                }, { passive: false });
+                
+                controlRight.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (window.Game) {
+                        Game.touchActive = true;
+                        Game.touchDirection = 1;
+                    }
+                }, { passive: false });
+                
+                controlRight.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    if (window.Game) {
+                        Game.touchActive = false;
+                        Game.touchDirection = 0;
+                    }
+                }, { passive: false });
+                
+                // Add mouse events for desktop testing
+                controlLeft.addEventListener('mousedown', () => {
+                    if (window.Game) {
+                        Game.touchActive = true;
+                        Game.touchDirection = -1;
+                    }
+                });
+                
+                controlLeft.addEventListener('mouseup', () => {
+                    if (window.Game) {
+                        Game.touchActive = false;
+                        Game.touchDirection = 0;
+                    }
+                });
+                
+                controlRight.addEventListener('mousedown', () => {
+                    if (window.Game) {
+                        Game.touchActive = true;
+                        Game.touchDirection = 1;
+                    }
+                });
+                
+                controlRight.addEventListener('mouseup', () => {
+                    if (window.Game) {
+                        Game.touchActive = false;
+                        Game.touchDirection = 0;
+                    }
+                });
+                
+                console.log('Mobile controls overlay initialized');
+            }
+        }
 
         window.addEventListener('resize', updateSafeArea);
-        window.addEventListener('orientationchange', () => {
-            setTimeout(updateSafeArea, 350);
-        });
-
-        let lastWindowHeight = window.innerHeight;
-        let resizeTimer;
+        window.addEventListener('orientationchange', updateSafeArea);
         
-        window.addEventListener('resize', () => {
-            const currentHeight = window.innerHeight;
-            
-            if (Math.abs(currentHeight - lastWindowHeight) > 50) {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(() => {
-                    updateSafeArea();
-                    lastWindowHeight = currentHeight;
-                }, 250);
-            }
+        // Initial call
+        setTimeout(updateSafeArea, 100);
+        setTimeout(updateSafeArea, 500); // Double check after everything loads
+        
+        // Hide address bar on mobile
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                window.scrollTo(0, 1);
+            }, 0);
         });
-
-        setTimeout(updateSafeArea, 1000);
+    </script>
+    
+    <!-- Initialization after page load -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize menu
+            if (window.Menu) Menu.init();
+            
+            // Force recalculation after everything loads
+            setTimeout(() => {
+                updateSafeArea();
+                if (window.Game && Game.resizeCanvas) {
+                    Game.resizeCanvas();
+                }
+            }, 300);
+        });
     </script>
 </body>
 </html>
