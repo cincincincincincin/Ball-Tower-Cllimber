@@ -885,78 +885,157 @@ const Menu = {
     },
 
     
+// ... (reszta kodu bez zmian) ...
+
     setupEventListeners() {
         console.log('Configuring event listeners...');
         
-        
-        document.getElementById('play-btn').addEventListener('click', () => {
+        // Play button
+        document.getElementById('play-btn').addEventListener('click', (e) => {
+            console.log('Play button clicked');
             this.startGame();
         });
         
+        // Balls button
         document.getElementById('balls-btn').addEventListener('click', () => {
+            console.log('Balls button clicked');
             this.switchScreen('balls');
         });
         
+        // Upgrades button
         document.getElementById('upgrades-btn').addEventListener('click', () => {
+            console.log('Upgrades button clicked');
             this.switchScreen('upgrades');
         });
         
+        // Settings button
         document.getElementById('settings-btn').addEventListener('click', () => {
+            console.log('Settings button clicked');
             this.switchScreen('settings');
         });
         
-        
+        // Back buttons
         document.querySelectorAll('.back-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                console.log('Back button clicked');
                 this.switchScreen('start');
             });
         });
         
-        
-        document.getElementById('pause-btn').addEventListener('click', () => {
-            this.togglePause();
-        });
-        
-        
-        document.getElementById('resume-btn').addEventListener('click', () => {
-            this.togglePause();
-        });
-
-        document.getElementById('restart-btn').addEventListener('click', () => {
+        // Pause button - UŻYJ EVENT DELEGATION dla standalone
+        const pauseBtn = document.getElementById('pause-btn');
+        if (pauseBtn) {
+            // Usuń stare event listeners
+            const newPauseBtn = pauseBtn.cloneNode(true);
+            pauseBtn.parentNode.replaceChild(newPauseBtn, pauseBtn);
             
-            this.saveGameProgress(true); 
-            this.state.coinsInGame = 0; 
-
-            document.getElementById('pause-menu').classList.add('hidden');
-            this.startGame();
-        });
-
-        document.getElementById('quit-to-menu-btn').addEventListener('click', () => {
+            newPauseBtn.addEventListener('click', (e) => {
+                console.log('Pause button clicked (direct listener)');
+                e.preventDefault();
+                e.stopPropagation();
+                this.togglePause();
+                return false;
+            });
             
-            this.saveGameProgress(true); 
-            this.state.coinsInGame = 0; 
-
-            document.getElementById('pause-menu').classList.add('hidden');
-            this.switchScreen('start');
-        });
-
+            // Dodaj touch event dla standalone
+            newPauseBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                newPauseBtn.click();
+                return false;
+            }, { passive: false });
+        }
         
-        document.getElementById('play-again-btn').addEventListener('click', () => {
+        // Resume button
+        const resumeBtn = document.getElementById('resume-btn');
+        if (resumeBtn) {
+            const newResumeBtn = resumeBtn.cloneNode(true);
+            resumeBtn.parentNode.replaceChild(newResumeBtn, resumeBtn);
             
-            this.saveGameProgress(false); 
-            this.state.coinsInGame = 0; 
-
-            document.getElementById('game-over-screen').classList.add('hidden');
-            this.startGame();
-        });
-
-        document.getElementById('quit-after-game-btn').addEventListener('click', () => {
+            newResumeBtn.addEventListener('click', (e) => {
+                console.log('Resume button clicked');
+                e.preventDefault();
+                e.stopPropagation();
+                this.togglePause();
+                return false;
+            });
+        }
+        
+        // Restart button
+        const restartBtn = document.getElementById('restart-btn');
+        if (restartBtn) {
+            const newRestartBtn = restartBtn.cloneNode(true);
+            restartBtn.parentNode.replaceChild(newRestartBtn, restartBtn);
             
-            document.getElementById('game-over-screen').classList.add('hidden');
-            this.switchScreen('start');
-        });
+            newRestartBtn.addEventListener('click', (e) => {
+                console.log('Restart button clicked');
+                e.preventDefault();
+                e.stopPropagation();
+                
+                this.saveGameProgress(true);
+                this.state.coinsInGame = 0;
+                document.getElementById('pause-menu').classList.add('hidden');
+                this.startGame();
+                return false;
+            });
+        }
         
+        // Quit to menu button
+        const quitToMenuBtn = document.getElementById('quit-to-menu-btn');
+        if (quitToMenuBtn) {
+            const newQuitToMenuBtn = quitToMenuBtn.cloneNode(true);
+            quitToMenuBtn.parentNode.replaceChild(newQuitToMenuBtn, quitToMenuBtn);
+            
+            newQuitToMenuBtn.addEventListener('click', (e) => {
+                console.log('Quit to menu button clicked');
+                e.preventDefault();
+                e.stopPropagation();
+                
+                this.saveGameProgress(true);
+                this.state.coinsInGame = 0;
+                document.getElementById('pause-menu').classList.add('hidden');
+                this.switchScreen('start');
+                return false;
+            });
+        }
         
+        // Play again button
+        const playAgainBtn = document.getElementById('play-again-btn');
+        if (playAgainBtn) {
+            const newPlayAgainBtn = playAgainBtn.cloneNode(true);
+            playAgainBtn.parentNode.replaceChild(newPlayAgainBtn, playAgainBtn);
+            
+            newPlayAgainBtn.addEventListener('click', (e) => {
+                console.log('Play again button clicked');
+                e.preventDefault();
+                e.stopPropagation();
+                
+                this.saveGameProgress(false);
+                this.state.coinsInGame = 0;
+                document.getElementById('game-over-screen').classList.add('hidden');
+                this.startGame();
+                return false;
+            });
+        }
+        
+        // Quit after game button
+        const quitAfterGameBtn = document.getElementById('quit-after-game-btn');
+        if (quitAfterGameBtn) {
+            const newQuitAfterGameBtn = quitAfterGameBtn.cloneNode(true);
+            quitAfterGameBtn.parentNode.replaceChild(newQuitAfterGameBtn, quitAfterGameBtn);
+            
+            newQuitAfterGameBtn.addEventListener('click', (e) => {
+                console.log('Quit after game button clicked');
+                e.preventDefault();
+                e.stopPropagation();
+                
+                document.getElementById('game-over-screen').classList.add('hidden');
+                this.switchScreen('start');
+                return false;
+            });
+        }
+        
+        // Keyboard events
         document.addEventListener('keydown', (e) => {
             
             if (e.key === 'p' || e.key === 'P') {
@@ -992,6 +1071,8 @@ const Menu = {
         
         console.log('Event listeners configured');
     },
+
+// ... (reszta kodu bez zmian) ...
 
     
     saveGameProgress(shouldAddToTotal = true) {
