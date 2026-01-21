@@ -547,72 +547,66 @@
         // Rozwiązanie problemu z przyciskami w standalone mode
         function fixStandaloneClickEvents() {
             console.log('Fixing standalone click events...');
-            
+
             // Wszystkie przyciski w aplikacji
             const allButtons = document.querySelectorAll('button');
-            
+
             allButtons.forEach(button => {
-                // Usuń wszystkie stare event listeners przez klonowanie
+                // Usuń stare event listeners przez klonowanie
                 const newButton = button.cloneNode(true);
                 button.parentNode.replaceChild(newButton, button);
-                
+
+                // Usuń atrybut onclick, aby uniknąć konfliktów
+                newButton.removeAttribute('onclick');
+
                 // Dodaj specjalny event dla standalone
                 newButton.addEventListener('click', function(e) {
-                    console.log('Button clicked in standalone:', this.id || this.className);
+                    console.log('Direct button click in standalone:', this.id || this.className);
                     e.preventDefault();
                     e.stopPropagation();
-                    
-                    // Użyj setTimeout aby uniknąć problemów z timingiem
+
                     setTimeout(() => {
-                        if (this.id === 'pause-btn' && window.Menu) {
-                            console.log('Pause button clicked');
-                            window.Menu.togglePause();
-                        } else if (this.id === 'play-btn' && window.Menu) {
-                            console.log('Play button clicked');
+                        if (!window.Menu) return;
+
+                        const buttonId = this.id;
+                        const buttonClass = this.className;
+
+                        // Obsługa przycisków menu
+                        if (buttonId === 'play-btn') {
                             window.Menu.startGame();
-                        } else if (this.classList.contains('back-btn') && window.Menu) {
-                            console.log('Back button clicked');
-                            window.Menu.switchScreen('start');
-                        } else if (this.id === 'resume-btn' && window.Menu) {
-                            console.log('Resume button clicked');
-                            window.Menu.togglePause();
-                        } else if (this.id === 'restart-btn' && window.Menu) {
-                            console.log('Restart button clicked');
-                            window.Menu.saveGameProgress(true);
-                            window.Menu.state.coinsInGame = 0;
-                            document.getElementById('pause-menu').classList.add('hidden');
-                            window.Menu.startGame();
-                        } else if (this.id === 'quit-to-menu-btn' && window.Menu) {
-                            console.log('Quit to menu button clicked');
-                            window.Menu.saveGameProgress(true);
-                            window.Menu.state.coinsInGame = 0;
-                            document.getElementById('pause-menu').classList.add('hidden');
-                            window.Menu.switchScreen('start');
-                        } else if (this.id === 'play-again-btn' && window.Menu) {
-                            console.log('Play again button clicked');
-                            window.Menu.saveGameProgress(false);
-                            window.Menu.state.coinsInGame = 0;
-                            document.getElementById('game-over-screen').classList.add('hidden');
-                            window.Menu.startGame();
-                        } else if (this.id === 'quit-after-game-btn' && window.Menu) {
-                            console.log('Quit after game button clicked');
-                            document.getElementById('game-over-screen').classList.add('hidden');
-                            window.Menu.switchScreen('start');
-                        } else if (this.id === 'balls-btn' && window.Menu) {
-                            console.log('Balls button clicked');
+                        } 
+                        else if (buttonId === 'balls-btn') {
                             window.Menu.switchScreen('balls');
-                        } else if (this.id === 'upgrades-btn' && window.Menu) {
-                            console.log('Upgrades button clicked');
+                        }
+                        else if (buttonId === 'upgrades-btn') {
                             window.Menu.switchScreen('upgrades');
-                        } else if (this.id === 'settings-btn' && window.Menu) {
-                            console.log('Settings button clicked');
+                        }
+                        else if (buttonId === 'settings-btn') {
                             window.Menu.switchScreen('settings');
                         }
+                        else if (this.classList.contains('back-btn')) {
+                            window.Menu.switchScreen('start');
+                        }
+                        // Przyciski ekranu piłek
+                        else if (this.classList.contains('select-ball-btn')) {
+                            const ballCard = this.closest('.ball-card');
+                            if (ballCard) {
+                                const ballType = ballCard.dataset.ball;
+                                window.Menu.selectBall(ballType);
+                            }
+                        }
+                        else if (this.classList.contains('unlock-btn')) {
+                            const ballCard = this.closest('.ball-card');
+                            if (ballCard) {
+                                const ballType = ballCard.dataset.ball;
+                                window.Menu.unlockBall(ballType);
+                            }
+                        }
                     }, 50);
-                    
+
                     return false;
                 }, true);
-                
+
                 // Dodaj touch event również
                 newButton.addEventListener('touchstart', function(e) {
                     e.preventDefault();
@@ -620,11 +614,11 @@
                     this.click();
                     return false;
                 }, { passive: false });
-                
+
                 // Ustaw transparentny tap highlight
                 newButton.style.webkitTapHighlightColor = 'transparent';
             });
-            
+
             console.log('Standalone click events fixed for', allButtons.length, 'buttons');
         }
 
@@ -656,75 +650,113 @@
         }
 
         // Event Delegation dla przycisków w trybie standalone
+        // Znajdź funkcję setupStandaloneEventDelegation i zaktualizuj:
         function setupStandaloneEventDelegation() {
             if (!document.body.classList.contains('standalone')) return;
-            
-            console.log('Setting up standalone event delegation');
-            
+
+            console.log('Setting up standalone event delegation for menu buttons');
+
+            // Event delegation dla przycisków menu głównego
             document.addEventListener('click', function(e) {
                 const target = e.target;
                 if (!target) return;
-                
+
                 // Znajdź najbliższy przycisk
                 const button = target.closest('button');
                 if (!button) return;
-                
+
                 e.preventDefault();
                 e.stopPropagation();
-                
+
+                console.log('Standalone click detected on button:', button.id || button.className);
+
                 setTimeout(() => {
                     if (!window.Menu) return;
-                    
-                    switch(button.id) {
-                        case 'pause-btn':
-                            console.log('Event delegation: Pause button');
-                            window.Menu.togglePause();
-                            break;
+
+                    // Obsługa przycisków menu głównego
+                    const buttonId = button.id;
+                    const buttonClass = button.className;
+
+                    switch(buttonId) {
                         case 'play-btn':
                             console.log('Event delegation: Play button');
                             window.Menu.startGame();
                             break;
-                        case 'resume-btn':
-                            console.log('Event delegation: Resume button');
-                            window.Menu.togglePause();
+                        case 'balls-btn':
+                            console.log('Event delegation: Balls button');
+                            window.Menu.switchScreen('balls');
                             break;
-                        case 'restart-btn':
-                            console.log('Event delegation: Restart button');
-                            window.Menu.saveGameProgress(true);
-                            window.Menu.state.coinsInGame = 0;
-                            document.getElementById('pause-menu').classList.add('hidden');
-                            window.Menu.startGame();
+                        case 'upgrades-btn':
+                            console.log('Event delegation: Upgrades button');
+                            window.Menu.switchScreen('upgrades');
                             break;
-                        case 'quit-to-menu-btn':
-                            console.log('Event delegation: Quit to menu button');
-                            window.Menu.saveGameProgress(true);
-                            window.Menu.state.coinsInGame = 0;
-                            document.getElementById('pause-menu').classList.add('hidden');
-                            window.Menu.switchScreen('start');
-                            break;
-                        case 'play-again-btn':
-                            console.log('Event delegation: Play again button');
-                            window.Menu.saveGameProgress(false);
-                            window.Menu.state.coinsInGame = 0;
-                            document.getElementById('game-over-screen').classList.add('hidden');
-                            window.Menu.startGame();
-                            break;
-                        case 'quit-after-game-btn':
-                            console.log('Event delegation: Quit after game button');
-                            document.getElementById('game-over-screen').classList.add('hidden');
-                            window.Menu.switchScreen('start');
+                        case 'settings-btn':
+                            console.log('Event delegation: Settings button');
+                            window.Menu.switchScreen('settings');
                             break;
                         default:
+                            // Sprawdź czy to przycisk back
                             if (button.classList.contains('back-btn')) {
                                 console.log('Event delegation: Back button');
                                 window.Menu.switchScreen('start');
                             }
+                            // Sprawdź czy to przycisk w ekranie piłek
+                            else if (button.classList.contains('select-ball-btn')) {
+                                const ballCard = button.closest('.ball-card');
+                                if (ballCard) {
+                                    const ballType = ballCard.dataset.ball;
+                                    console.log('Event delegation: Select ball button for', ballType);
+                                    window.Menu.selectBall(ballType);
+                                }
+                            }
+                            // Sprawdź czy to przycisk odblokowania piłki
+                            else if (button.classList.contains('unlock-btn')) {
+                                const ballCard = button.closest('.ball-card');
+                                if (ballCard) {
+                                    const ballType = ballCard.dataset.ball;
+                                    console.log('Event delegation: Unlock ball button for', ballType);
+                                    window.Menu.unlockBall(ballType);
+                                }
+                            }
+                            // Sprawdź czy to przycisk zakupu ulepszenia
+                            else if (button.classList.contains('buy-btn')) {
+                                const ballType = window.Menu.state.currentBall;
+                                const upgradeItem = button.closest('.upgrade-item');
+                                if (upgradeItem) {
+                                    const upgradeId = button.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+                                    if (upgradeId) {
+                                        console.log('Event delegation: Buy upgrade', upgradeId);
+                                        window.Menu.buyUpgrade(ballType, upgradeId);
+                                    }
+                                }
+                            }
                             break;
                     }
                 }, 10);
-                
+
                 return false;
             }, true);
+        }
+
+        // Globalny event listener dla trybu standalone
+        if (document.body.classList.contains('standalone')) {
+            console.log('Setting up global standalone event listener');
+            
+            // Przechwyć wszystkie kliknięcia
+            document.addEventListener('click', function(e) {
+                const target = e.target;
+                
+                // Jeśli to link, zapobiegaj domyślnej akcji
+                if (target.tagName === 'A' || target.tagName === 'BUTTON') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }, true);
+            
+            // Uruchom event delegation dla menu
+            setTimeout(() => {
+                setupStandaloneEventDelegation();
+            }, 1000);
         }
 
         window.addEventListener('resize', updateSafeArea);
