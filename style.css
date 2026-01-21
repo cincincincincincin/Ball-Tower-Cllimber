@@ -21,7 +21,6 @@ html, body {
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-inset-left: env(safe-area-inset-left, 0px);
     --safe-area-inset-right: env(safe-area-inset-right, 0px);
-    --standalone-offset: 0px;
 }
 
 body {
@@ -64,10 +63,15 @@ body {
     max-height: 100%;
 }
 
-/* Tylko dla trybu standalone (PWA) dodajemy padding na górze */
+/* Tryb standalone (PWA) - używamy safe-area */
 body.standalone #game-container {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: 0 !important;
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
+}
+
+/* Tryb przeglądarkowy - dodajemy padding na dół dla interfejsu przeglądarki */
+body:not(.standalone) #game-container {
+    padding-bottom: 60px; /* Miejsce na pasek nawigacji przeglądarki */
 }
 
 .screen {
@@ -82,17 +86,21 @@ body.standalone #game-container {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     overflow-y: auto;
     overflow-x: hidden;
-    overscroll-behavior-y: none; /* Pozwala na normalne scrollowanie */
+    overscroll-behavior-y: contain;
 }
 
+/* Ekran gry - specjalne ustawienia */
 #game-screen {
     padding: 0 !important;
-    /* Tylko dla standalone dodajemy padding na górze */
-    padding-top: env(safe-area-inset-top) !important;
     background: #000 !important;
 }
 
-/* Dla przeglądarki mobilnej (nie standalone) - ekran gry wyżej */
+/* W trybie standalone - padding na górze z safe-area */
+body.standalone #game-screen {
+    padding-top: var(--safe-area-inset-top) !important;
+}
+
+/* W trybie przeglądarkowym - padding na górze dla paska adresu */
 body:not(.standalone) #game-screen {
     padding-top: 40px !important;
 }
@@ -106,8 +114,15 @@ body:not(.standalone) #game-screen {
     align-items: center;
     text-align: center;
     padding: 20px;
-    /* Tylko dla standalone dodajemy padding na górze */
-    padding-top: calc(20px + env(safe-area-inset-top)) !important;
+}
+
+/* Ustawienia dla trybu standalone */
+body.standalone #start-screen {
+    padding-top: calc(20px + var(--safe-area-inset-top)) !important;
+}
+
+body:not(.standalone) #start-screen {
+    padding-top: 60px !important; /* Więcej miejsca na pasek adresu */
 }
 
 .title-container {
@@ -208,9 +223,17 @@ body:not(.standalone) #game-screen {
     background: rgba(0, 0, 0, 0.9);
     backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    /* Użyj var z fallbackiem */
-    padding-bottom: calc(2vh + var(--safe-area-inset-bottom, 0px));
     z-index: 100;
+}
+
+/* Dla trybu standalone - użyj safe-area na dole */
+body.standalone .stats-bar {
+    padding-bottom: calc(2vh + var(--safe-area-inset-bottom));
+}
+
+/* Dla trybu przeglądarkowego - standardowy padding */
+body:not(.standalone) .stats-bar {
+    padding-bottom: 2vh;
 }
 
 .stat {
@@ -472,6 +495,7 @@ body:not(.standalone) #game-screen {
     flex: 1;
     overflow-y: auto;
     margin-bottom: 2vh;
+    -webkit-overflow-scrolling: touch;
 }
 
 .upgrade-item {
@@ -573,21 +597,15 @@ body:not(.standalone) #game-screen {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    /* Dodaj te linie dla scrollowania palcem */
-    touch-action: pan-y;
-    -webkit-overflow-scrolling: touch;
 }
 
 .settings-content {
     flex: 1;
     overflow-y: auto;
-    /* Dodaj te linie */
     padding-bottom: 20px;
-    -webkit-overflow-scrolling: touch !important;
+    -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
     touch-action: pan-y;
-    /* Zwiększ maksymalną wysokość dla lepszego scrollowania */
-    max-height: calc(100vh - 200px);
 }
 
 .settings-section {
@@ -765,8 +783,16 @@ input:checked + .slider:before {
     justify-content: space-between;
     align-items: center;
     padding: 10px 3vw;
-    /* Tylko dla standalone dodajemy padding na górze */
-    padding-top: calc(10px + env(safe-area-inset-top)) !important;
+}
+
+/* W trybie standalone - standardowy padding */
+body.standalone .hud-top {
+    padding-top: 10px !important;
+}
+
+/* W trybie przeglądarkowym - padding dla paska adresu */
+body:not(.standalone) .hud-top {
+    padding-top: 50px !important;
 }
 
 .hud-left,
@@ -848,7 +874,10 @@ input:checked + .slider:before {
 @media (min-width: 768px) and (min-height: 500px) {
     .hud-top {
         padding: 10px 25px;
-        padding-top: calc(10px + env(safe-area-inset-top)) !important;
+    }
+    
+    body:not(.standalone) .hud-top {
+        padding-top: 40px !important;
     }
     
     .hud-btn {
@@ -893,8 +922,16 @@ input:checked + .slider:before {
     align-items: center;
     justify-content: center;
     z-index: 200;
-    /* Tylko dla standalone dodajemy padding na górze */
-    padding-top: env(safe-area-inset-top);
+}
+
+body.standalone .overlay-menu {
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
+}
+
+body:not(.standalone) .overlay-menu {
+    padding-top: 40px;
+    padding-bottom: 60px;
 }
 
 .overlay-menu.hidden {
@@ -1013,7 +1050,7 @@ input:checked + .slider:before {
 
 #notification-container {
     position: fixed;
-    top: calc(20px + env(safe-area-inset-top));
+    top: calc(20px + var(--safe-area-inset-top));
     right: 20px;
     z-index: 1000;
     display: flex;
@@ -1061,6 +1098,7 @@ input:checked + .slider:before {
     to { opacity: 0; }
 }
 
+/* Responsywność dla dużych ekranów */
 @media (min-height: 1000px) {
     #game-container {
         max-width: 430px;
@@ -1106,6 +1144,15 @@ input:checked + .slider:before {
     .balls-container {
         grid-template-columns: repeat(4, 1fr);
     }
+    
+    /* W trybie przeglądarkowym w poziomie - mniej miejsca na dole */
+    body:not(.standalone) #game-container {
+        padding-bottom: 30px;
+    }
+    
+    body:not(.standalone) #game-screen {
+        padding-top: 20px !important;
+    }
 }
 
 @media (max-height: 600px) {
@@ -1124,33 +1171,59 @@ input:checked + .slider:before {
     .menu-btn {
         padding: 10px 15px;
     }
+    
+    /* W trybie przeglądarkowym na małych ekranach */
+    body:not(.standalone) #game-screen {
+        padding-top: 30px !important;
+    }
+    
+    body:not(.standalone) #game-container {
+        padding-bottom: 40px;
+    }
 }
 
 .hidden {
     display: none !important;
 }
 
-/* Usuń nadmierne paddings dla trybu standalone */
-body.standalone::after {
-    display: none;
+/* Optymalizacja dla iOS - gładkie scrollowanie */
+.balls-container,
+#upgrades-list,
+.settings-content {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
 }
 
-body.standalone {
-    --safe-area-inset-bottom: 0px !important;
+/* Zapobieganie overscroll na iOS */
+.screen {
+    overscroll-behavior-y: none;
 }
 
-body.standalone #game-container {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: 0 !important;
-}
-
-body.standalone .hud-top {
-    padding-top: calc(10px + env(safe-area-inset-top)) !important;
-}
-body.standalone .stats-bar {
-    padding-bottom: 2vh !important;
-}
-
-body:not(.standalone) #game-screen {
-    padding-bottom: 60px !important;
+/* Poprawki dla landscape na małych ekranach */
+@media (orientation: landscape) and (max-height: 400px) {
+    #start-screen {
+        padding-top: 10px;
+    }
+    
+    .title-container {
+        margin-bottom: 1vh;
+    }
+    
+    .game-title {
+        font-size: 24px;
+    }
+    
+    .menu-buttons {
+        gap: 5px;
+    }
+    
+    .menu-btn {
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+    
+    .stats-bar {
+        padding: 5px 10px;
+        font-size: 10px;
+    }
 }

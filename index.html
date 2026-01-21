@@ -429,47 +429,24 @@
                 document.body.classList.add('standalone');
                 console.log('Running in standalone mode');
                 
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                if (isIOS) {
-                    const width = window.screen.width;
-                    const height = window.screen.height;
-                    
-                    let offset = 47; // Default for most iPhones
-                    
-                    // iPhone 14 Pro/Pro Max and newer with Dynamic Island
-                    if ((width === 393 && height === 852) || 
-                        (width === 430 && height === 932) ||
-                        (width === 430 && height === 932)) {
-                        offset = 59; // Dynamic Island is taller
-                    }
-                    
-                    // iPhone X/XS/11 Pro/12 Mini/13 Mini
-                    else if ((width === 375 && height === 812) ||
-                             (width === 390 && height === 844) ||
-                             (width === 360 && height === 780)) {
-                        offset = 47;
-                    }
-                    
-                    console.log(`iOS device detected: ${width}x${height}, offset: ${offset}px`);
-                }
+                // Tylko dla standalone - ustaw safe-area dla dołu ekranu
+                const safeAreaBottom = 'env(safe-area-inset-bottom, 0px)';
+                document.documentElement.style.setProperty('--safe-area-inset-bottom', safeAreaBottom);
                 
-                // Usuń ewentualny biały pasek na dole
-                setTimeout(() => {
-                    const gameContainer = document.getElementById('game-container');
-                    if (gameContainer) {
-                        const computedStyle = window.getComputedStyle(gameContainer);
-                        if (computedStyle.backgroundColor === 'rgba(0, 0, 0, 0)' || 
-                            computedStyle.backgroundColor === 'transparent') {
-                            gameContainer.style.backgroundColor = '#000';
-                        }
-                    }
-                }, 100);
+                // Upewnij się, że kontener gry ma czarne tło
+                const gameContainer = document.getElementById('game-container');
+                if (gameContainer) {
+                    gameContainer.style.backgroundColor = '#000';
+                }
             } else {
                 document.body.classList.remove('standalone');
-                // W trybie przeglądarki - dodaj padding na górze dla game-screen
+                // Dla przeglądarki - zeruj safe-area dla dołu
+                document.documentElement.style.setProperty('--safe-area-inset-bottom', '0px');
+                
+                // Dla przeglądarki - ustaw padding na dole dla interfejsu przeglądarki
                 const gameScreen = document.getElementById('game-screen');
                 if (gameScreen) {
-                    gameScreen.style.paddingTop = '40px';
+                    gameScreen.style.paddingBottom = '60px';
                 }
             }
             
