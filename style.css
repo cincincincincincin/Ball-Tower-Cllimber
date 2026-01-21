@@ -67,6 +67,7 @@ body {
 /* Tylko dla trybu standalone (PWA) dodajemy padding na górze */
 body.standalone #game-container {
     padding-top: env(safe-area-inset-top);
+    padding-bottom: 0 !important;
 }
 
 .screen {
@@ -1134,10 +1135,22 @@ body.standalone::after {
     display: none;
 }
 
+body.standalone {
+    --safe-area-inset-bottom: 0px !important;
+}
+
 body.standalone #game-container {
     padding-top: env(safe-area-inset-top);
+    padding-bottom: 0 !important;
 }
 
 body.standalone .hud-top {
     padding-top: calc(10px + env(safe-area-inset-top)) !important;
+}
+body.standalone .stats-bar {
+    padding-bottom: 2vh !important;
+}
+
+body:not(.standalone) #game-screen {
+    padding-bottom: 60px !important;
 }
