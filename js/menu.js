@@ -710,10 +710,7 @@ const Menu = {
 
             if (isNewHighScore) {
                 message = 'NEW RECORD! 🎉';
-            } else if (this.state.scoreInGame >= this.state.bestScore * 0.9) {
-                message = 'Almost new record!';
             }
-
             if (this.state.coinsInGame > 50) {
                 message += ' Great coin haul! 💰';
             } else if (this.state.coinsInGame > 20) {

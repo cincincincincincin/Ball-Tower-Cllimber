@@ -2,34 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- W <head> pliku index.html: -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Ball Tower Jumper">
-
-    <!-- Dodaj touch icons dla iOS -->
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="mask-icon" href="safari-pinned-tab.svg" color="#1a1a2e">
-    <meta name="msapplication-TileColor" content="#1a1a2e">
-    <meta name="theme-color" content="#1a1a2e">
-
-    <!-- Zmień sekcję PWA w head -->
-    <link rel="manifest" href="manifest.json">
-    <!-- Dodaj fallback dla iOS -->
     <link rel="apple-touch-icon" href="icon-192.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Ball Tower Jumper">
+    <link rel="manifest" href="manifest.json">
     <title>Ball Tower Jumper</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Game Container -->
     <div id="game-container">
-        <!-- Start Screen (Main Menu) -->
         <div id="start-screen" class="screen active">
             <div class="title-container">
                 <h1 class="game-title">BALL TOWER JUMPER</h1>
@@ -52,7 +37,6 @@
                 </button>
             </div>
             
-            <!-- STATS BAR MOVED TO BOTTOM -->
             <div class="stats-bar">
                 <div class="stat">
                     <i class="fas fa-coins"></i>
@@ -69,7 +53,6 @@
             </div>
         </div>
         
-        <!-- Ball Selection Screen -->
         <div id="balls-screen" class="screen">
             <div class="screen-header">
                 <button class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
@@ -82,7 +65,6 @@
             </div>
             
             <div class="balls-container">
-                <!-- Standard ball -->
                 <div class="ball-card active" data-ball="standard">
                     <div class="ball-preview standard-ball"></div>
                     <h3>Standard</h3>
@@ -92,7 +74,6 @@
                     <button class="select-ball-btn">Selected</button>
                 </div>
                 
-                <!-- Rubber ball -->
                 <div class="ball-card locked" data-ball="rubber">
                     <div class="ball-preview rubber-ball">
                         <i class="fas fa-lock"></i>
@@ -104,7 +85,6 @@
                     <button class="unlock-btn" data-cost="50">Unlock for 50 <i class="fas fa-coins"></i></button>
                 </div>
                 
-                <!-- Beach ball -->
                 <div class="ball-card locked" data-ball="beach">
                     <div class="ball-preview beach-ball">
                         <i class="fas fa-lock"></i>
@@ -114,7 +94,6 @@
                     <button class="unlock-btn" data-cost="100">Unlock for 100 <i class="fas fa-coins"></i></button>
                 </div>
                 
-                <!-- Golf ball -->
                 <div class="ball-card locked" data-ball="golf">
                     <div class="ball-preview golf-ball">
                         <i class="fas fa-lock"></i>
@@ -130,7 +109,6 @@
             </div>
         </div>
         
-        <!-- Upgrades Screen -->
         <div id="upgrades-screen" class="screen">
             <div class="screen-header">
                 <button class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
@@ -145,12 +123,10 @@
             <div class="ball-selector">
                 <h3>Select ball to upgrade:</h3>
                 <div class="ball-selector-buttons">
-                    <!-- Ball selection buttons will be generated dynamically -->
                 </div>
             </div>
             
             <div id="upgrades-list">
-                <!-- Upgrades list will be generated dynamically -->
             </div>
             
             <div class="upgrades-info">
@@ -158,7 +134,6 @@
             </div>
         </div>
         
-        <!-- Settings Screen -->
         <div id="settings-screen" class="screen">
             <div class="screen-header">
                 <button class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
@@ -247,7 +222,6 @@
                             <i class="fas fa-trash"></i> Reset progress
                         </button>
                     </div>
-                    <!-- W pliku index.html, w sekcji ustawień dodaj: -->
                     <div class="setting-item">
                         <div class="setting-info">
                             <h4>Request Accelerometer Access</h4>
@@ -261,11 +235,9 @@
             </div>
         </div>
         
-        <!-- Game Screen -->
         <div id="game-screen" class="screen">
             <canvas id="game-canvas"></canvas>
             
-            <!-- Debug elements from the first project -->
             <div id="debug-info" class="debug-info hidden">
                 <div id="height-display">Height: <span id="height">0</span>px</div>
                 <div id="max-height-display">Max height: <span id="max-height">0</span>px</div>
@@ -278,9 +250,7 @@
                 <div id="high-score-display">High score: <span id="high-score">0</span></div>
             </div>
             
-            <!-- SIMPLIFIED GAME HUD -->
             <div id="game-hud">
-                <!-- Top HUD bar -->
                 <div class="hud-top">
                     <div class="hud-left">
                         <button id="pause-btn" class="hud-btn" title="Pause (P)">
@@ -303,9 +273,7 @@
                 </div>
             </div>
             
-            <!-- Pause menu -->
             <div id="pause-menu" class="overlay-menu hidden">
-                <div class="overlay-background"></div> <!-- Added background -->
                 <div class="pause-content">
                     <h2><i class="fas fa-pause"></i> Game Paused</h2>
                     <div class="pause-stats">
@@ -336,9 +304,7 @@
                 </div>
             </div>
             
-            <!-- Game over screen -->
             <div id="game-over-screen" class="overlay-menu hidden">
-                <div class="overlay-background"></div> <!-- Added background -->
                 <div class="game-over-content">
                     <h2><i class="fas fa-skull-crossbones"></i> Fell!</h2>
                     <div class="game-over-stats">
@@ -373,139 +339,93 @@
         </div>
     </div>
     
-    <!-- Notifications -->
     <div id="notification-container"></div>
     
-    <!-- JavaScript Scripts -->
     <script src="js/config.js"></script>
     <script src="js/menu.js"></script>
     <script src="js/game.js"></script>
+    
     <script>
-        // Rejestracja Service Worker dla PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
+        function updateSafeArea() {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+            
+            const computedStyle = getComputedStyle(document.documentElement);
+            const safeAreaTop = computedStyle.getPropertyValue('--safe-area-inset-top').trim();
+            const safeAreaBottom = computedStyle.getPropertyValue('--safe-area-inset-bottom').trim();
+            
+            console.log('Safe Area - Top:', safeAreaTop, 'Bottom:', safeAreaBottom);
+            
+            const isStandalone = window.navigator.standalone || 
+                                (window.matchMedia('(display-mode: standalone)').matches);
+            
+            if (isStandalone) {
+                document.body.classList.add('standalone');
+                console.log('Running in standalone mode');
+                
+                const iosStandaloneTop = '59px';
+                document.documentElement.style.setProperty('--safe-area-inset-top', iosStandaloneTop);
+            } else {
+                document.body.classList.remove('standalone');
+            }
+            
+            if (window.Menu && window.Menu.updateUI) {
+                setTimeout(() => window.Menu.updateUI(), 100);
+            }
+            
+            if (window.Game && window.Game.resizeCanvas) {
+                setTimeout(() => window.Game.resizeCanvas(), 100);
+            }
         }
 
-        // Rozwiązanie dla fullscreen na iOS
         document.addEventListener('DOMContentLoaded', () => {
-            // Fix dla iOS scroll
+            setTimeout(() => {
+                updateSafeArea();
+                
+                if (window.Menu) Menu.init();
+                
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('./service-worker.js')
+                        .then(registration => {
+                            console.log('ServiceWorker registration successful');
+                        })
+                        .catch(err => {
+                            console.log('ServiceWorker registration failed: ', err);
+                        });
+                }
+            }, 100);
+            
             document.addEventListener('touchmove', function(e) {
                 if(e.target.type === 'range') return;
                 e.preventDefault();
             }, { passive: false });
-
-            // Fix dla iOS zoom
+            
             document.addEventListener('gesturestart', function(e) {
                 e.preventDefault();
             });
+        });
 
-            // Dodaj do ekranu głównego iOS
-            if (window.navigator.standalone) {
-                document.body.classList.add('standalone');
+        window.addEventListener('resize', updateSafeArea);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(updateSafeArea, 350);
+        });
+
+        let lastWindowHeight = window.innerHeight;
+        let resizeTimer;
+        
+        window.addEventListener('resize', () => {
+            const currentHeight = window.innerHeight;
+            
+            if (Math.abs(currentHeight - lastWindowHeight) > 50) {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    updateSafeArea();
+                    lastWindowHeight = currentHeight;
+                }, 250);
             }
         });
 
-        // Rozwiązanie dla safe area dynamicznie
-        function updateSafeArea() {
-            const vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-            document.documentElement.style.setProperty('--safe-area-inset-top', env('safe-area-inset-top'));
-            document.documentElement.style.setProperty('--safe-area-inset-bottom', env('safe-area-inset-bottom'));
-        }
-
-        window.addEventListener('resize', updateSafeArea);
-        window.addEventListener('orientationchange', updateSafeArea);
-        updateSafeArea();
-    </script>
-    <script>
-        const CACHE_NAME = 'ball-tower-v1.1';
-        const urlsToCache = [
-          './',
-          './index.html',
-          './style.css',
-          './js/config.js',
-          './js/game.js',
-          './js/menu.js',
-          './manifest.json',
-          './icon-192.png',
-          './icon-512.png'
-        ];
-            
-        self.addEventListener('install', event => {
-          event.waitUntil(
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                console.log('Caching app shell');
-                return cache.addAll(urlsToCache);
-              })
-          );
-        });
-        
-        self.addEventListener('fetch', event => {
-          event.respondWith(
-            caches.match(event.request)
-              .then(response => {
-                // Cache hit - return response
-                if (response) {
-                  return response;
-                }
-                
-                // Clone the request
-                const fetchRequest = event.request.clone();
-                
-                return fetch(fetchRequest).then(
-                  response => {
-                    // Check if we received a valid response
-                    if(!response || response.status !== 200 || response.type !== 'basic') {
-                      return response;
-                    }
-                    
-                    // Clone the response
-                    const responseToCache = response.clone();
-                    
-                    caches.open(CACHE_NAME)
-                      .then(cache => {
-                        cache.put(event.request, responseToCache);
-                      });
-                  
-                    return response;
-                  }
-                );
-              })
-          );
-        });
-        
-        // Clean up old caches
-        self.addEventListener('activate', event => {
-          event.waitUntil(
-            caches.keys().then(cacheNames => {
-              return Promise.all(
-                cacheNames.map(cacheName => {
-                  if (cacheName !== CACHE_NAME) {
-                    console.log('Deleting old cache:', cacheName);
-                    return caches.delete(cacheName);
-                  }
-                })
-              );
-            })
-          );
-        });
-    </script>
-    
-    <!-- Initialization after page load -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize menu
-            if (window.Menu) Menu.init();
-        });
+        setTimeout(updateSafeArea, 1000);
     </script>
 </body>
 </html>
