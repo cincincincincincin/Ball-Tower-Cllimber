@@ -20,6 +20,7 @@ html, body {
     --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-inset-left: env(safe-area-inset-left, 0px);
     --safe-area-inset-right: env(safe-area-inset-right, 0px);
+    --standalone-offset: 0px;
 }
 
 body {
@@ -78,6 +79,7 @@ body.standalone #game-container {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     overflow-y: auto;
     overflow-x: hidden;
+    overscroll-behavior-y: none; /* Pozwala na normalne scrollowanie */
 }
 
 #game-screen {
@@ -556,9 +558,26 @@ body.standalone #game-container {
     color: #aaa;
 }
 
+.settings-scroll-container {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    /* Dodaj te linie dla scrollowania palcem */
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+}
+
 .settings-content {
     flex: 1;
     overflow-y: auto;
+    /* Dodaj te linie */
+    padding-bottom: 20px;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth;
+    touch-action: pan-y;
+    /* Zwiększ maksymalną wysokość dla lepszego scrollowania */
+    max-height: calc(100vh - 200px);
 }
 
 .settings-section {
