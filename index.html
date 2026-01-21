@@ -6,47 +6,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Ball Tower Jumper">
-    <meta name="apple-mobile-web-app-orientations" content="portrait">
-    <meta name="format-detection" content="telephone=no">
-    <meta name="mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="manifest" href="manifest.json">
     <title>Ball Tower Jumper</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-    <style>
-        /* Dodatkowe style inline dla bezpieczeństwa */
-        html {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            touch-action: none;
-        }
-        
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            overflow: hidden;
-            overscroll-behavior: none;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-    </style>
 </head>
 <body>
     <div id="game-container">
@@ -381,113 +346,49 @@
     <script src="js/game.js"></script>
     
     <script>
-        // Główna funkcja do aktualizacji safe areas
         function updateSafeArea() {
             const vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
             
-            // Detekcja trybu standalone (PWA)
             const isStandalone = window.navigator.standalone || 
                                 (window.matchMedia('(display-mode: standalone)').matches);
             
             if (isStandalone) {
-                console.log('Running in standalone PWA mode');
                 document.body.classList.add('standalone');
+                console.log('Running in standalone mode');
                 
-                // Dla iOS ustawiamy konkretne wartości safe area
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                 if (isIOS) {
-                    // iPhone 15 Pro Max: 430x932
-                    document.documentElement.style.setProperty('--safe-area-inset-top', '59px');
-                    document.documentElement.style.setProperty('--safe-area-inset-bottom', '34px');
+                    const width = window.screen.width;
+                    const height = window.screen.height;
                     
-                    // Upewnij się, że body zajmuje cały ekran
-                    document.body.style.position = 'fixed';
-                    document.body.style.top = '0';
-                    document.body.style.left = '0';
-                    document.body.style.right = '0';
-                    document.body.style.bottom = '0';
-                    document.body.style.overflow = 'hidden';
-                    
-                    // Zapobieganie białemu paskowi na dole
-                    setTimeout(() => {
-                        document.body.style.height = '100%';
-                        document.documentElement.style.height = '100%';
-                        window.scrollTo(0, 0);
-                        
-                        // Wymuś czarne tło
-                        document.body.style.backgroundColor = '#000';
-                        document.documentElement.style.backgroundColor = '#000';
-                    }, 100);
+                    if ((width === 393 && height === 852) || (width === 430 && height === 932)) {
+                        document.documentElement.style.setProperty('--safe-area-inset-top', '59px');
+                        document.documentElement.style.setProperty('--safe-area-inset-bottom', '34px');
+                    } else {
+                        document.documentElement.style.setProperty('--safe-area-inset-top', '47px');
+                        document.documentElement.style.setProperty('--safe-area-inset-bottom', '34px');
+                    }
                 }
             } else {
                 document.body.classList.remove('standalone');
-                // Reset dla normalnego trybu
-                document.documentElement.style.setProperty('--safe-area-inset-top', '0px');
-                document.documentElement.style.setProperty('--safe-area-inset-bottom', '0px');
             }
             
-            // Aktualizacja UI po zmianie rozmiaru
-            setTimeout(() => {
-                if (window.Menu && window.Menu.updateUI) {
-                    window.Menu.updateUI();
-                }
-                
-                if (window.Game && window.Game.resizeCanvas) {
-                    window.Game.resizeCanvas();
-                }
-            }, 100);
-        }
-        
-        // Funkcja do blokady niechcianego zachowania na iOS
-        function setupIOSBehavior() {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (window.Menu && window.Menu.updateUI) {
+                setTimeout(() => window.Menu.updateUI(), 100);
+            }
             
-            if (isIOS) {
-                // Zapobiegaj zoomowi dwoma palcami
-                document.addEventListener('touchstart', function(e) {
-                    if (e.touches.length > 1) {
-                        e.preventDefault();
-                    }
-                }, { passive: false });
-                
-                // Zapobiegaj przewijaniu poza ekran
-                document.addEventListener('touchmove', function(e) {
-                    // Pozwól na przewijanie tylko w elementach z klasą .settings-content
-                    if (!e.target.closest('.settings-content') && 
-                        !e.target.closest('#upgrades-list') &&
-                        !e.target.closest('#balls-screen') &&
-                        !e.target.closest('#upgrades-screen')) {
-                        e.preventDefault();
-                    }
-                }, { passive: false });
-                
-                // Ukryj adres URL w PWA
-                if (window.navigator.standalone) {
-                    setTimeout(() => {
-                        window.scrollTo(0, 1);
-                    }, 0);
-                }
+            if (window.Game && window.Game.resizeCanvas) {
+                setTimeout(() => window.Game.resizeCanvas(), 100);
             }
         }
-        
-        // Inicjalizacja po załadowaniu DOM
+
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM Content Loaded - Initializing game');
-            
-            // Początkowa aktualizacja safe area
             setTimeout(() => {
                 updateSafeArea();
                 
-                // Inicjalizacja menu
-                if (window.Menu) {
-                    Menu.init();
-                }
+                if (window.Menu) Menu.init();
                 
-                // Konfiguracja zachowania na iOS
-                setupIOSBehavior();
-                
-                // Rejestracja Service Workera dla PWA
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.register('./service-worker.js')
                         .then(registration => {
@@ -499,7 +400,6 @@
                 }
             }, 100);
             
-            // Blokada domyślnego zachowania dotyku
             document.addEventListener('touchmove', function(e) {
                 if(e.target.type === 'range') return;
                 e.preventDefault();
@@ -509,23 +409,18 @@
                 e.preventDefault();
             });
         });
-        
-        // Aktualizacja przy zmianie rozmiaru okna
+
         window.addEventListener('resize', updateSafeArea);
-        
-        // Aktualizacja przy zmianie orientacji
         window.addEventListener('orientationchange', () => {
             setTimeout(updateSafeArea, 350);
         });
-        
-        // Obsługa dynamicznego dostosowania wysokości
+
         let lastWindowHeight = window.innerHeight;
         let resizeTimer;
         
         window.addEventListener('resize', () => {
             const currentHeight = window.innerHeight;
             
-            // Aktualizuj tylko przy znaczącej zmianie wysokości
             if (Math.abs(currentHeight - lastWindowHeight) > 50) {
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(() => {
@@ -534,32 +429,8 @@
                 }, 250);
             }
         });
-        
-        // Ostateczna aktualizacja safe area po chwili
+
         setTimeout(updateSafeArea, 1000);
-        
-        // Dodatkowa funkcja dla pewności - wymusza czarne tło
-        function enforceBlackBackground() {
-            const isStandalone = window.navigator.standalone || 
-                                (window.matchMedia('(display-mode: standalone)').matches);
-            
-            if (isStandalone) {
-                document.body.style.backgroundColor = '#000';
-                document.documentElement.style.backgroundColor = '#000';
-                
-                // Upewnij się, że game-container też ma czarne tło
-                const gameContainer = document.getElementById('game-container');
-                if (gameContainer) {
-                    gameContainer.style.backgroundColor = '#000';
-                }
-            }
-        }
-        
-        // Wykonaj enforceBlackBackground po załadowaniu i co sekundę przez 3 sekundy
-        setTimeout(enforceBlackBackground, 500);
-        setTimeout(enforceBlackBackground, 1000);
-        setTimeout(enforceBlackBackground, 2000);
-        setTimeout(enforceBlackBackground, 3000);
     </script>
 </body>
 </html>
