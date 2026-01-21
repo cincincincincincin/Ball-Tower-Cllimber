@@ -21,10 +21,12 @@ html, body {
     --safe-area-inset-bottom: 0px;
     --safe-area-inset-left: 0px;
     --safe-area-inset-right: 0px;
+    --game-background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    --game-dark-bg: #0a0a1a;
 }
 
 body {
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    background: var(--game-background);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -42,7 +44,7 @@ body {
     right: 0;
     bottom: 0;
     
-    /* Zaktualizowane paddingi safe-area dla iOS */
+    /* Użyj env() dla safe-area */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
@@ -57,6 +59,37 @@ body {
     /* Zapobiega przesuwaniu się strony na iOS Safari */
     overflow: hidden;
     position: fixed;
+}
+
+body.standalone {
+    /* W standalone mode - minimalne paddingi, tło takie jak gra */
+    background: var(--game-dark-bg) !important;
+    padding-top: env(safe-area-inset-top) !important;
+    padding-bottom: 0px !important; /* Minimalny dolny padding */
+    padding-left: 0px !important;
+    padding-right: 0px !important;
+}
+
+body.standalone::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top);
+    background: var(--game-dark-bg);
+    z-index: 1000;
+}
+
+body.standalone::after {
+    content: '';
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: max(0px, env(safe-area-inset-bottom));
+    background: var(--game-dark-bg);
+    z-index: 1000;
 }
 
 #game-container {
@@ -83,14 +116,7 @@ body.standalone #game-container {
     padding-left: 0 !important;
     padding-right: 0 !important;
     height: 100% !important;
-}
-
-body.standalone {
-    /* W standalone mode na iOS, użyj env() bezpośrednio */
-    padding-top: env(safe-area-inset-top) !important;
-    padding-bottom: env(safe-area-inset-bottom) !important;
-    padding-left: env(safe-area-inset-left) !important;
-    padding-right: env(safe-area-inset-right) !important;
+    background: #000; /* Tło canvasa */
 }
 
 .screen {
@@ -109,9 +135,9 @@ body.standalone {
 
 #game-screen {
     padding: 0 !important;
-    /* Dodaj padding safe-area tylko dla game screen */
-    padding-top: env(safe-area-inset-top) !important;
-    padding-bottom: env(safe-area-inset-bottom) !important;
+    /* Dodaj minimalny padding safe-area tylko dla game screen */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
 }
 
 body.standalone #game-screen {
@@ -132,6 +158,11 @@ body.standalone #game-screen {
     /* Dodaj padding safe-area */
     padding-top: calc(20px + env(safe-area-inset-top)) !important;
     padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+}
+
+body.standalone #start-screen {
+    padding-top: calc(20px + env(safe-area-inset-top)) !important;
+    padding-bottom: 20px !important; /* Minimalny dolny padding */
 }
 
 .title-container {
@@ -241,6 +272,7 @@ body.standalone #game-screen {
 body.standalone .stats-bar {
     /* W standalone mode, dolny pasek nawigacji jest ukryty */
     padding-bottom: 2vh;
+    background: rgba(10, 10, 26, 0.95); /* Ciemne tło pasujące do gry */
 }
 
 .screen-header {
@@ -251,6 +283,10 @@ body.standalone .stats-bar {
     padding-bottom: 2vh;
     border-bottom: 2px solid rgba(74, 159, 255, 0.3);
     padding-top: env(safe-area-inset-top);
+}
+
+body.standalone .screen-header {
+    padding-top: calc(10px + env(safe-area-inset-top)); /* Mniejszy padding */
 }
 
 .screen-header h2 {
@@ -593,6 +629,10 @@ body.standalone .stats-bar {
     padding-bottom: env(safe-area-inset-bottom);
 }
 
+body.standalone .settings-content {
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
 .settings-section {
     margin-bottom: 3vh;
 }
@@ -715,14 +755,26 @@ input:checked + .slider:before {
     height: 100%;
 }
 
+body.standalone #game-canvas {
+    /* W standalone mode, canvas używa całej przestrzeni */
+    width: 100% !important;
+    height: 100% !important;
+    top: 0 !important;
+    left: 0 !important;
+}
+
 #debug-info {
     position: absolute;
-    top: calc(20px + env(safe-area-inset-top));
+    top: calc(10px + env(safe-area-inset-top));
     left: 10px;
     z-index: 100;
     display: flex;
     flex-direction: column;
     gap: 5px;
+}
+
+body.standalone #debug-info {
+    top: 10px; /* Bez dodatkowego marginesu w standalone */
 }
 
 #height-display,
@@ -767,13 +819,14 @@ input:checked + .slider:before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: max(2vh, env(safe-area-inset-top)) 3vw 2vh 3vw;
+    padding: max(1vh, env(safe-area-inset-top)) 3vw 1vh 3vw;
     pointer-events: none;
 }
 
 body.standalone .hud-top {
     /* W standalone mode, górny pasek jest bliżej krawędzi */
-    padding-top: max(1vh, env(safe-area-inset-top)) !important;
+    padding-top: max(0.5vh, env(safe-area-inset-top)) !important;
+    padding-bottom: 0.5vh !important;
 }
 
 .hud-left,
@@ -791,8 +844,8 @@ body.standalone .hud-top {
 }
 
 .hud-btn {
-    width: clamp(50px, 15vw, 60px);
-    height: clamp(50px, 15vw, 60px);
+    width: clamp(44px, 12vw, 50px);
+    height: clamp(44px, 12vw, 50px);
     border-radius: 50%;
     background: rgba(74, 159, 255, 0.15);
     border: 2px solid rgba(74, 159, 255, 0.4);
@@ -801,12 +854,20 @@ body.standalone .hud-top {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(18px, 5vw, 22px);
+    font-size: clamp(16px, 4vw, 20px);
     transition: all 0.3s ease;
     pointer-events: auto;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body.standalone .hud-btn {
+    /* W standalone mode, przyciski bez efektów highlight */
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .hud-btn:hover {
@@ -818,7 +879,7 @@ body.standalone .hud-top {
 
 .score-display {
     font-family: 'Orbitron', sans-serif;
-    font-size: clamp(18px, 5vw, 24px);
+    font-size: clamp(16px, 4vw, 20px);
     font-weight: 800;
     color: white;
     text-shadow: 
@@ -831,22 +892,28 @@ body.standalone .hud-top {
 .hud-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     background: rgba(0, 0, 0, 0.2);
-    padding: clamp(10px, 3vw, 14px) clamp(16px, 4vw, 22px);
-    border-radius: 35px;
-    font-size: clamp(18px, 5vw, 24px);
+    padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 18px);
+    border-radius: 30px;
+    font-size: clamp(16px, 4vw, 20px);
     font-weight: 700;
     border: 2px solid rgba(255, 215, 0, 0.3);
     backdrop-filter: blur(15px);
     box-shadow: 
         inset 0 0 20px rgba(255, 215, 0, 0.1),
         0 4px 15px rgba(0, 0, 0, 0.4);
+    -webkit-tap-highlight-color: transparent;
+}
+
+body.standalone .hud-item {
+    /* W standalone mode, elementy HUD bez efektów highlight */
+    -webkit-tap-highlight-color: transparent;
 }
 
 .hud-item i {
     color: #FFD700;
-    font-size: clamp(20px, 6vw, 28px);
+    font-size: clamp(18px, 5vw, 24px);
     text-shadow: 
         0 0 10px rgba(255, 215, 0, 0.7),
         0 0 20px rgba(255, 215, 0, 0.4);
@@ -854,27 +921,27 @@ body.standalone .hud-top {
 
 @media (min-width: 768px) and (min-height: 500px) {
     .hud-top {
-        padding: 20px 25px;
+        padding: 15px 20px;
     }
     
     .hud-btn {
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
     }
     
     .score-display {
-        font-size: 22px;
+        font-size: 18px;
     }
     
     .hud-item {
-        font-size: 20px;
-        padding: 10px 18px;
-        gap: 10px;
+        font-size: 18px;
+        padding: 8px 15px;
+        gap: 8px;
     }
     
     .hud-item i {
-        font-size: 22px;
+        font-size: 20px;
     }
 }
 
@@ -892,15 +959,22 @@ body.standalone .hud-top {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 30%;
+    height: 25%;
     pointer-events: auto;
     display: flex;
     z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: 0;
+    opacity: 0.2;
+    transition: opacity 0.2s;
 }
 
 body.standalone .mobile-controls-overlay {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: 0;
+    opacity: 0.15; /* Jeszcze bardziej przezroczyste w standalone */
+}
+
+.mobile-controls-overlay:active {
+    opacity: 0.3;
 }
 
 .control-left,
@@ -909,6 +983,12 @@ body.standalone .mobile-controls-overlay {
     height: 100%;
     opacity: 0.3;
     transition: opacity 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body.standalone .control-left,
+body.standalone .control-right {
+    -webkit-tap-highlight-color: transparent;
 }
 
 .control-left {
@@ -921,7 +1001,22 @@ body.standalone .mobile-controls-overlay {
 
 .control-left:active,
 .control-right:active {
-    opacity: 0.6;
+    opacity: 0.5;
+}
+
+/* Usuń efekty highlight z wszystkich elementów w standalone */
+body.standalone * {
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+
+body.standalone button,
+body.standalone .hud-btn,
+body.standalone .menu-btn,
+body.standalone .back-btn {
+    -webkit-tap-highlight-color: transparent !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
 }
 
 .overlay-menu {
@@ -930,7 +1025,7 @@ body.standalone .mobile-controls-overlay {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.9);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -947,8 +1042,8 @@ body.standalone .mobile-controls-overlay {
 .game-over-content {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     border-radius: 20px;
-    padding: 30px;
-    max-width: min(400px, 90vw);
+    padding: 25px;
+    max-width: min(380px, 90vw);
     width: 90%;
     text-align: center;
     border: 2px solid rgba(74, 159, 255, 0.3);
@@ -958,17 +1053,17 @@ body.standalone .mobile-controls-overlay {
 body.standalone .pause-content,
 body.standalone .game-over-content {
     margin-top: env(safe-area-inset-top);
-    margin-bottom: env(safe-area-inset-bottom);
+    margin-bottom: max(10px, env(safe-area-inset-bottom));
 }
 
 .overlay-menu h2 {
     font-family: 'Orbitron', sans-serif;
-    font-size: clamp(24px, 7vw, 32px);
-    margin-bottom: 25px;
+    font-size: clamp(22px, 6vw, 28px);
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 15px;
+    gap: 12px;
 }
 
 .overlay-menu h2 i {
@@ -979,14 +1074,14 @@ body.standalone .game-over-content {
 .game-over-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin: 25px 0;
+    gap: 12px;
+    margin: 20px 0;
 }
 
 .stat-box {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
-    padding: 15px 10px;
+    padding: 12px 8px;
 }
 
 .stat-box h3 {
@@ -996,7 +1091,7 @@ body.standalone .game-over-content {
 }
 
 .stat-value {
-    font-size: clamp(20px, 6vw, 24px);
+    font-size: clamp(18px, 5vw, 22px);
     font-weight: 700;
     color: white;
 }
@@ -1005,8 +1100,8 @@ body.standalone .game-over-content {
 .game-over-buttons {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-top: 25px;
+    gap: 10px;
+    margin-top: 20px;
 }
 
 .pause-btn,
@@ -1023,6 +1118,12 @@ body.standalone .game-over-content {
     justify-content: center;
     gap: 10px;
     min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body.standalone .pause-btn,
+body.standalone .game-over-btn {
+    -webkit-tap-highlight-color: transparent;
 }
 
 .pause-btn {
@@ -1048,8 +1149,8 @@ body.standalone .game-over-content {
 }
 
 .game-over-message {
-    margin-top: 20px;
-    padding: 15px;
+    margin-top: 15px;
+    padding: 12px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
 }
@@ -1061,8 +1162,8 @@ body.standalone .game-over-content {
 
 #notification-container {
     position: fixed;
-    top: calc(20px + env(safe-area-inset-top));
-    right: 20px;
+    top: calc(15px + env(safe-area-inset-top));
+    right: 15px;
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -1070,15 +1171,19 @@ body.standalone .game-over-content {
     pointer-events: none;
 }
 
+body.standalone #notification-container {
+    top: calc(10px + env(safe-area-inset-top));
+}
+
 .notification {
-    padding: 15px 20px;
-    background: rgba(0, 0, 0, 0.8);
+    padding: 12px 18px;
+    background: rgba(0, 0, 0, 0.9);
     border-left: 4px solid #4a9eff;
     border-radius: 8px;
     color: white;
     font-size: clamp(13px, 3.5vw, 14px);
     animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
-    max-width: min(300px, 80vw);
+    max-width: min(280px, 80vw);
     backdrop-filter: blur(10px);
 }
 
@@ -1160,7 +1265,7 @@ body.standalone .game-over-content {
     }
     
     .mobile-controls-overlay {
-        height: 40%;
+        height: 30%;
     }
 }
 
@@ -1177,14 +1282,14 @@ body.standalone .game-over-content {
     }
     
     .hud-top {
-        padding-top: max(3vh, env(safe-area-inset-top));
+        padding-top: max(1vh, env(safe-area-inset-top));
     }
     
     body.standalone {
         padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
+        padding-bottom: 0px !important;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
     }
     
     body.standalone #game-container {
@@ -1210,11 +1315,7 @@ body.standalone #game-screen {
 }
 
 body.standalone .hud-top {
-    padding-top: calc(env(safe-area-inset-top) + 10px);
-}
-
-body.standalone::after {
-    display: none;
+    padding-top: max(0.5vh, env(safe-area-inset-top)) !important;
 }
 
 /* iPhone 14 Pro/15 Pro with Dynamic Island */
@@ -1227,7 +1328,15 @@ body.standalone::after {
     
     body.standalone {
         padding-top: 59px !important;
-        padding-bottom: 34px !important;
+        padding-bottom: 0px !important;
+    }
+    
+    body.standalone::before {
+        height: 59px;
+    }
+    
+    body.standalone::after {
+        height: 0px;
     }
 }
 
@@ -1241,7 +1350,15 @@ body.standalone::after {
     
     body.standalone {
         padding-top: 47px !important;
-        padding-bottom: 34px !important;
+        padding-bottom: 0px !important;
+    }
+    
+    body.standalone::before {
+        height: 47px;
+    }
+    
+    body.standalone::after {
+        height: 0px;
     }
 }
 
@@ -1251,6 +1368,27 @@ body.standalone::after {
     :root {
         --safe-area-inset-top: 20px;
         --safe-area-inset-bottom: 0px;
+    }
+    
+    body.standalone {
+        padding-top: 20px !important;
+        padding-bottom: 0px !important;
+    }
+    
+    body.standalone::before {
+        height: 20px;
+    }
+    
+    body.standalone::after {
+        height: 0px;
+    }
+}
+
+/* Tablet */
+@media only screen and (min-width: 768px) and (min-height: 1024px) {
+    :root {
+        --safe-area-inset-top: 20px;
+        --safe-area-inset-bottom: 20px;
     }
     
     body.standalone {

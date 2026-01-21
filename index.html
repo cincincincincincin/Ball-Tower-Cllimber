@@ -386,8 +386,6 @@
     <script src="js/config.js"></script>
     <script src="js/menu.js"></script>
     <script src="js/game.js"></script>
-    
-    <!-- Enhanced PWA and iOS Standalone Script -->
     <script>
         // Rejestracja Service Worker dla PWA
         if ('serviceWorker' in navigator) {
@@ -419,6 +417,20 @@
             if (window.navigator.standalone) {
                 document.body.classList.add('standalone');
                 console.log('Running in standalone mode (added to home screen)');
+                
+                // Dodatkowe optymalizacje dla standalone
+                document.documentElement.style.overflow = 'hidden';
+                document.body.style.overflow = 'hidden';
+                
+                // Wyłącz wszystkie efekty highlight
+                document.addEventListener('touchstart', function(e) {
+                    if (e.target.tagName === 'BUTTON' || 
+                        e.target.classList.contains('hud-btn') ||
+                        e.target.classList.contains('menu-btn') ||
+                        e.target.classList.contains('back-btn')) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
             } else {
                 console.log('Running in browser mode');
             }
@@ -432,10 +444,6 @@
             const vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
             
-            // Użyj env() dla safe-area-inset
-            const safeAreaTop = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top') || '0px';
-            const safeAreaBottom = getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-bottom') || '0px';
-            
             // Aktualizuj zmienne CSS z env() jeśli dostępne
             if (CSS.supports('padding-top: env(safe-area-inset-top)')) {
                 document.documentElement.style.setProperty('--safe-area-inset-top', 'env(safe-area-inset-top)');
@@ -447,10 +455,19 @@
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                 if (isIOS) {
                     // Domyślne wartości dla iPhone z dynamic island/notch
-                    document.documentElement.style.setProperty('--safe-area-inset-top', '47px');
-                    document.documentElement.style.setProperty('--safe-area-inset-bottom', '34px');
-                    document.documentElement.style.setProperty('--safe-area-inset-left', '0px');
-                    document.documentElement.style.setProperty('--safe-area-inset-right', '0px');
+                    if (window.innerHeight >= 932 && window.innerWidth >= 430) {
+                        // iPhone 14 Pro/15 Pro
+                        document.documentElement.style.setProperty('--safe-area-inset-top', '59px');
+                        document.documentElement.style.setProperty('--safe-area-inset-bottom', '34px');
+                    } else if (window.innerHeight >= 844 && window.innerWidth >= 390) {
+                        // iPhone bez Dynamic Island
+                        document.documentElement.style.setProperty('--safe-area-inset-top', '47px');
+                        document.documentElement.style.setProperty('--safe-area-inset-bottom', '34px');
+                    } else {
+                        // Starsze iPhone
+                        document.documentElement.style.setProperty('--safe-area-inset-top', '20px');
+                        document.documentElement.style.setProperty('--safe-area-inset-bottom', '0px');
+                    }
                 } else {
                     document.documentElement.style.setProperty('--safe-area-inset-top', '0px');
                     document.documentElement.style.setProperty('--safe-area-inset-bottom', '0px');
@@ -462,7 +479,8 @@
             // Debug safe area
             console.log('Safe Area - Top:', document.documentElement.style.getPropertyValue('--safe-area-inset-top'),
                        'Bottom:', document.documentElement.style.getPropertyValue('--safe-area-inset-bottom'),
-                       'Window height:', window.innerHeight, 'vh:', vh);
+                       'Window height:', window.innerHeight, 'vh:', vh,
+                       'Standalone:', document.body.classList.contains('standalone'));
         }
 
         // Initialize mobile controls overlay
@@ -475,66 +493,35 @@
             
             if (controlLeft && controlRight) {
                 // Add touch event listeners
-                controlLeft.addEventListener('touchstart', (e) => {
+                const handleTouchStart = (direction) => (e) => {
                     e.preventDefault();
                     if (window.Game) {
                         Game.touchActive = true;
-                        Game.touchDirection = -1;
+                        Game.touchDirection = direction;
                     }
-                }, { passive: false });
+                };
                 
-                controlLeft.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    if (window.Game) {
-                        Game.touchActive = false;
-                        Game.touchDirection = 0;
-                    }
-                }, { passive: false });
-                
-                controlRight.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    if (window.Game) {
-                        Game.touchActive = true;
-                        Game.touchDirection = 1;
-                    }
-                }, { passive: false });
-                
-                controlRight.addEventListener('touchend', (e) => {
+                const handleTouchEnd = (e) => {
                     e.preventDefault();
                     if (window.Game) {
                         Game.touchActive = false;
                         Game.touchDirection = 0;
                     }
-                }, { passive: false });
+                };
                 
-                // Add mouse events for desktop testing
-                controlLeft.addEventListener('mousedown', () => {
-                    if (window.Game) {
-                        Game.touchActive = true;
-                        Game.touchDirection = -1;
-                    }
-                });
+                controlLeft.addEventListener('touchstart', handleTouchStart(-1), { passive: false });
+                controlLeft.addEventListener('touchend', handleTouchEnd, { passive: false });
+                controlLeft.addEventListener('touchcancel', handleTouchEnd, { passive: false });
                 
-                controlLeft.addEventListener('mouseup', () => {
-                    if (window.Game) {
-                        Game.touchActive = false;
-                        Game.touchDirection = 0;
-                    }
-                });
+                controlRight.addEventListener('touchstart', handleTouchStart(1), { passive: false });
+                controlRight.addEventListener('touchend', handleTouchEnd, { passive: false });
+                controlRight.addEventListener('touchcancel', handleTouchEnd, { passive: false });
                 
-                controlRight.addEventListener('mousedown', () => {
-                    if (window.Game) {
-                        Game.touchActive = true;
-                        Game.touchDirection = 1;
-                    }
-                });
-                
-                controlRight.addEventListener('mouseup', () => {
-                    if (window.Game) {
-                        Game.touchActive = false;
-                        Game.touchDirection = 0;
-                    }
-                });
+                // Wyłącz highlight w standalone
+                if (document.body.classList.contains('standalone')) {
+                    controlLeft.style.webkitTapHighlightColor = 'transparent';
+                    controlRight.style.webkitTapHighlightColor = 'transparent';
+                }
                 
                 console.log('Mobile controls overlay initialized');
             }
@@ -553,6 +540,14 @@
                 window.scrollTo(0, 1);
             }, 0);
         });
+        
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', function(e) {
+            if (document.body.classList.contains('standalone')) {
+                e.preventDefault();
+                return false;
+            }
+        });
     </script>
     
     <!-- Initialization after page load -->
@@ -566,6 +561,18 @@
                 updateSafeArea();
                 if (window.Game && Game.resizeCanvas) {
                     Game.resizeCanvas();
+                }
+                
+                // Dodatkowe optymalizacje dla standalone
+                if (document.body.classList.contains('standalone')) {
+                    // Wymuś ciemne tło dla safe area
+                    document.documentElement.style.backgroundColor = '#0a0a1a';
+                    document.body.style.backgroundColor = '#0a0a1a';
+                    
+                    // Ukryj pasek adresu (jeśli jeszcze widoczny)
+                    setTimeout(() => {
+                        window.scrollTo(0, 0);
+                    }, 100);
                 }
             }, 300);
         });
