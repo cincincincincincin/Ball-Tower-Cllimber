@@ -493,13 +493,15 @@ const Menu = {
                         </div>
                         ${currentLevel > 0 ? `
                             <button class="toggle-btn ${isActive ? '' : 'off'}"
-                                    onclick="if(window.Menu) Menu.toggleUpgrade('${this.state.currentBall}', '${upgradeDef.id}')">
+                                    data-ball-type="${this.state.currentBall}"
+                                    data-upgrade-id="${upgradeDef.id}">
                                 ${isActive ? 'ON' : 'OFF'}
                             </button>
                         ` : ''}
                         <button class="buy-btn" 
-                                ${isMaxLevel || !canAfford ? 'disabled' : ''}
-                                onclick="if(window.Menu) Menu.buyUpgrade('${this.state.currentBall}', '${upgradeDef.id}')">
+                                data-ball-type="${this.state.currentBall}"
+                                data-upgrade-id="${upgradeDef.id}"
+                                ${isMaxLevel || !canAfford ? 'disabled' : ''}>
                             ${isMaxLevel ? 'MAX' : 'Buy'}
                         </button>
                     </div>
@@ -895,8 +897,13 @@ const Menu = {
 
     
 
-
     setupEventListeners() {
+        // JEŚLI JESTEŚMY W STANDALONE, NIE DODAWAJ ŻADNYCH EVENT LISTENERÓW
+        if (window.navigator.standalone || 
+            (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)) {
+            console.log('Standalone mode detected - skipping menu event listeners');
+            return;
+        }
         console.log('Configuring event listeners...');
 
         // Play button

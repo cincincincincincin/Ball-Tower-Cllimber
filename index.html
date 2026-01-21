@@ -403,9 +403,9 @@
     
     <!-- JavaScript Scripts -->
     <script src="js/config.js"></script>
+    <script src="js/standalone-fix.js"></script> <!-- TERAZ PRZED menu.js -->
     <script src="js/menu.js"></script>
     <script src="js/game.js"></script>
-    <script src="js/standalone-fix.js"></script>
     
 
     <!-- Enhanced PWA and iOS Standalone Script -->
@@ -836,6 +836,45 @@
                 }
             }, 300);
         });
+    </script>
+    <script>
+        // Force initialization after all scripts loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            
+            // Poczekaj na załadowanie wszystkich skryptów
+            setTimeout(function() {
+                // Initialize Menu (jeśli nie jest standalone)
+                if (!window.navigator.standalone && window.Menu && window.Menu.init) {
+                    window.Menu.init();
+                }
+                
+                // Initialize Game
+                if (window.Game && window.Game.init) {
+                    window.Game.init();
+                }
+                
+                // Jeśli standalone, wywołaj reinit fixa
+                if (window.navigator.standalone && window.StandaloneFix && window.StandaloneFix.reinit) {
+                    setTimeout(() => {
+                        window.StandaloneFix.reinit();
+                    }, 500);
+                }
+            }, 500);
+        });
+        
+        // Zapobiegaj domyślnemu zachowaniu w standalone
+        if (window.navigator.standalone) {
+            document.addEventListener('touchstart', function(e) {
+                if (e.touches.length > 1) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            
+            document.addEventListener('gesturestart', function(e) {
+                e.preventDefault();
+            });
+        }
     </script>
 </body>
 </html>

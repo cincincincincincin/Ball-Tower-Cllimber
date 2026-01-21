@@ -230,6 +230,17 @@ window.Game = {
     },
     
     initEventListeners() {
+        // JEŚLI STANDALONE, NIE DODAWAJ EVENT LISTENERÓW
+        if (window.navigator.standalone) {
+            console.log('Standalone mode - skipping game event listeners');
+            
+            // Tylko absolutnie niezbędne event listeners
+            window.addEventListener('resize', () => {
+                this.resizeCanvas();
+            });
+            
+            return;
+        }
         
         window.addEventListener('keydown', (e) => {
             if (!this.keys[e.key]) {
