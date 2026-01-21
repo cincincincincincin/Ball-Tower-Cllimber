@@ -28,6 +28,27 @@
             }
         }
         
+        /* Zapobieganie białemu paskowi u dołu w trybie standalone */
+        body.standalone {
+            background-color: #000 !important;
+        }
+        
+        body.standalone::before {
+            content: '';
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: env(safe-area-inset-bottom);
+            background-color: #000;
+            z-index: 9999;
+        }
+        
+        /* Dla przeglądarki mobilnej (nie standalone) - ekran gry wyżej */
+        body:not(.standalone) #game-screen {
+            padding-top: 40px !important;
+        }
+        
         /* iOS/iPadOS - gładkie scrollowanie */
         .settings-scroll-container,
         #upgrades-list,
@@ -429,14 +450,27 @@
                         offset = 47;
                     }
                     
-                    // Apply the offset
-                    document.documentElement.style.setProperty('--standalone-offset', `${offset}px`);
-                    
                     console.log(`iOS device detected: ${width}x${height}, offset: ${offset}px`);
                 }
+                
+                // Usuń ewentualny biały pasek na dole
+                setTimeout(() => {
+                    const gameContainer = document.getElementById('game-container');
+                    if (gameContainer) {
+                        const computedStyle = window.getComputedStyle(gameContainer);
+                        if (computedStyle.backgroundColor === 'rgba(0, 0, 0, 0)' || 
+                            computedStyle.backgroundColor === 'transparent') {
+                            gameContainer.style.backgroundColor = '#000';
+                        }
+                    }
+                }, 100);
             } else {
                 document.body.classList.remove('standalone');
-                document.documentElement.style.setProperty('--standalone-offset', '0px');
+                // W trybie przeglądarki - dodaj padding na górze dla game-screen
+                const gameScreen = document.getElementById('game-screen');
+                if (gameScreen) {
+                    gameScreen.style.paddingTop = '40px';
+                }
             }
             
             // Force reflow for scrolling elements
@@ -472,6 +506,29 @@
                     settingsContent.style.overflowY = 'auto';
                     settingsContent.style.webkitOverflowScrolling = 'touch';
                 }
+                
+                // Dodatkowe zabezpieczenie przed białym paskiem
+                const checkWhiteBar = setInterval(() => {
+                    const body = document.body;
+                    const html = document.documentElement;
+                    
+                    // Sprawdź czy są jakieś białe elementy na dole
+                    const elements = document.querySelectorAll('*');
+                    elements.forEach(el => {
+                        const rect = el.getBoundingClientRect();
+                        if (rect.bottom >= window.innerHeight && 
+                            rect.top < window.innerHeight &&
+                            rect.top > window.innerHeight - 50) {
+                            const style = window.getComputedStyle(el);
+                            if (style.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+                                style.backgroundColor !== 'transparent') {
+                                el.style.backgroundColor = '#000';
+                            }
+                        }
+                    });
+                }, 1000);
+                
+                setTimeout(() => clearInterval(checkWhiteBar), 5000);
             }, 100);
             
             document.addEventListener('touchmove', function(e) {
