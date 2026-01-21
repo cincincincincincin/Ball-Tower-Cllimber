@@ -408,6 +408,7 @@
     
 
     <!-- Enhanced PWA and iOS Standalone Script -->
+<!-- Enhanced PWA and iOS Standalone Script -->
     <script>
         // Rejestracja Service Worker dla PWA
         if ('serviceWorker' in navigator) {
@@ -421,9 +422,22 @@
                     });
             });
         }
-
+    
+        // Globalna zmienna do śledzenia stanu standalone
+        window.isStandalone = false;
+        
         // Rozwiązanie dla fullscreen na iOS
         document.addEventListener('DOMContentLoaded', () => {
+            // Sprawdź czy jesteśmy w trybie standalone
+            if (window.navigator.standalone) {
+                document.body.classList.add('standalone');
+                window.isStandalone = true;
+                console.log('Running in standalone mode (added to home screen)');
+            } else {
+                console.log('Running in browser mode');
+                window.isStandalone = false;
+            }
+            
             // Fix dla iOS scroll - tylko dla elementów które nie są interaktywne
             document.addEventListener('touchmove', function(e) {
                 if(e.target.type === 'range' || 
@@ -435,209 +449,299 @@
                 }
                 e.preventDefault();
             }, { passive: false });
-
+        
             // Fix dla iOS zoom
             document.addEventListener('gesturestart', function(e) {
                 e.preventDefault();
             });
-
-            // Dodaj do ekranu głównego iOS
-            if (window.navigator.standalone) {
-                document.body.classList.add('standalone');
-                console.log('Running in standalone mode (added to home screen)');
-                
-                // Rozwiązanie problemu z przyciskami w standalone mode
-                setTimeout(() => {
-                    fixStandaloneClickEvents();
-                }, 100);
-            } else {
-                console.log('Running in browser mode');
-            }
+        
+            // Inicjalizacja safe area
+            updateSafeArea();
             
-            // Initialize mobile controls overlay
-            initMobileControls();
+            // Rozwiązanie problemu z przyciskami w standalone mode
+            setTimeout(() => {
+                if (window.isStandalone) {
+                    setupUniversalEventDelegation();
+                }
+            }, 300);
         });
-
+    
         // Rozwiązanie dla safe area dynamicznie
         function updateSafeArea() {
             const vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
             
-            // Aktualizuj zmienne CSS z env() jeśli dostępne
             if (CSS.supports('padding-top: env(safe-area-inset-top)')) {
-                const safeTop = 'env(safe-area-inset-top)';
-                const safeBottom = 'env(safe-area-inset-bottom)';
-                
-                document.documentElement.style.setProperty('--safe-area-inset-top', safeTop);
-                document.documentElement.style.setProperty('--safe-area-inset-bottom', safeBottom);
+                document.documentElement.style.setProperty('--safe-area-inset-top', 'env(safe-area-inset-top)');
+                document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
                 document.documentElement.style.setProperty('--safe-area-inset-left', 'env(safe-area-inset-left)');
                 document.documentElement.style.setProperty('--safe-area-inset-right', 'env(safe-area-inset-right)');
-                
-                // Debug
-                console.log('Safe Area updated - Top:', safeTop, 'Bottom:', safeBottom);
-            } else {
-                // Fallback dla przeglądarek bez env()
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                if (isIOS) {
-                    // Domyślne wartości dla iPhone
-                    if (window.innerHeight >= 932 && window.innerWidth >= 430) {
-                        // iPhone 14 Pro/15 Pro
-                        document.documentElement.style.setProperty('--safe-area-inset-top', '59px');
-                        document.documentElement.style.setProperty('--safe-area-inset-bottom', '34px');
-                    } else if (window.innerHeight >= 844 && window.innerWidth >= 390) {
-                        // iPhone bez Dynamic Island
-                        document.documentElement.style.setProperty('--safe-area-inset-top', '47px');
-                        document.documentElement.style.setProperty('--safe-area-inset-bottom', '34px');
-                    } else {
-                        // Starsze iPhone
-                        document.documentElement.style.setProperty('--safe-area-inset-top', '20px');
-                        document.documentElement.style.setProperty('--safe-area-inset-bottom', '0px');
-                    }
-                } else {
-                    document.documentElement.style.setProperty('--safe-area-inset-top', '0px');
-                    document.documentElement.style.setProperty('--safe-area-inset-bottom', '0px');
-                    document.documentElement.style.setProperty('--safe-area-inset-left', '0px');
-                    document.documentElement.style.setProperty('--safe-area-inset-right', '0px');
-                }
-            }
-            
-            // Debug safe area
-            console.log('Window height:', window.innerHeight, 'vh:', vh,
-                       'Standalone:', document.body.classList.contains('standalone'));
-        }
-
-        // Initialize mobile controls overlay
-        function initMobileControls() {
-            const controlsOverlay = document.getElementById('mobile-controls-overlay');
-            if (!controlsOverlay) return;
-            
-            const controlLeft = document.getElementById('control-left');
-            const controlRight = document.getElementById('control-right');
-            
-            if (controlLeft && controlRight) {
-                // Add touch event listeners
-                const handleTouchStart = (direction) => (e) => {
-                    e.preventDefault();
-                    if (window.Game) {
-                        Game.touchActive = true;
-                        Game.touchDirection = direction;
-                    }
-                };
-                
-                const handleTouchEnd = (e) => {
-                    e.preventDefault();
-                    if (window.Game) {
-                        Game.touchActive = false;
-                        Game.touchDirection = 0;
-                    }
-                };
-                
-                controlLeft.addEventListener('touchstart', handleTouchStart(-1), { passive: false });
-                controlLeft.addEventListener('touchend', handleTouchEnd, { passive: false });
-                controlLeft.addEventListener('touchcancel', handleTouchEnd, { passive: false });
-                
-                controlRight.addEventListener('touchstart', handleTouchStart(1), { passive: false });
-                controlRight.addEventListener('touchend', handleTouchEnd, { passive: false });
-                controlRight.addEventListener('touchcancel', handleTouchEnd, { passive: false });
-                
-                console.log('Mobile controls overlay initialized');
             }
         }
-
-        // Rozwiązanie problemu z przyciskami w standalone mode
-        function fixStandaloneClickEvents() {
-            console.log('Fixing standalone click events...');
-
-            // Wszystkie przyciski w aplikacji
-            const allButtons = document.querySelectorAll('button');
-
-            allButtons.forEach(button => {
-                // Usuń stare event listeners przez klonowanie
+    
+        // UNIWERSALNA EVENT DELEGATION DLA WSZYSTKICH PRZYCISKÓW W STANDALONE
+        function setupUniversalEventDelegation() {
+            console.log('Setting up universal event delegation for standalone mode');
+            
+            // Usuń wszystkie istniejące event listeners z przycisków przez klonowanie
+            document.querySelectorAll('button').forEach(button => {
                 const newButton = button.cloneNode(true);
                 button.parentNode.replaceChild(newButton, button);
-
-                // Usuń atrybut onclick, aby uniknąć konfliktów
-                newButton.removeAttribute('onclick');
-
-                // Dodaj specjalny event dla standalone
-                newButton.addEventListener('click', function(e) {
-                    console.log('Direct button click in standalone:', this.id || this.className);
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    setTimeout(() => {
-                        if (!window.Menu) return;
-
-                        const buttonId = this.id;
-                        const buttonClass = this.className;
-
-                        // Obsługa przycisków menu
-                        if (buttonId === 'play-btn') {
-                            window.Menu.startGame();
-                        } 
-                        else if (buttonId === 'balls-btn') {
-                            window.Menu.switchScreen('balls');
-                        }
-                        else if (buttonId === 'upgrades-btn') {
-                            window.Menu.switchScreen('upgrades');
-                        }
-                        else if (buttonId === 'settings-btn') {
-                            window.Menu.switchScreen('settings');
-                        }
-                        else if (this.classList.contains('back-btn')) {
-                            window.Menu.switchScreen('start');
-                        }
-                        // Przyciski ekranu piłek
-                        else if (this.classList.contains('select-ball-btn')) {
-                            const ballCard = this.closest('.ball-card');
-                            if (ballCard) {
-                                const ballType = ballCard.dataset.ball;
-                                window.Menu.selectBall(ballType);
-                            }
-                        }
-                        else if (this.classList.contains('unlock-btn')) {
-                            const ballCard = this.closest('.ball-card');
-                            if (ballCard) {
-                                const ballType = ballCard.dataset.ball;
-                                window.Menu.unlockBall(ballType);
-                            }
-                        }
-                    }, 50);
-
-                    return false;
-                }, true);
-
-                // Dodaj touch event również
-                newButton.addEventListener('touchstart', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.click();
-                    return false;
-                }, { passive: false });
-
-                // Ustaw transparentny tap highlight
-                newButton.style.webkitTapHighlightColor = 'transparent';
             });
-
-            console.log('Standalone click events fixed for', allButtons.length, 'buttons');
+            
+            // Globalny event listener dla WSZYSTKICH kliknięć
+            document.addEventListener('click', function(e) {
+                if (!window.isStandalone) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const target = e.target;
+                const button = target.closest('button');
+                if (!button) return;
+                
+                console.log('Standalone click detected:', {
+                    id: button.id,
+                    className: button.className,
+                    text: button.textContent?.trim()
+                });
+                
+                // Obsługa z opóźnieniem (dla iOS)
+                setTimeout(() => handleStandaloneButtonClick(button), 10);
+                
+                return false;
+            }, true);
+            
+            // Touch events dla iOS
+            document.addEventListener('touchstart', function(e) {
+                if (!window.isStandalone) return;
+                
+                const target = e.target;
+                const button = target.closest('button');
+                if (!button) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Symuluj kliknięcie
+                setTimeout(() => handleStandaloneButtonClick(button), 10);
+                
+                return false;
+            }, { passive: false });
         }
-
+    
+        // GŁÓWNA FUNKCJA OBSŁUGUJĄCA WSZYSTKIE PRZYCISKI
+        function handleStandaloneButtonClick(button) {
+            console.log('Handling standalone button click:', button.id || button.className);
+            
+            // Upewnij się, że Menu jest dostępne
+            if (!window.Menu) {
+                console.error('Menu not available');
+                return;
+            }
+            
+            const buttonId = button.id;
+            const buttonClass = button.className;
+            
+            // 1. PRZYCISKI MENU GŁÓWNEGO
+            if (buttonId === 'play-btn') {
+                console.log('Play button clicked in standalone');
+                window.Menu.startGame();
+                return;
+            }
+            
+            if (buttonId === 'balls-btn') {
+                console.log('Balls button clicked in standalone');
+                window.Menu.switchScreen('balls');
+                return;
+            }
+            
+            if (buttonId === 'upgrades-btn') {
+                console.log('Upgrades button clicked in standalone');
+                window.Menu.switchScreen('upgrades');
+                return;
+            }
+            
+            if (buttonId === 'settings-btn') {
+                console.log('Settings button clicked in standalone');
+                window.Menu.switchScreen('settings');
+                return;
+            }
+            
+            // 2. PRZYCISKI EKRANU PIŁEK
+            if (buttonClass.includes('select-ball-btn')) {
+                const ballCard = button.closest('.ball-card');
+                if (ballCard) {
+                    const ballType = ballCard.dataset.ball;
+                    console.log('Select ball button clicked:', ballType);
+                    window.Menu.selectBall(ballType);
+                }
+                return;
+            }
+            
+            if (buttonClass.includes('unlock-btn')) {
+                const ballCard = button.closest('.ball-card');
+                if (ballCard) {
+                    const ballType = ballCard.dataset.ball;
+                    console.log('Unlock ball button clicked:', ballType);
+                    window.Menu.unlockBall(ballType);
+                }
+                return;
+            }
+            
+            // 3. PRZYCISKI EKRANU ULEPSZEŃ
+            if (buttonClass.includes('buy-btn') && !button.disabled) {
+                // Pobierz ID ulepszenia z atrybutu onclick
+                const onClickAttr = button.getAttribute('onclick');
+                if (onClickAttr) {
+                    const match = onClickAttr.match(/['"]([^'"]+)['"]/);
+                    if (match && match[1]) {
+                        const upgradeId = match[1];
+                        const ballType = window.Menu.state.currentBall;
+                        console.log('Buy upgrade button clicked:', upgradeId, 'for ball:', ballType);
+                        window.Menu.buyUpgrade(ballType, upgradeId);
+                    }
+                }
+                return;
+            }
+            
+            if (buttonClass.includes('toggle-btn')) {
+                const onClickAttr = button.getAttribute('onclick');
+                if (onClickAttr) {
+                    const match = onClickAttr.match(/['"]([^'"]+)['"]/);
+                    if (match && match[1]) {
+                        const upgradeId = match[1];
+                        const ballType = window.Menu.state.currentBall;
+                        console.log('Toggle upgrade button clicked:', upgradeId);
+                        window.Menu.toggleUpgrade(ballType, upgradeId);
+                    }
+                }
+                return;
+            }
+            
+            if (buttonClass.includes('ball-select-btn') && !buttonClass.includes('active')) {
+                const ballName = button.textContent.trim();
+                console.log('Ball select button clicked:', ballName);
+                
+                // Znajdź typ piłki na podstawie nazwy
+                const ballTypes = ['standard', 'rubber', 'beach', 'golf'];
+                const ballDisplayNames = ballTypes.map(type => GameConfig.getBallDisplayName(type));
+                const ballIndex = ballDisplayNames.findIndex(name => name === ballName);
+                
+                if (ballIndex !== -1) {
+                    const ballType = ballTypes[ballIndex];
+                    window.Menu.state.currentBall = ballType;
+                    window.Menu.updateUpgradesScreen();
+                }
+                return;
+            }
+            
+            // 4. PRZYCISKI USTAWIEN
+            if (buttonId === 'add-coins-btn') {
+                console.log('Add coins button clicked');
+                window.Menu.state.totalCoins += 1000;
+                window.Menu.saveData();
+                window.Menu.updateCoinsDisplay();
+                window.Menu.showNotification('Added 1000 coins!', 'success');
+                return;
+            }
+            
+            if (buttonId === 'reset-progress-btn') {
+                console.log('Reset progress button clicked');
+                if (confirm('Are you sure you want to reset all progress? This action cannot be undone.')) {
+                    window.Menu.resetData();
+                    window.Menu.updateMainMenu();
+                    window.Menu.showNotification('All data has been reset', 'warning');
+                }
+                return;
+            }
+            
+            if (buttonId === 'request-accelerometer-btn') {
+                console.log('Request accelerometer button clicked');
+                // Ta funkcja powinna być zdefiniowana w menu.js
+                if (window.Menu && window.Menu.requestAccelerometerAccess) {
+                    window.Menu.requestAccelerometerAccess();
+                }
+                return;
+            }
+            
+            // 5. PRZYCISKI PAUZY
+            if (buttonId === 'pause-btn') {
+                console.log('Pause button clicked');
+                if (window.Menu) window.Menu.togglePause();
+                return;
+            }
+            
+            if (buttonId === 'resume-btn') {
+                console.log('Resume button clicked');
+                if (window.Menu) window.Menu.togglePause();
+                return;
+            }
+            
+            if (buttonId === 'restart-btn') {
+                console.log('Restart button clicked');
+                if (window.Menu) {
+                    window.Menu.saveGameProgress(true);
+                    window.Menu.state.coinsInGame = 0;
+                    document.getElementById('pause-menu').classList.add('hidden');
+                    window.Menu.startGame();
+                }
+                return;
+            }
+            
+            if (buttonId === 'quit-to-menu-btn') {
+                console.log('Quit to menu button clicked');
+                if (window.Menu) {
+                    window.Menu.saveGameProgress(true);
+                    window.Menu.state.coinsInGame = 0;
+                    document.getElementById('pause-menu').classList.add('hidden');
+                    window.Menu.switchScreen('start');
+                }
+                return;
+            }
+            
+            // 6. PRZYCISKI GAME OVER
+            if (buttonId === 'play-again-btn') {
+                console.log('Play again button clicked');
+                if (window.Menu) {
+                    window.Menu.saveGameProgress(false);
+                    window.Menu.state.coinsInGame = 0;
+                    document.getElementById('game-over-screen').classList.add('hidden');
+                    window.Menu.startGame();
+                }
+                return;
+            }
+            
+            if (buttonId === 'quit-after-game-btn') {
+                console.log('Quit after game button clicked');
+                document.getElementById('game-over-screen').classList.add('hidden');
+                window.Menu.switchScreen('start');
+                return;
+            }
+            
+            // 7. PRZYCISKI POWROTU (BACK)
+            if (buttonClass.includes('back-btn')) {
+                console.log('Back button clicked');
+                window.Menu.switchScreen('start');
+                return;
+            }
+            
+            console.log('Unhandled button click:', buttonId, buttonClass);
+        }
+    
         // Rozwiązanie dla białego paska w Safari
         function fixSafariWhiteBar() {
-            if (!document.body.classList.contains('standalone') && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
+            if (!window.isStandalone && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
                 console.log('Fixing Safari white bar issue');
                 
-                // Wymuś ponowne obliczenie wysokości
                 const vh = window.innerHeight * 0.01;
                 document.documentElement.style.setProperty('--vh', `${vh}px`);
                 
-                // Przewiń do góry aby ukryć pasek adresu
                 setTimeout(() => {
                     window.scrollTo(0, 0);
                     document.body.style.height = `${window.innerHeight}px`;
                 }, 100);
                 
-                // Dodaj obsługę zmiany orientacji
                 window.addEventListener('orientationchange', () => {
                     setTimeout(() => {
                         const newVh = window.innerHeight * 0.01;
@@ -648,117 +752,8 @@
                 });
             }
         }
-
-        // Event Delegation dla przycisków w trybie standalone
-        // Znajdź funkcję setupStandaloneEventDelegation i zaktualizuj:
-        function setupStandaloneEventDelegation() {
-            if (!document.body.classList.contains('standalone')) return;
-
-            console.log('Setting up standalone event delegation for menu buttons');
-
-            // Event delegation dla przycisków menu głównego
-            document.addEventListener('click', function(e) {
-                const target = e.target;
-                if (!target) return;
-
-                // Znajdź najbliższy przycisk
-                const button = target.closest('button');
-                if (!button) return;
-
-                e.preventDefault();
-                e.stopPropagation();
-
-                console.log('Standalone click detected on button:', button.id || button.className);
-
-                setTimeout(() => {
-                    if (!window.Menu) return;
-
-                    // Obsługa przycisków menu głównego
-                    const buttonId = button.id;
-                    const buttonClass = button.className;
-
-                    switch(buttonId) {
-                        case 'play-btn':
-                            console.log('Event delegation: Play button');
-                            window.Menu.startGame();
-                            break;
-                        case 'balls-btn':
-                            console.log('Event delegation: Balls button');
-                            window.Menu.switchScreen('balls');
-                            break;
-                        case 'upgrades-btn':
-                            console.log('Event delegation: Upgrades button');
-                            window.Menu.switchScreen('upgrades');
-                            break;
-                        case 'settings-btn':
-                            console.log('Event delegation: Settings button');
-                            window.Menu.switchScreen('settings');
-                            break;
-                        default:
-                            // Sprawdź czy to przycisk back
-                            if (button.classList.contains('back-btn')) {
-                                console.log('Event delegation: Back button');
-                                window.Menu.switchScreen('start');
-                            }
-                            // Sprawdź czy to przycisk w ekranie piłek
-                            else if (button.classList.contains('select-ball-btn')) {
-                                const ballCard = button.closest('.ball-card');
-                                if (ballCard) {
-                                    const ballType = ballCard.dataset.ball;
-                                    console.log('Event delegation: Select ball button for', ballType);
-                                    window.Menu.selectBall(ballType);
-                                }
-                            }
-                            // Sprawdź czy to przycisk odblokowania piłki
-                            else if (button.classList.contains('unlock-btn')) {
-                                const ballCard = button.closest('.ball-card');
-                                if (ballCard) {
-                                    const ballType = ballCard.dataset.ball;
-                                    console.log('Event delegation: Unlock ball button for', ballType);
-                                    window.Menu.unlockBall(ballType);
-                                }
-                            }
-                            // Sprawdź czy to przycisk zakupu ulepszenia
-                            else if (button.classList.contains('buy-btn')) {
-                                const ballType = window.Menu.state.currentBall;
-                                const upgradeItem = button.closest('.upgrade-item');
-                                if (upgradeItem) {
-                                    const upgradeId = button.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
-                                    if (upgradeId) {
-                                        console.log('Event delegation: Buy upgrade', upgradeId);
-                                        window.Menu.buyUpgrade(ballType, upgradeId);
-                                    }
-                                }
-                            }
-                            break;
-                    }
-                }, 10);
-
-                return false;
-            }, true);
-        }
-
-        // Globalny event listener dla trybu standalone
-        if (document.body.classList.contains('standalone')) {
-            console.log('Setting up global standalone event listener');
-            
-            // Przechwyć wszystkie kliknięcia
-            document.addEventListener('click', function(e) {
-                const target = e.target;
-                
-                // Jeśli to link, zapobiegaj domyślnej akcji
-                if (target.tagName === 'A' || target.tagName === 'BUTTON') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
-            }, true);
-            
-            // Uruchom event delegation dla menu
-            setTimeout(() => {
-                setupStandaloneEventDelegation();
-            }, 1000);
-        }
-
+    
+        // Event listeners dla zmiany rozmiaru
         window.addEventListener('resize', updateSafeArea);
         window.addEventListener('orientationchange', () => {
             setTimeout(() => {
@@ -779,27 +774,37 @@
         // Ukryj pasek adresu na mobilnych urządzeniach
         window.addEventListener('load', function() {
             setTimeout(function() {
-                if (!document.body.classList.contains('standalone')) {
+                if (!window.isStandalone) {
                     window.scrollTo(0, 1);
                 }
             }, 0);
         });
         
-        // Zapobiegaj domyślnemu menu kontekstowemu
+        // Zapobiegaj domyślnemu menu kontekstowemu w standalone
         document.addEventListener('contextmenu', function(e) {
-            if (document.body.classList.contains('standalone')) {
+            if (window.isStandalone) {
                 e.preventDefault();
                 return false;
             }
         });
         
-        // Inicjalizacja event delegation po załadowaniu
+        // Dodatkowa inicjalizacja po załadowaniu
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
-                if (document.body.classList.contains('standalone')) {
-                    setupStandaloneEventDelegation();
+                if (window.isStandalone) {
+                    console.log('Re-initializing standalone mode...');
+                    setupUniversalEventDelegation();
+                    
+                    // Wymuś ciemne tło dla safe area
+                    document.documentElement.style.backgroundColor = '#0a0a1a';
+                    document.body.style.backgroundColor = '#0a0a1a';
+                    
+                    // Ukryj pasek adresu (jeśli jeszcze widoczny)
+                    setTimeout(() => {
+                        window.scrollTo(0, 0);
+                    }, 100);
                 }
-            }, 500);
+            }, 1000);
         });
     </script>
     

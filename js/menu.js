@@ -400,15 +400,18 @@ const Menu = {
                 const selectBtn = document.createElement('button');
                 selectBtn.className = 'select-ball-btn';
                 selectBtn.textContent = isCurrent ? 'Selected' : 'Select';
+                // DODAJ DATA ATTRIBUTE dla standalone
+                selectBtn.setAttribute('data-ball-type', ballType);
                 selectBtn.onclick = () => {
                     this.selectBall(ballType);
                 };
                 ballCard.appendChild(selectBtn);
             } else {
-                
                 const unlockBtn = document.createElement('button');
                 unlockBtn.className = 'unlock-btn';
                 unlockBtn.dataset.cost = GameConfig.getBallUnlockPrice(ballType);
+                // DODAJ DATA ATTRIBUTE dla standalone
+                unlockBtn.setAttribute('data-ball-type', ballType);
                 unlockBtn.innerHTML = `Unlock for ${unlockBtn.dataset.cost} <i class="fas fa-coins"></i>`;
                 unlockBtn.disabled = this.state.totalCoins < parseInt(unlockBtn.dataset.cost);
                 unlockBtn.onclick = () => {
@@ -484,18 +487,18 @@ const Menu = {
                         </div>
                         ${currentLevel > 0 ? `
                             <button class="toggle-btn ${isActive ? '' : 'off'}"
-                                    onclick="Menu.toggleUpgrade('${this.state.currentBall}', '${upgradeDef.id}')">
+                                    onclick="if(window.Menu) Menu.toggleUpgrade('${this.state.currentBall}', '${upgradeDef.id}')">
                                 ${isActive ? 'ON' : 'OFF'}
                             </button>
                         ` : ''}
                         <button class="buy-btn" 
                                 ${isMaxLevel || !canAfford ? 'disabled' : ''}
-                                onclick="Menu.buyUpgrade('${this.state.currentBall}', '${upgradeDef.id}')">
+                                onclick="if(window.Menu) Menu.buyUpgrade('${this.state.currentBall}', '${upgradeDef.id}')">
                             ${isMaxLevel ? 'MAX' : 'Buy'}
                         </button>
                     </div>
                 `;
-                
+                        
                 upgradesList.appendChild(upgradeEl);
             });
         }
@@ -885,7 +888,7 @@ const Menu = {
     },
 
     
-// ... (reszta kodu bez zmian) ...
+
 
     setupEventListeners() {
         console.log('Configuring event listeners...');
@@ -1092,7 +1095,6 @@ const Menu = {
         console.log('Event listeners configured');
     },
 
-// ... (reszta kodu bez zmian) ...
 
     
     saveGameProgress(shouldAddToTotal = true) {
@@ -1121,6 +1123,28 @@ const Menu = {
         
         if (this.state.gameStarted) {
             this.updateGameHUD();
+        }
+    },
+    // Dodaj do obiektu Menu:
+    requestAccelerometerAccess: async function() {
+        if (typeof DeviceOrientationEvent !== 'undefined' && 
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                const permission = await DeviceOrientationEvent.requestPermission();
+                if (permission === 'granted') {
+                    this.showNotification('Accelerometer access granted!', 'success');
+                    if (window.Game && Game.setupIOSAccelerometer) {
+                        Game.setupIOSAccelerometer();
+                    }
+                } else {
+                    this.showNotification('Accelerometer access denied', 'error');
+                }
+            } catch (error) {
+                console.error('Error requesting accelerometer permission:', error);
+                this.showNotification('Failed to request access', 'error');
+            }
+        } else {
+            this.showNotification('Accelerometer already available', 'info');
         }
     }
 };
