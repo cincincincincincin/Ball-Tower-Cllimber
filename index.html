@@ -5,876 +5,481 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Ball Tower Jumper">
-
-    <!-- Dodaj touch icons dla iOS -->
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="mask-icon" href="safari-pinned-tab.svg" color="#1a1a2e">
-    <meta name="msapplication-TileColor" content="#1a1a2e">
-    <meta name="theme-color" content="#1a1a2e">
-
-    <!-- Zmień sekcję PWA w head -->
+    <meta name="apple-mobile-web-app-title" content="Ball Tower Climber">
+    <title>Ball Tower Climber</title>
+    
+    <!-- Manifest for PWA -->
     <link rel="manifest" href="manifest.json">
-    <!-- Dodaj fallback dla iOS -->
+    
+    <!-- Icons -->
+    <link rel="icon" href="icon-192.png" type="image/png">
     <link rel="apple-touch-icon" href="icon-192.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Ball Tower Jumper">
-    <title>Ball Tower Jumper</title>
+    
+    <!-- CSS -->
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     
-    <!-- Styly dla iOS PWA -->
     <style>
-        /* Uniwersalne resetowanie tap-highlight dla iOS standalone */
-        body.standalone * {
-            -webkit-tap-highlight-color: transparent !important;
+        /* Prevent text selection and touch callout */
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         
-        body.standalone button,
-        body.standalone .hud-btn,
-        body.standalone .menu-btn,
-        body.standalone .back-btn {
-            -webkit-tap-highlight-color: transparent !important;
-        }
-        
-        /* Zapobiegaj zoomowaniu na iOS */
-        body.standalone {
-            touch-action: pan-x pan-y;
+        /* iOS Standalone fixes */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                /* iOS padding fix */
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+            
+            body.standalone {
+                padding-top: max(20px, env(safe-area-inset-top));
+                padding-bottom: max(20px, env(safe-area-inset-bottom));
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Game Container -->
     <div id="game-container">
-        <!-- Start Screen (Main Menu) -->
+        <!-- START SCREEN -->
         <div id="start-screen" class="screen active">
-            <div class="title-container">
-                <h1 class="game-title">BALL TOWER JUMPER</h1>
-                <div class="title-ball"></div>
-                <p class="tagline">Play, change balls, buy upgrades!</p>
-            </div>
-            
-            <div class="menu-buttons">
-                <button id="play-btn" class="menu-btn">
-                    <i class="fas fa-play"></i> Play
-                </button>
-                <button id="balls-btn" class="menu-btn">
-                    <i class="fas fa-basketball-ball"></i> Choose Ball
-                </button>
-                <button id="upgrades-btn" class="menu-btn">
-                    <i class="fas fa-sliders-h"></i> Upgrades
-                </button>
-                <button id="settings-btn" class="menu-btn">
-                    <i class="fas fa-cogs"></i> Settings
-                </button>
-            </div>
-            
-            <!-- STATS BAR MOVED TO BOTTOM -->
-            <div class="stats-bar">
-                <div class="stat">
-                    <i class="fas fa-coins"></i>
-                    <span id="total-coins">0</span>
+            <div class="main-menu">
+                <div class="game-title-container">
+                    <h1 class="game-title">BALL TOWER CLIMBER</h1>
+                    <div class="title-ball"></div>
                 </div>
-                <div class="stat">
-                    <i class="fas fa-arrow-up"></i>
-                    Highscore: <span id="best-score">0</span>
+                
+                <div class="menu-buttons">
+                    <button id="play-btn" class="menu-btn">
+                        <i class="fas fa-play"></i> Play
+                    </button>
+                    <button id="balls-btn" class="menu-btn">
+                        <i class="fas fa-basketball-ball"></i> Choose Ball
+                    </button>
+                    <button id="upgrades-btn" class="menu-btn">
+                        <i class="fas fa-sliders-h"></i> Upgrades
+                    </button>
+                    <button id="settings-btn" class="menu-btn">
+                        <i class="fas fa-cogs"></i> Settings
+                    </button>
                 </div>
-                <div class="stat">
-                    <i class="fas fa-basketball-ball"></i>
-                    Unlocked Balls: <span id="unlocked-balls">1/4</span>
+                
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <i class="fas fa-coins"></i>
+                        <span id="total-coins">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-trophy"></i>
+                        Highscore: <span id="best-score">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-basketball-ball"></i>
+                        Balls: <span id="unlocked-balls-count">1/4</span>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <!-- Ball Selection Screen -->
+        <!-- BALLS SELECTION SCREEN -->
         <div id="balls-screen" class="screen">
             <div class="screen-header">
-                <button class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
-                <div class="header-actions">
-                        <h2><i class="fas fa-basketball-ball"></i> Choose ball</h2>
-                    <div class="coins-display">
-                        <i class="fas fa-coins"></i> <span id="balls-coins">0</span>
-                    </div>
+                <button class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <h2><i class="fas fa-basketball-ball"></i> Choose Ball</h2>
+                <div class="coins-display">
+                    <i class="fas fa-coins"></i> <span id="balls-coins">0</span>
                 </div>
             </div>
             
-            <div class="balls-container">
-                <!-- Standard ball -->
-                <div class="ball-card active" data-ball="standard">
-                    <div class="ball-preview standard-ball"></div>
-                    <h3>Standard</h3>
-                    <p>Standard ball, normal physics, perfect for start</p>
-                    <div class="ball-stats">
+            <div class="balls-grid">
+                <!-- Standard Ball -->
+                <div class="ball-card" data-ball="standard">
+                    <div class="ball-icon standard-ball">
+                        <i class="fas fa-check selected-icon"></i>
                     </div>
-                    <button class="select-ball-btn">Selected</button>
+                    <div class="ball-info">
+                        <h3>Standard</h3>
+                        <p>Balanced ball for beginners</p>
+                    </div>
+                    <button class="ball-action-btn select-btn selected">Selected</button>
                 </div>
                 
-                <!-- Rubber ball -->
+                <!-- Rubber Ball -->
                 <div class="ball-card locked" data-ball="rubber">
-                    <div class="ball-preview rubber-ball">
-                        <i class="fas fa-lock"></i>
+                    <div class="ball-icon rubber-ball">
+                        <i class="fas fa-lock lock-icon"></i>
                     </div>
-                    <h3>Gumball</h3>
-                    <p>High Wall Boost</p>
-                    <div class="ball-stats">
+                    <div class="ball-info">
+                        <h3>Rubber Ball</h3>
+                        <p>Better bounce, less control</p>
+                        <div class="ball-price">
+                            <i class="fas fa-coins"></i> 50
+                        </div>
                     </div>
-                    <button class="unlock-btn" data-cost="50">Unlock for 50 <i class="fas fa-coins"></i></button>
+                    <button class="ball-action-btn unlock-btn">Unlock</button>
                 </div>
                 
-                <!-- Beach ball -->
+                <!-- Beach Ball -->
                 <div class="ball-card locked" data-ball="beach">
-                    <div class="ball-preview beach-ball">
-                        <i class="fas fa-lock"></i>
+                    <div class="ball-icon beach-ball">
+                        <i class="fas fa-lock lock-icon"></i>
                     </div>
-                    <h3>Beach Ball</h3>
-                    <p>Sensitive to wind</p>
-                    <button class="unlock-btn" data-cost="100">Unlock for 100 <i class="fas fa-coins"></i></button>
+                    <div class="ball-info">
+                        <h3>Beach Ball</h3>
+                        <p>Lightweight, wind affected</p>
+                        <div class="ball-price">
+                            <i class="fas fa-coins"></i> 100
+                        </div>
+                    </div>
+                    <button class="ball-action-btn unlock-btn">Unlock</button>
                 </div>
                 
-                <!-- Golf ball -->
+                <!-- Golf Ball -->
                 <div class="ball-card locked" data-ball="golf">
-                    <div class="ball-preview golf-ball">
-                        <i class="fas fa-lock"></i>
+                    <div class="ball-icon golf-ball">
+                        <i class="fas fa-lock lock-icon"></i>
                     </div>
-                    <h3>Golf</h3>
-                    <p>Cannon Access</p>
-                    <button class="unlock-btn" data-cost="150">Unlock for 150 <i class="fas fa-coins"></i></button>
+                    <div class="ball-info">
+                        <h3>Golf Ball</h3>
+                        <p>Fast, precise control</p>
+                        <div class="ball-price">
+                            <i class="fas fa-coins"></i> 150
+                        </div>
+                    </div>
+                    <button class="ball-action-btn unlock-btn">Unlock</button>
                 </div>
             </div>
             
-            <div class="selected-ball-info">
-                <h3>Selected ball: <span id="current-ball-name">Standard</span></h3>
+            <div class="selected-ball-display">
+                <h3>Selected: <span id="selected-ball-name">Standard Ball</span></h3>
             </div>
         </div>
         
-        <!-- Upgrades Screen -->
+        <!-- UPGRADES SCREEN -->
         <div id="upgrades-screen" class="screen">
             <div class="screen-header">
-                <button class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
-                <div class="header-actions">
-                        <h2><i class="fas fa-cogs"></i> Upgrades</h2>
-                    <div class="coins-display">
-                        <i class="fas fa-coins"></i> <span id="upgrades-coins">0</span>
+                <button class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <h2><i class="fas fa-sliders-h"></i> Upgrades</h2>
+                <div class="coins-display">
+                    <i class="fas fa-coins"></i> <span id="upgrades-coins">0</span>
+                </div>
+            </div>
+            
+            <div class="ball-selector-tabs">
+                <button class="ball-tab active" data-ball="standard">Standard</button>
+                <button class="ball-tab" data-ball="rubber">Rubber</button>
+                <button class="ball-tab" data-ball="beach">Beach</button>
+                <button class="ball-tab" data-ball="golf">Golf</button>
+            </div>
+            
+            <div class="upgrades-list-container">
+                <div class="upgrades-list">
+                    <!-- Upgrades will be populated dynamically -->
+                    <div class="upgrade-item">
+                        <div class="upgrade-header">
+                            <h4>Jump Power</h4>
+                            <div class="upgrade-level">Level <span class="current-level">1</span>/5</div>
+                        </div>
+                        <p class="upgrade-desc">Increases jump height by 10%</p>
+                        <div class="upgrade-stats">
+                            <div class="stat-bar">
+                                <div class="stat-fill" style="width: 20%"></div>
+                            </div>
+                            <div class="upgrade-cost">
+                                <i class="fas fa-coins"></i> <span>50</span>
+                            </div>
+                        </div>
+                        <div class="upgrade-actions">
+                            <button class="toggle-btn active">ON</button>
+                            <button class="buy-btn">Buy Upgrade</button>
+                        </div>
                     </div>
+                    
+                    <!-- More upgrades will be added dynamically -->
                 </div>
-            </div>
-            
-            <div class="ball-selector">
-                <h3>Select ball to upgrade:</h3>
-                <div class="ball-selector-buttons">
-                    <!-- Ball selection buttons will be generated dynamically -->
-                </div>
-            </div>
-            
-            <div id="upgrades-list">
-                <!-- Upgrades list will be generated dynamically -->
-            </div>
-            
-            <div class="upgrades-info">
-                <p><i class="fas fa-info-circle"></i> Upgrades can be enabled/disabled before starting the game. They are specific to each ball.</p>
             </div>
         </div>
         
-        <!-- Settings Screen -->
+        <!-- SETTINGS SCREEN -->
         <div id="settings-screen" class="screen">
             <div class="screen-header">
-                <button class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
-                <h2><i class="fas fa-sliders-h"></i> Settings</h2>
+                <button class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <h2><i class="fas fa-cogs"></i> Settings</h2>
             </div>
             
-            <div class="settings-content">
-                <div class="settings-section">
-                    <h3><i class="fas fa-gamepad"></i> Controls</h3>
-                    
+            <div class="settings-list-container">
+                <div class="settings-list">
                     <div class="setting-item">
                         <div class="setting-info">
-                            <h4>Auto jump</h4>
-                            <p>Ball jumps automatically after landing</p>
+                            <h4><i class="fas fa-arrow-up"></i> Auto Jump</h4>
+                            <p>Automatically jump when landing on a platform</p>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" id="auto-jump-toggle" checked>
+                            <input type="checkbox" id="auto-jump" checked>
                             <span class="slider"></span>
                         </label>
                     </div>
                     
                     <div class="setting-item">
                         <div class="setting-info">
-                            <h4>Mobile controls</h4>
-                            <p>Enable touch controls (left/right side of screen)</p>
+                            <h4><i class="fas fa-mobile-alt"></i> Mobile Controls</h4>
+                            <p>Enable touch controls on mobile devices</p>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" id="mobile-controls-toggle" checked>
+                            <input type="checkbox" id="mobile-controls" checked>
                             <span class="slider"></span>
                         </label>
                     </div>
                     
                     <div class="setting-item">
                         <div class="setting-info">
-                            <h4>Accelerometer</h4>
-                            <p>Use device tilt to control</p>
+                            <h4><i class="fas fa-compass"></i> Accelerometer</h4>
+                            <p>Use device tilt for movement control</p>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" id="accelerometer-toggle" checked>
+                            <input type="checkbox" id="accelerometer" checked>
                             <span class="slider"></span>
                         </label>
                     </div>
                     
                     <div class="setting-item">
                         <div class="setting-info">
-                            <h4>Show wind</h4>
-                            <p>Display wind direction and strength arrow</p>
+                            <h4><i class="fas fa-wind"></i> Wind Effects</h4>
+                            <p>Enable wind simulation in game</p>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" id="wind-display-toggle" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="settings-section">
-                    <h3><i class="fas fa-bug"></i> Debug</h3>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h4>Show debug info</h4>
-                            <p>Show debugging information during the game</p>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" id="debug-info-toggle">
+                            <input type="checkbox" id="wind-effects" checked>
                             <span class="slider"></span>
                         </label>
                     </div>
                     
                     <div class="setting-item">
                         <div class="setting-info">
-                            <h4>Add coins (debug)</h4>
-                            <p>Add 1000 coins to test purchases</p>
+                            <h4><i class="fas fa-volume-up"></i> Sound Effects</h4>
+                            <p>Enable game sound effects</p>
                         </div>
-                        <button id="add-coins-btn" class="debug-btn">
-                            <i class="fas fa-coins"></i> Add 1000 coins
+                        <label class="switch">
+                            <input type="checkbox" id="sound-effects" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4><i class="fas fa-music"></i> Background Music</h4>
+                            <p>Play background music during game</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="bg-music" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4><i class="fas fa-bug"></i> Debug Info</h4>
+                            <p>Show debug information on screen</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="debug-info">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4><i class="fas fa-paint-brush"></i> Visual Effects</h4>
+                            <p>Enable particle effects and animations</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="visual-effects" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-section">
+                        <h3><i class="fas fa-tools"></i> Debug Tools</h3>
+                        
+                        <button class="debug-btn" id="add-coins-btn">
+                            <i class="fas fa-coins"></i> Add 1000 Coins
                         </button>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h4>Reset progress</h4>
-                            <p>Delete all saved data and start over</p>
-                        </div>
-                        <button id="reset-progress-btn" class="danger-btn">
-                            <i class="fas fa-trash"></i> Reset progress
+                        
+                        <button class="debug-btn" id="reset-highscore-btn">
+                            <i class="fas fa-trash"></i> Reset Highscore
                         </button>
-                    </div>
-                    <!-- W pliku index.html, w sekcji ustawień dodaj: -->
-                    <div class="setting-item">
-                        <div class="setting-info">
-                            <h4>Request Accelerometer Access</h4>
-                            <p>Tap to enable tilt controls on iOS</p>
-                        </div>
-                        <button id="request-accelerometer-btn" class="debug-btn">
-                            <i class="fas fa-compass"></i> Request Access
+                        
+                        <button class="debug-btn danger" id="reset-all-btn">
+                            <i class="fas fa-exclamation-triangle"></i> Reset All Progress
                         </button>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Game Screen -->
+        <!-- GAME SCREEN -->
         <div id="game-screen" class="screen">
             <canvas id="game-canvas"></canvas>
             
-            <!-- Debug elements from the first project -->
-            <div id="debug-info" class="debug-info hidden">
-                <div id="height-display">Height: <span id="height">0</span>px</div>
-                <div id="max-height-display">Max height: <span id="max-height">0</span>px</div>
-                <div id="velocity-x-display">Velocity X: <span id="velocity-x">0</span>px/frame</div>
-                <div id="max-velocity-x-display">Max velocity X: <span id="max-velocity-x">0</span>px/frame</div>
-                <div id="velocity-y-display">Velocity Y (up): <span id="velocity-y">0</span>px/frame</div>
-                <div id="max-velocity-y-display">Max velocity Y (up): <span id="max-velocity-y">0</span>px/frame</div>
-                <div id="current-floor-display">Current floor: <span id="current-floor">0</span></div>
-                <div id="max-floor-display">Highest floor: <span id="max-floor">0</span></div>
-                <div id="high-score-display">High score: <span id="high-score">0</span></div>
-            </div>
-            
-            <!-- SIMPLIFIED GAME HUD -->
-            <div id="game-hud">
-                <!-- Top HUD bar -->
+            <div class="game-hud">
                 <div class="hud-top">
-                    <div class="hud-left">
-                        <button id="pause-btn" class="hud-btn" title="Pause (P)">
-                            <i class="fas fa-pause"></i>
-                        </button>
+                    <button class="hud-btn" id="pause-game-btn">
+                        <i class="fas fa-pause"></i>
+                    </button>
+                    <div class="score-display">
+                        Score: <span id="game-score">0</span>
                     </div>
-                    
-                    <div class="hud-center">
-                        <div class="score-display">
-                            Score: <span id="score-value">0</span>
-                        </div>
-                    </div>
-                    
-                    <div class="hud-right">
-                        <div class="hud-item">
-                            <i class="fas fa-coins"></i>
-                            <span id="coins-value">0</span>
-                        </div>
+                    <div class="coins-display-hud">
+                        <i class="fas fa-coins"></i> <span id="game-coins">0</span>
                     </div>
                 </div>
                 
-                <!-- Mobile Controls Overlay -->
-                <div id="mobile-controls-overlay" class="mobile-controls-overlay">
-                    <div class="control-left" id="control-left"></div>
-                    <div class="control-right" id="control-right"></div>
+                <div class="mobile-controls">
+                    <div class="control-left" id="move-left-btn"></div>
+                    <div class="control-right" id="move-right-btn"></div>
                 </div>
             </div>
             
-            <!-- Pause menu -->
-            <div id="pause-menu" class="overlay-menu hidden">
-                <div class="overlay-background"></div> <!-- Added background -->
+            <!-- PAUSE MENU -->
+            <div class="pause-menu hidden">
                 <div class="pause-content">
                     <h2><i class="fas fa-pause"></i> Game Paused</h2>
+                    
                     <div class="pause-stats">
                         <div class="stat-box">
-                            <h3>Score</h3>
+                            <h4>Score</h4>
                             <p class="stat-value" id="pause-score">0</p>
                         </div>
                         <div class="stat-box">
-                            <h3>Coins</h3>
-                            <p class="stat-value" id="pause-coins">0</p>
+                            <h4>Height</h4>
+                            <p class="stat-value" id="pause-height">0m</p>
                         </div>
                         <div class="stat-box">
-                            <h3>Ball</h3>
-                            <p class="stat-value" id="pause-ball">Standard</p>
+                            <h4>Coins</h4>
+                            <p class="stat-value" id="pause-game-coins">0</p>
                         </div>
                     </div>
+                    
                     <div class="pause-buttons">
-                        <button id="resume-btn" class="pause-btn">
-                            <i class="fas fa-play"></i> Resume Game
+                        <button class="pause-btn" id="resume-game-btn">
+                            <i class="fas fa-play"></i> Resume
                         </button>
-                        <button id="restart-btn" class="pause-btn">
-                            <i class="fas fa-redo"></i> Start Over
+                        <button class="pause-btn" id="restart-game-btn">
+                            <i class="fas fa-redo"></i> Restart
                         </button>
-                        <button id="quit-to-menu-btn" class="pause-btn">
-                            <i class="fas fa-home"></i> Exit to Menu
+                        <button class="pause-btn" id="quit-game-btn">
+                            <i class="fas fa-home"></i> Main Menu
                         </button>
                     </div>
                 </div>
             </div>
             
-            <!-- Game over screen -->
-            <div id="game-over-screen" class="overlay-menu hidden">
-                <div class="overlay-background"></div> <!-- Added background -->
+            <!-- GAME OVER MENU -->
+            <div class="game-over-menu hidden">
                 <div class="game-over-content">
-                    <h2><i class="fas fa-skull-crossbones"></i> Fell!</h2>
+                    <h2><i class="fas fa-skull-crossbones"></i> Game Over</h2>
+                    
                     <div class="game-over-stats">
                         <div class="stat-box">
-                            <h3>Your Score</h3>
+                            <h4>Final Score</h4>
                             <p class="stat-value" id="final-score">0</p>
                         </div>
                         <div class="stat-box">
-                            <h3>Coins Collected</h3>
-                            <p class="stat-value" id="final-coins">0</p>
+                            <h4>Height Reached</h4>
+                            <p class="stat-value" id="final-height">0m</p>
                         </div>
                         <div class="stat-box">
-                            <h3>High Score</h3>
-                            <p class="stat-value" id="final-highscore">0</p>
+                            <h4>Coins Collected</h4>
+                            <p class="stat-value" id="final-game-coins">0</p>
                         </div>
                     </div>
                     
                     <div class="game-over-buttons">
-                        <button id="play-again-btn" class="game-over-btn">
+                        <button class="game-over-btn" id="play-again-btn">
                             <i class="fas fa-redo"></i> Play Again
                         </button>
-                        <button id="quit-after-game-btn" class="game-over-btn">
+                        <button class="game-over-btn" id="back-to-menu-btn">
                             <i class="fas fa-home"></i> Main Menu
                         </button>
-                    </div>
-                    
-                    <div class="game-over-message">
-                        <p id="game-over-message-text">Try again!</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Notifications -->
-    <div id="notification-container"></div>
+    <!-- NOTIFICATIONS -->
+    <div id="notifications"></div>
     
-    <!-- JavaScript Scripts -->
+    <!-- SCRIPTS -->
     <script src="js/config.js"></script>
-    <script src="js/single-tap.js"></script> <!-- Nowy system eventów -->
-    <script src="js/menu.js"></script>
     <script src="js/game.js"></script>
+    <script src="js/menu.js"></script>
     
-
-    <!-- Enhanced PWA and iOS Standalone Script -->
-<!-- Enhanced PWA and iOS Standalone Script -->
     <script>
-        // Rejestracja Service Worker dla PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
+        // Detect standalone mode
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                           window.navigator.standalone;
+        
+        if (isStandalone) {
+            document.body.classList.add('standalone');
+            console.log('Running in standalone mode');
         }
-
-        // Globalna zmienna do śledzenia stanu standalone
-        window.isStandalone = false;
-
-        // Rozwiązanie dla fullscreen na iOS
-        document.addEventListener('DOMContentLoaded', () => {
-            // Sprawdź czy jesteśmy w trybie standalone
-            if (window.navigator.standalone) {
-                document.body.classList.add('standalone');
-                window.isStandalone = true;
-                console.log('Running in standalone mode (added to home screen)');
-            } else {
-                console.log('Running in browser mode');
-                window.isStandalone = false;
-            }
-
-            // Fix dla iOS scroll - tylko dla elementów które nie są interaktywne
-            document.addEventListener('touchmove', function(e) {
-                if(e.target.type === 'range' || 
-                   e.target.tagName === 'BUTTON' || 
-                   e.target.tagName === 'INPUT' ||
-                   e.target.tagName === 'SELECT' ||
-                   e.target.isContentEditable) {
-                    return;
-                }
-                e.preventDefault();
-            }, { passive: false });
-
-            // Fix dla iOS zoom
-            document.addEventListener('gesturestart', function(e) {
-                e.preventDefault();
-            });
-
-            // Inicjalizacja safe area
-            updateSafeArea();
-
-            // Rozwiązanie problemu z przyciskami w standalone mode
-            setTimeout(() => {
-                if (window.isStandalone) {
-                    setupUniversalEventDelegation();
-                }
-            }, 300);
-        });
-
-        // Rozwiązanie dla safe area dynamicznie
+        
+        // Handle iOS safe areas
         function updateSafeArea() {
             const vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
-
-            if (CSS.supports('padding-top: env(safe-area-inset-top)')) {
-                document.documentElement.style.setProperty('--safe-area-inset-top', 'env(safe-area-inset-top)');
-                document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
-                document.documentElement.style.setProperty('--safe-area-inset-left', 'env(safe-area-inset-left)');
-                document.documentElement.style.setProperty('--safe-area-inset-right', 'env(safe-area-inset-right)');
-            }
-        }
-
-        // UNIWERSALNA EVENT DELEGATION DLA WSZYSTKICH PRZYCISKÓW W STANDALONE
-        function setupUniversalEventDelegation() {
-            console.log('Setting up universal event delegation for standalone mode');
-
-            // Usuń wszystkie istniejące event listeners z przycisków przez klonowanie
-            document.querySelectorAll('button').forEach(button => {
-                const newButton = button.cloneNode(true);
-                button.parentNode.replaceChild(newButton, button);
-            });
-
-            // Globalny event listener dla WSZYSTKICH kliknięć
-            document.addEventListener('click', function(e) {
-                if (!window.isStandalone) return;
-
-                e.preventDefault();
-                e.stopPropagation();
-
-                const target = e.target;
-                const button = target.closest('button');
-                if (!button) return;
-
-                console.log('Standalone click detected:', {
-                    id: button.id,
-                    className: button.className,
-                    text: button.textContent?.trim()
-                });
-
-                // Obsługa z opóźnieniem (dla iOS)
-                setTimeout(() => handleStandaloneButtonClick(button), 10);
-
-                return false;
-            }, true);
-
-            // Touch events dla iOS
-            document.addEventListener('touchstart', function(e) {
-                if (!window.isStandalone) return;
-
-                const target = e.target;
-                const button = target.closest('button');
-                if (!button) return;
-
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Symuluj kliknięcie
-                setTimeout(() => handleStandaloneButtonClick(button), 10);
-
-                return false;
-            }, { passive: false });
-        }
-
-        // GŁÓWNA FUNKCJA OBSŁUGUJĄCA WSZYSTKIE PRZYCISKI
-        function handleStandaloneButtonClick(button) {
-            console.log('Handling standalone button click:', button.id || button.className);
-
-            // Upewnij się, że Menu jest dostępne
-            if (!window.Menu) {
-                console.error('Menu not available');
-                return;
-            }
-
-            const buttonId = button.id;
-            const buttonClass = button.className;
-
-            // 1. PRZYCISKI MENU GŁÓWNEGO
-            if (buttonId === 'play-btn') {
-                console.log('Play button clicked in standalone');
-                window.Menu.startGame();
-                return;
-            }
-
-            if (buttonId === 'balls-btn') {
-                console.log('Balls button clicked in standalone');
-                window.Menu.switchScreen('balls');
-                return;
-            }
-
-            if (buttonId === 'upgrades-btn') {
-                console.log('Upgrades button clicked in standalone');
-                window.Menu.switchScreen('upgrades');
-                return;
-            }
-
-            if (buttonId === 'settings-btn') {
-                console.log('Settings button clicked in standalone');
-                window.Menu.switchScreen('settings');
-                return;
-            }
-
-            // 2. PRZYCISKI EKRANU PIŁEK
-            if (buttonClass.includes('select-ball-btn')) {
-                const ballCard = button.closest('.ball-card');
-                if (ballCard) {
-                    const ballType = ballCard.dataset.ball;
-                    console.log('Select ball button clicked:', ballType);
-                    window.Menu.selectBall(ballType);
-                }
-                return;
-            }
-
-            if (buttonClass.includes('unlock-btn')) {
-                const ballCard = button.closest('.ball-card');
-                if (ballCard) {
-                    const ballType = ballCard.dataset.ball;
-                    console.log('Unlock ball button clicked:', ballType);
-                    window.Menu.unlockBall(ballType);
-                }
-                return;
-            }
-
-            // 3. PRZYCISKI EKRANU ULEPSZEŃ
-            if (buttonClass.includes('buy-btn') && !button.disabled) {
-                // Pobierz ID ulepszenia z atrybutu onclick
-                const onClickAttr = button.getAttribute('onclick');
-                if (onClickAttr) {
-                    const match = onClickAttr.match(/['"]([^'"]+)['"]/);
-                    if (match && match[1]) {
-                        const upgradeId = match[1];
-                        const ballType = window.Menu.state.currentBall;
-                        console.log('Buy upgrade button clicked:', upgradeId, 'for ball:', ballType);
-                        window.Menu.buyUpgrade(ballType, upgradeId);
-                    }
-                }
-                return;
-            }
-
-            if (buttonClass.includes('toggle-btn')) {
-                const onClickAttr = button.getAttribute('onclick');
-                if (onClickAttr) {
-                    const match = onClickAttr.match(/['"]([^'"]+)['"]/);
-                    if (match && match[1]) {
-                        const upgradeId = match[1];
-                        const ballType = window.Menu.state.currentBall;
-                        console.log('Toggle upgrade button clicked:', upgradeId);
-                        window.Menu.toggleUpgrade(ballType, upgradeId);
-                    }
-                }
-                return;
-            }
-
-            if (buttonClass.includes('ball-select-btn') && !buttonClass.includes('active')) {
-                const ballName = button.textContent.trim();
-                console.log('Ball select button clicked:', ballName);
-
-                // Znajdź typ piłki na podstawie nazwy
-                const ballTypes = ['standard', 'rubber', 'beach', 'golf'];
-                const ballDisplayNames = ballTypes.map(type => GameConfig.getBallDisplayName(type));
-                const ballIndex = ballDisplayNames.findIndex(name => name === ballName);
-
-                if (ballIndex !== -1) {
-                    const ballType = ballTypes[ballIndex];
-                    window.Menu.state.currentBall = ballType;
-                    window.Menu.updateUpgradesScreen();
-                }
-                return;
-            }
-
-            // 4. PRZYCISKI USTAWIEN
-            if (buttonId === 'add-coins-btn') {
-                console.log('Add coins button clicked');
-                window.Menu.state.totalCoins += 1000;
-                window.Menu.saveData();
-                window.Menu.updateCoinsDisplay();
-                window.Menu.showNotification('Added 1000 coins!', 'success');
-                return;
-            }
-
-            if (buttonId === 'reset-progress-btn') {
-                console.log('Reset progress button clicked');
-                if (confirm('Are you sure you want to reset all progress? This action cannot be undone.')) {
-                    window.Menu.resetData();
-                    window.Menu.updateMainMenu();
-                    window.Menu.showNotification('All data has been reset', 'warning');
-                }
-                return;
-            }
-
-            if (buttonId === 'request-accelerometer-btn') {
-                console.log('Request accelerometer button clicked');
-                // Ta funkcja powinna być zdefiniowana w menu.js
-                if (window.Menu && window.Menu.requestAccelerometerAccess) {
-                    window.Menu.requestAccelerometerAccess();
-                }
-                return;
-            }
-
-            // 5. PRZYCISKI PAUZY
-            if (buttonId === 'pause-btn') {
-                console.log('Pause button clicked');
-                if (window.Menu) window.Menu.togglePause();
-                return;
-            }
-
-            if (buttonId === 'resume-btn') {
-                console.log('Resume button clicked');
-                if (window.Menu) window.Menu.togglePause();
-                return;
-            }
-
-            if (buttonId === 'restart-btn') {
-                console.log('Restart button clicked');
-                if (window.Menu) {
-                    window.Menu.saveGameProgress(true);
-                    window.Menu.state.coinsInGame = 0;
-                    document.getElementById('pause-menu').classList.add('hidden');
-                    window.Menu.startGame();
-                }
-                return;
-            }
-
-            if (buttonId === 'quit-to-menu-btn') {
-                console.log('Quit to menu button clicked');
-                if (window.Menu) {
-                    window.Menu.saveGameProgress(true);
-                    window.Menu.state.coinsInGame = 0;
-                    document.getElementById('pause-menu').classList.add('hidden');
-                    window.Menu.switchScreen('start');
-                }
-                return;
-            }
-
-            // 6. PRZYCISKI GAME OVER
-            if (buttonId === 'play-again-btn') {
-                console.log('Play again button clicked');
-                if (window.Menu) {
-                    window.Menu.saveGameProgress(false);
-                    window.Menu.state.coinsInGame = 0;
-                    document.getElementById('game-over-screen').classList.add('hidden');
-                    window.Menu.startGame();
-                }
-                return;
-            }
-
-            if (buttonId === 'quit-after-game-btn') {
-                console.log('Quit after game button clicked');
-                document.getElementById('game-over-screen').classList.add('hidden');
-                window.Menu.switchScreen('start');
-                return;
-            }
-
-            // 7. PRZYCISKI POWROTU (BACK)
-            if (buttonClass.includes('back-btn')) {
-                console.log('Back button clicked');
-                window.Menu.switchScreen('start');
-                return;
-            }
-
-            console.log('Unhandled button click:', buttonId, buttonClass);
-        }
-
-        // Rozwiązanie dla białego paska w Safari
-        function fixSafariWhiteBar() {
-            if (!window.isStandalone && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
-                console.log('Fixing Safari white bar issue');
-
-                const vh = window.innerHeight * 0.01;
-                document.documentElement.style.setProperty('--vh', `${vh}px`);
-
-                setTimeout(() => {
-                    window.scrollTo(0, 0);
-                    document.body.style.height = `${window.innerHeight}px`;
-                }, 100);
-
-                window.addEventListener('orientationchange', () => {
-                    setTimeout(() => {
-                        const newVh = window.innerHeight * 0.01;
-                        document.documentElement.style.setProperty('--vh', `${newVh}px`);
-                        document.body.style.height = `${window.innerHeight}px`;
-                        window.scrollTo(0, 0);
-                    }, 300);
-                });
-            }
-        }
-
-        // Event listeners dla zmiany rozmiaru
-        window.addEventListener('resize', updateSafeArea);
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                updateSafeArea();
-                fixSafariWhiteBar();
-                if (window.Game && Game.resizeCanvas) {
-                    Game.resizeCanvas();
-                }
-            }, 100);
-        });
-
-        // Initial call
-        setTimeout(() => {
-            updateSafeArea();
-            fixSafariWhiteBar();
-        }, 100);
-
-        // Ukryj pasek adresu na mobilnych urządzeniach
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                if (!window.isStandalone) {
-                    window.scrollTo(0, 1);
-                }
-            }, 0);
-        });
-
-        // Zapobiegaj domyślnemu menu kontekstowemu w standalone
-        document.addEventListener('contextmenu', function(e) {
-            if (window.isStandalone) {
-                e.preventDefault();
-                return false;
-            }
-        });
-
-        // Dodatkowa inicjalizacja po załadowaniu
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                if (window.isStandalone) {
-                    console.log('Re-initializing standalone mode...');
-                    setupUniversalEventDelegation();
-
-                    // Wymuś ciemne tło dla safe area
-                    document.documentElement.style.backgroundColor = '#0a0a1a';
-                    document.body.style.backgroundColor = '#0a0a1a';
-
-                    // Ukryj pasek adresu (jeśli jeszcze widoczny)
-                    setTimeout(() => {
-                        window.scrollTo(0, 0);
-                    }, 100);
-                }
-            }, 1000);
-        });
-    </script>
-    
-    <!-- Initialization after page load -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize menu
-            if (window.Menu) Menu.init();
             
-            // Force recalculation after everything loads
-            setTimeout(() => {
-                updateSafeArea();
-                fixSafariWhiteBar();
-                if (window.Game && Game.resizeCanvas) {
-                    Game.resizeCanvas();
-                }
-                
-                // Dodatkowe optymalizacje dla standalone
-                if (document.body.classList.contains('standalone')) {
-                    // Wymuś ciemne tło dla safe area
-                    document.documentElement.style.backgroundColor = '#0a0a1a';
-                    document.body.style.backgroundColor = '#0a0a1a';
-                    
-                    // Ukryj pasek adresu (jeśli jeszcze widoczny)
-                    setTimeout(() => {
-                        window.scrollTo(0, 0);
-                    }, 100);
-                }
-            }, 300);
-        });
-    </script>
-    <script>
-        // Force initialization after all scripts loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing...');
-
-            // Poczekaj na załadowanie wszystkich skryptów
-            setTimeout(function() {
-                // Initialize Menu (jeśli nie jest standalone)
-                if (!window.navigator.standalone && window.Menu && window.Menu.init) {
-                    window.Menu.init();
-                }
-
-                // Initialize Game
-                if (window.Game && window.Game.init) {
-                    window.Game.init();
-                }
-
-                // Jeśli standalone, wywołaj reinit fixa
-                if (window.navigator.standalone && window.StandaloneFix && window.StandaloneFix.reinit) {
-                    setTimeout(() => {
-                        window.StandaloneFix.reinit();
-                    }, 500);
-                }
-            }, 500);
-        });
-
-        // Zapobiegaj domyślnemu zachowaniu w standalone
-        if (window.navigator.standalone) {
-            document.addEventListener('touchstart', function(e) {
-                if (e.touches.length > 1) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-
-            document.addEventListener('gesturestart', function(e) {
-                e.preventDefault();
-            });
+            // Set safe area insets for iOS
+            const safeAreaTop = 'env(safe-area-inset-top, 0px)';
+            const safeAreaBottom = 'env(safe-area-inset-bottom, 0px)';
+            
+            document.documentElement.style.setProperty('--safe-top', safeAreaTop);
+            document.documentElement.style.setProperty('--safe-bottom', safeAreaBottom);
         }
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSafeArea();
+            
+            // Initialize game
+            if (window.Game && typeof Game.init === 'function') {
+                Game.init();
+            }
+            
+            // Initialize menu
+            if (window.Menu && typeof Menu.init === 'function') {
+                Menu.init();
+            }
+            
+            // Update safe area on resize/orientation change
+            window.addEventListener('resize', updateSafeArea);
+            window.addEventListener('orientationchange', () => {
+                setTimeout(updateSafeArea, 100);
+            });
+        });
+        
+        // Prevent default touch behaviors
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        document.addEventListener('gesturestart', (e) => {
+            e.preventDefault();
+        });
     </script>
 </body>
 </html>
