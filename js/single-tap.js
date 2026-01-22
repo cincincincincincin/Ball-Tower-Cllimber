@@ -1,572 +1,503 @@
-// single-tap.js - Single Source of Truth dla wszystkich eventów
+// single-tap.js - Poprawiona wersja dla standalone iOS
 (function() {
     'use strict';
-    
-    console.log('Loading Single Tap Event System...');
-    
-    // Globalne flagi
-    let isProcessing = false;
-    let lastTapTime = 0;
-    let lastTapTarget = null;
-    const TAP_DELAY = 300; // 300ms między kliknięciami
-    
-    // Detekcja trybu
+
+    console.log('Loading Single Tap System...');
+
+    // Sprawdź, czy jesteśmy w trybie standalone
     const isStandalone = window.navigator.standalone || 
                         window.matchMedia('(display-mode: standalone)').matches;
-    
-    // Single Tap System
-    class SingleTapSystem {
-        constructor() {
-            this.initialized = false;
-            this.eventMap = new Map();
-            this.setup();
-        }
-        
-        setup() {
-            if (this.initialized) return;
+
+    // TYLKO dla standalone używamy tego systemu
+    if (!isStandalone) {
+        console.log('Browser mode - Single Tap System disabled');
+        return;
+    }
+
+    console.log('Standalone mode detected - activating Single Tap System');
+    document.body.classList.add('standalone');
+
+    // Flagi zapobiegające duplikacji
+    let isProcessing = false;
+    let lastProcessedId = null;
+    let lastProcessTime = 0;
+
+    // 1. USUŃ WSZYSTKIE ISTNIEJĄCE ONCLICK ATTRYBUTY (tylko w standalone)
+    function removeOnClickAttributes() {
+        console.log('Removing onclick attributes for standalone...');
+
+        document.querySelectorAll('[onclick]').forEach(element => {
+            const originalOnClick = element.getAttribute('onclick');
+            element.removeAttribute('onclick');
+            element.dataset.originalOnclick = originalOnClick;
+        });
+    }
+
+    // 2. GLOBALNY CLICK HANDLER dla standalone
+    function setupGlobalClickHandler() {
+        console.log('Setting up global click handler for standalone...');
+
+        // Używamy capture phase aby przechwycić WSZYSTKIE kliknięcia
+        document.addEventListener('click', function(e) {
+            const target = e.target;
             
-            console.log('Setting up Single Tap System...');
-            
-            // 1. USUŃ WSZYSTKIE ISTNIEJĄCE EVENT LISTENERS
-            this.removeAllExistingListeners();
-            
-            // 2. DODAJ GLOBALNY EVENT LISTENER (JEDYNY)
-            this.addGlobalEventListener();
-            
-            // 3. OBSERWATOR DLA DYNAMICZNYCH ELEMENTÓW
-            this.setupMutationObserver();
-            
-            // 4. INICJALIZACJA SPECJALNYCH ELEMENTÓW
-            this.initializeSpecialElements();
-            
-            this.initialized = true;
-            console.log('Single Tap System initialized');
-        }
-        
-        removeAllExistingListeners() {
-            console.log('Removing existing listeners...');
-            
-            // Usuń event listeners z wszystkich przycisków
-            document.querySelectorAll('button').forEach(btn => {
-                const newBtn = btn.cloneNode(true);
-                btn.parentNode.replaceChild(newBtn, btn);
-                newBtn._singleTapProcessed = true;
-            });
-            
-            // Usuń event listeners z sliderów
-            document.querySelectorAll('input[type="checkbox"]').forEach(input => {
-                const newInput = input.cloneNode(true);
-                input.parentNode.replaceChild(newInput, input);
-                newInput._singleTapProcessed = true;
-            });
-        }
-        
-        addGlobalEventListener() {
-            console.log('Adding global event listener...');
-            
-            // KLIKNIĘCIA
-            document.addEventListener('click', (e) => {
-                this.handleEvent(e);
-            }, true); // Użyj capture phase
-            
-            // DOTYK (dla mobilnych)
-            document.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1) {
-                    this.handleEvent(e);
-                }
-            }, { passive: true });
-            
-            // KEYBOARD - tylko dla pauzy (zapobieganie duplikacji)
-            document.addEventListener('keydown', (e) => {
-                if ((e.key === 'p' || e.key === 'P') && !isProcessing) {
+            // 1. IGNORUJ kliknięcia w CANVAS i elementy gry
+            if (target.closest('#game-canvas') || 
+                target.closest('#game-screen') ||
+                target.closest('#mobile-controls-overlay')) {
+                console.log('Game area click - allowing default behavior');
+                return; // Pozwól normalne działanie
+            }
+
+            // 2. IGNORUJ kliknięcia w custom modal (ale nie przyciski w nim)
+            if (target.closest('.custom-confirm-modal')) {
+                // Pozwól na normalne działanie przycisków w modal
+                // Ale zapobiegaj kliknięciu w tło (zamknięcie)
+                if (!target.closest('.custom-confirm-modal > div') && 
+                    !target.closest('.custom-confirm-modal button')) {
                     e.preventDefault();
                     e.stopPropagation();
-                    this.executeAction('keyboard-pause');
                 }
-            });
-        }
-        
-        handleEvent(event) {
-            // Zapobiegaj domyślnej akcji
-            event.preventDefault();
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-            
-            const target = event.target;
-            const now = Date.now();
-            
-            // ANTY-DUPLIKACJA: Sprawdź czy to nie jest szybkie wielokrotne kliknięcie
-            if (isProcessing) {
-                console.log('Already processing, ignoring');
-                return false;
-            }
-            
-            if (target === lastTapTarget && (now - lastTapTime) < TAP_DELAY) {
-                console.log('Quick retap ignored');
-                return false;
-            }
-            
-            // Ustaw flagi
-            isProcessing = true;
-            lastTapTarget = target;
-            lastTapTime = now;
-            
-            // Obsłuż event
-            setTimeout(() => {
-                try {
-                    this.processEvent(target, event.type);
-                } catch (error) {
-                    console.error('Error processing event:', error);
-                }
-                
-                // Reset flagi
-                setTimeout(() => {
-                    isProcessing = false;
-                }, 50);
-            }, 10);
-            
-            return false;
-        }
-        
-        processEvent(target, eventType) {
-            console.log('Processing:', eventType, target.tagName, target.id, target.className);
-            
-            // 1. PRZYCISK
-            const button = target.closest('button');
-            if (button && !button.disabled) {
-                this.handleButton(button);
                 return;
             }
-            
-            // 2. SLIDER
+
+            // 3. Zapobiegaj duplikacji dla przycisków UI
+            if (isProcessing) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+
+            const button = target.closest('button');
+            const now = Date.now();
+
+            // Jeśli to przycisk
+            if (button && !button.disabled) {
+                const buttonId = button.id || button.className;
+
+                // Sprawdź czy to nie jest szybkie ponowne kliknięcie tego samego przycisku
+                if (lastProcessedId === buttonId && (now - lastProcessTime) < 500) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Duplicate click prevented for:', buttonId);
+                    return;
+                }
+
+                // Ustaw flagi
+                isProcessing = true;
+                lastProcessedId = buttonId;
+                lastProcessTime = now;
+
+                // Obsłuż kliknięcie z opóźnieniem
+                setTimeout(() => {
+                    handleButtonClick(button);
+
+                    // Reset flagi
+                    setTimeout(() => {
+                        isProcessing = false;
+                    }, 100);
+                }, 10);
+
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+
+            // Obsługa sliderów
             const slider = target.closest('input[type="checkbox"]');
             if (slider) {
-                this.handleSlider(slider);
-                return;
+                // Pozwól sliderowi działać normalnie, ale dodaj delay dla zmiany
+                setTimeout(() => {
+                    handleSliderChange(slider);
+                }, 100);
+                return; // Pozwól domyślne działanie slidera
             }
-            
-            // 3. LABEL dla slidera
+
+            // Jeśli to label dla slidera
             const label = target.closest('label.switch');
             if (label) {
                 const slider = label.querySelector('input[type="checkbox"]');
                 if (slider) {
-                    slider.checked = !slider.checked;
-                    this.handleSlider(slider);
+                    setTimeout(() => {
+                        slider.checked = !slider.checked;
+                        handleSliderChange(slider);
+                    }, 50);
                 }
                 return;
             }
-            
-            // 4. ELEMENTY HUD w grze
-            if (target.classList.contains('hud-btn') || 
-                target.closest('.hud-btn')) {
-                const hudBtn = target.closest('.hud-btn');
-                if (hudBtn) this.handleButton(hudBtn);
-                return;
+
+        }, true); // Użyj capture phase
+
+        // Touch events - przekieruj do click
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                const target = document.elementFromPoint(touch.clientX, touch.clientY);
+
+                if (target && (target.tagName === 'BUTTON' || 
+                              target.closest('button') || 
+                              target.closest('input[type="checkbox"]') ||
+                              target.closest('label.switch'))) {
+                    e.preventDefault();
+
+                    // Symuluj kliknięcie
+                    const clickEvent = new MouseEvent('click', {
+                        view: window,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    target.dispatchEvent(clickEvent);
+                }
             }
-            
-            console.log('Unhandled target:', target);
+        }, { passive: false });
+    }
+
+    // 3. OBSŁUGA PRZYCISKÓW
+    function handleButtonClick(button) {
+        const buttonId = button.id;
+        const buttonClass = button.className;
+
+        console.log('Processing button click in standalone:', buttonId, buttonClass);
+
+        // Mapowanie przycisków do funkcji Menu
+        const actionMap = {
+            // MENU GŁÓWNE
+            'play-btn': () => callMenuFunction('startGame'),
+            'balls-btn': () => callMenuFunction('switchScreen', 'balls'),
+            'upgrades-btn': () => callMenuFunction('switchScreen', 'upgrades'),
+            'settings-btn': () => callMenuFunction('switchScreen', 'settings'),
+
+            // PAUZA
+            'pause-btn': () => callMenuFunction('togglePause'),
+            'resume-btn': () => callMenuFunction('togglePause'),
+            'restart-btn': () => restartGame(),
+            'quit-to-menu-btn': () => quitToMenu(),
+
+            // GAME OVER
+            'play-again-btn': () => playAgain(),
+            'quit-after-game-btn': () => callMenuFunction('switchScreen', 'start'),
+
+            // USTAWIENIA
+            'add-coins-btn': () => addCoins(),
+            'reset-progress-btn': () => showResetConfirm(),
+            'request-accelerometer-btn': () => requestAccelerometerAccess(),
+
+            // BACK BUTTONS (używamy klasy, bo może być wiele przycisków z tą klasą)
+            'back-btn': () => callMenuFunction('switchScreen', 'start')
+        };
+
+        // Sprawdź po ID
+        if (buttonId && actionMap[buttonId]) {
+            actionMap[buttonId]();
+            return;
         }
-        
-        handleButton(button) {
-            const buttonId = button.id;
-            const buttonClass = button.className;
-            
-            console.log('Button clicked:', buttonId || 'no-id', buttonClass);
-            
-            // Mapowanie przycisków do akcji
-            const actionMap = {
-                // MENU GŁÓWNE
-                'play-btn': () => this.executeMenuAction('startGame'),
-                'balls-btn': () => this.executeMenuAction('switchScreen', 'balls'),
-                'upgrades-btn': () => this.executeMenuAction('switchScreen', 'upgrades'),
-                'settings-btn': () => this.executeMenuAction('switchScreen', 'settings'),
-                
-                // PAUZA
-                'pause-btn': () => this.executeMenuAction('togglePause'),
-                'resume-btn': () => this.executeMenuAction('togglePause'),
-                'restart-btn': () => this.executeGameAction('restart'),
-                'quit-to-menu-btn': () => this.executeGameAction('quitToMenu'),
-                
-                // GAME OVER
-                'play-again-btn': () => this.executeGameAction('playAgain'),
-                'quit-after-game-btn': () => this.executeMenuAction('switchScreen', 'start'),
-                
-                // USTAWIENIA
-                'add-coins-btn': () => this.executeSettingsAction('addCoins'),
-                'reset-progress-btn': () => this.executeSettingsAction('resetProgress'),
-                'request-accelerometer-btn': () => this.executeSettingsAction('requestAccelerometer'),
-            };
-            
-            // Sprawdź ID przycisku
-            if (buttonId && actionMap[buttonId]) {
-                actionMap[buttonId]();
-                return;
-            }
-            
-            // Sprawdź klasy przycisku
-            if (buttonClass.includes('back-btn')) {
-                this.executeMenuAction('switchScreen', 'start');
-                return;
-            }
-            
-            if (buttonClass.includes('select-ball-btn')) {
-                const ballCard = button.closest('.ball-card');
-                if (ballCard) {
-                    const ballType = ballCard.dataset.ball;
-                    this.executeMenuAction('selectBall', ballType);
-                }
-                return;
-            }
-            
-            if (buttonClass.includes('unlock-btn')) {
-                const ballCard = button.closest('.ball-card');
-                if (ballCard) {
-                    const ballType = ballCard.dataset.ball;
-                    this.executeMenuAction('unlockBall', ballType);
-                }
-                return;
-            }
-            
-            if (buttonClass.includes('buy-btn') && !button.disabled) {
-                const upgradeItem = button.closest('.upgrade-item');
-                if (upgradeItem) {
-                    const ballType = button.dataset.ballType || this.getCurrentBallType();
-                    const upgradeId = button.dataset.upgradeId || this.getUpgradeIdFromElement(upgradeItem);
-                    
-                    if (ballType && upgradeId) {
-                        this.executeMenuAction('buyUpgrade', { ballType, upgradeId });
-                    }
-                }
-                return;
-            }
-            
-            if (buttonClass.includes('toggle-btn')) {
-                const upgradeItem = button.closest('.upgrade-item');
-                if (upgradeItem) {
-                    const ballType = button.dataset.ballType || this.getCurrentBallType();
-                    const upgradeId = button.dataset.upgradeId || this.getUpgradeIdFromElement(upgradeItem);
-                    
-                    if (ballType && upgradeId) {
-                        this.executeMenuAction('toggleUpgrade', { ballType, upgradeId });
-                    }
-                }
-                return;
-            }
-            
-            if (buttonClass.includes('ball-select-btn') && !buttonClass.includes('active')) {
-                const ballName = button.textContent.trim();
-                const ballType = this.getBallTypeFromName(ballName);
-                if (ballType) {
-                    this.executeMenuAction('selectBallForUpgrades', ballType);
-                }
-                return;
-            }
+
+        // Sprawdź po klasie (dla przycisków, które nie mają unikalnego ID)
+        if (buttonClass.includes('back-btn')) {
+            callMenuFunction('switchScreen', 'start');
+            return;
         }
-        
-        handleSlider(slider) {
-            const settingMap = {
-                'auto-jump-toggle': 'autoJump',
-                'mobile-controls-toggle': 'mobileControls',
-                'accelerometer-toggle': 'accelerometer',
-                'wind-display-toggle': 'windDisplay',
-                'debug-info-toggle': 'debugInfo'
-            };
-            
-            const settingKey = settingMap[slider.id];
-            if (settingKey && window.Menu) {
-                window.Menu.state.settings[settingKey] = slider.checked;
-                window.Menu.saveData();
-                window.Menu.applySettings();
-                
-                console.log('Setting updated:', settingKey, slider.checked);
+
+        if (buttonClass.includes('select-ball-btn')) {
+            const ballCard = button.closest('.ball-card');
+            if (ballCard) {
+                const ballType = ballCard.dataset.ball;
+                callMenuFunction('selectBall', ballType);
             }
+            return;
         }
-        
-        // WYKONYWANIE AKCJI
-        executeMenuAction(action, data = null) {
-            if (!window.Menu) {
-                console.error('Menu not available');
-                return;
+
+        if (buttonClass.includes('unlock-btn')) {
+            const ballCard = button.closest('.ball-card');
+            if (ballCard) {
+                const ballType = ballCard.dataset.ball;
+                callMenuFunction('unlockBall', ballType);
             }
-            
-            console.log('Executing menu action:', action, data);
-            
-            switch(action) {
-                case 'startGame':
-                    window.Menu.startGame();
-                    break;
-                case 'switchScreen':
-                    window.Menu.switchScreen(data);
-                    break;
-                case 'selectBall':
-                    window.Menu.selectBall(data);
-                    break;
-                case 'unlockBall':
-                    window.Menu.unlockBall(data);
-                    break;
-                case 'buyUpgrade':
-                    window.Menu.buyUpgrade(data.ballType, data.upgradeId);
-                    break;
-                case 'toggleUpgrade':
-                    window.Menu.toggleUpgrade(data.ballType, data.upgradeId);
-                    break;
-                case 'togglePause':
-                    window.Menu.togglePause();
-                    break;
-                case 'selectBallForUpgrades':
-                    window.Menu.state.currentBall = data;
-                    window.Menu.updateUpgradesScreen();
-                    break;
-            }
+            return;
         }
-        
-        executeGameAction(action) {
-            console.log('Executing game action:', action);
-            
-            switch(action) {
-                case 'restart':
-                    if (window.Menu) {
-                        window.Menu.saveGameProgress(true);
-                        window.Menu.state.coinsInGame = 0;
-                        document.getElementById('pause-menu').classList.add('hidden');
-                        window.Menu.startGame();
-                    }
-                    break;
-                case 'quitToMenu':
-                    if (window.Menu) {
-                        window.Menu.saveGameProgress(true);
-                        window.Menu.state.coinsInGame = 0;
-                        document.getElementById('pause-menu').classList.add('hidden');
-                        window.Menu.switchScreen('start');
-                    }
-                    break;
-                case 'playAgain':
-                    if (window.Menu) {
-                        window.Menu.saveGameProgress(false);
-                        window.Menu.state.coinsInGame = 0;
-                        document.getElementById('game-over-screen').classList.add('hidden');
-                        window.Menu.startGame();
-                    }
-                    break;
-            }
-        }
-        
-        executeSettingsAction(action) {
-            console.log('Executing settings action:', action);
-            
-            switch(action) {
-                case 'addCoins':
-                    if (window.Menu) {
-                        window.Menu.state.totalCoins += 1000;
-                        window.Menu.saveData();
-                        window.Menu.updateCoinsDisplay();
-                        window.Menu.showNotification('Added 1000 coins!', 'success');
-                    }
-                    break;
-                    
-                case 'resetProgress':
-                    this.showCustomConfirm(
-                        'Reset Progress',
-                        'Are you sure you want to reset all progress? This action cannot be undone.',
-                        () => {
-                            if (window.Menu) {
-                                window.Menu.resetData();
-                                window.Menu.updateMainMenu();
-                                window.Menu.showNotification('All data has been reset', 'warning');
-                            }
-                        }
+
+        if (buttonClass.includes('buy-btn') && !button.disabled) {
+            const upgradeItem = button.closest('.upgrade-item');
+            if (upgradeItem) {
+                const ballType = window.Menu?.state?.currentBall || 'standard';
+                const upgradeName = upgradeItem.querySelector('h4')?.textContent;
+                if (upgradeName) {
+                    // Musimy znaleźć upgradeId
+                    const upgradeDefs = GameConfig.getUpgradeDefinitions(ballType);
+                    const upgradeDef = upgradeDefs.find(u => 
+                        upgradeName.includes(u.name.split(' ')[0])
                     );
-                    break;
-                    
-                case 'requestAccelerometer':
-                    this.requestAccelerometerAccess();
-                    break;
-                    
-                case 'keyboard-pause':
-                    if (window.Menu && window.Menu.togglePause) {
-                        window.Menu.togglePause();
+                    if (upgradeDef && window.Menu?.buyUpgrade) {
+                        window.Menu.buyUpgrade(ballType, upgradeDef.id);
                     }
-                    break;
+                }
             }
+            return;
         }
-        
-        // POMOCNICZE FUNKCJE
-        getCurrentBallType() {
-            return window.Menu ? window.Menu.state.currentBall : 'standard';
+
+        if (buttonClass.includes('toggle-btn')) {
+            const upgradeItem = button.closest('.upgrade-item');
+            if (upgradeItem) {
+                const ballType = window.Menu?.state?.currentBall || 'standard';
+                const upgradeName = upgradeItem.querySelector('h4')?.textContent;
+                if (upgradeName) {
+                    const upgradeDefs = GameConfig.getUpgradeDefinitions(ballType);
+                    const upgradeDef = upgradeDefs.find(u => 
+                        upgradeName.includes(u.name.split(' ')[0])
+                    );
+                    if (upgradeDef && window.Menu?.toggleUpgrade) {
+                        window.Menu.toggleUpgrade(ballType, upgradeDef.id);
+                    }
+                }
+            }
+            return;
         }
-        
-        getUpgradeIdFromElement(element) {
-            const title = element.querySelector('h4');
-            if (!title) return null;
-            
-            // Przykład: "Jump Power (1/5)" → "jump-power"
-            const name = title.textContent.split('(')[0].trim().toLowerCase().replace(/\s+/g, '-');
-            return name;
-        }
-        
-        getBallTypeFromName(displayName) {
+
+        if (buttonClass.includes('ball-select-btn') && !buttonClass.includes('active')) {
+            const ballName = button.textContent.trim();
             const ballTypes = ['standard', 'rubber', 'beach', 'golf'];
-            for (const type of ballTypes) {
-                if (GameConfig.getBallDisplayName(type) === displayName) {
-                    return type;
-                }
-            }
-            return null;
-        }
-        
-        showCustomConfirm(title, message, onConfirm) {
-            const modal = document.createElement('div');
-            modal.className = 'custom-confirm-modal';
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.8);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 9999;
-            `;
-            
-            modal.innerHTML = `
-                <div style="
-                    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-                    border-radius: 20px;
-                    padding: 25px;
-                    max-width: 90%;
-                    width: 350px;
-                    border: 2px solid rgba(74, 159, 255, 0.3);
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-                    text-align: center;
-                ">
-                    <h3 style="color: #fff; margin-bottom: 15px; font-family: 'Orbitron', sans-serif;">
-                        ${title}
-                    </h3>
-                    <p style="color: #aaa; margin-bottom: 25px; line-height: 1.5;">
-                        ${message}
-                    </p>
-                    <div style="display: flex; gap: 15px;">
-                        <button class="confirm-cancel" style="
-                            flex: 1;
-                            padding: 12px;
-                            background: rgba(255,107,107,0.2);
-                            border: 2px solid rgba(255,107,107,0.3);
-                            border-radius: 12px;
-                            color: white;
-                            font-size: 16px;
-                            cursor: pointer;
-                        ">Cancel</button>
-                        <button class="confirm-ok" style="
-                            flex: 1;
-                            padding: 12px;
-                            background: linear-gradient(135deg, rgba(74,159,255,0.2), rgba(74,255,74,0.1));
-                            border: 2px solid rgba(74,159,255,0.3);
-                            border-radius: 12px;
-                            color: white;
-                            font-size: 16px;
-                            cursor: pointer;
-                        ">OK</button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Event listeners dla przycisków w modal
-            modal.querySelector('.confirm-cancel').addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.body.removeChild(modal);
-            });
-            
-            modal.querySelector('.confirm-ok').addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.body.removeChild(modal);
-                if (onConfirm) onConfirm();
-            });
-            
-            // Zapobiegaj propagacji kliknięć na tło
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    document.body.removeChild(modal);
-                }
-            });
-        }
-        
-        async requestAccelerometerAccess() {
-            if (typeof DeviceOrientationEvent !== 'undefined' && 
-                typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    if (permission === 'granted') {
-                        if (window.Menu) {
-                            window.Menu.showNotification('Accelerometer access granted!', 'success');
-                        }
-                        if (window.Game && window.Game.setupIOSAccelerometer) {
-                            window.Game.setupIOSAccelerometer();
-                        }
-                    } else {
-                        if (window.Menu) {
-                            window.Menu.showNotification('Accelerometer access denied', 'error');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error requesting accelerometer permission:', error);
+            for (const ballType of ballTypes) {
+                if (GameConfig.getBallDisplayName(ballType) === ballName) {
                     if (window.Menu) {
-                        window.Menu.showNotification('Failed to request access', 'error');
+                        window.Menu.state.currentBall = ballType;
+                        window.Menu.updateUpgradesScreen();
                     }
-                }
-            } else {
-                if (window.Menu) {
-                    window.Menu.showNotification('Accelerometer already available', 'info');
+                    break;
                 }
             }
-        }
-        
-        setupMutationObserver() {
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    if (mutation.addedNodes.length) {
-                        mutation.addedNodes.forEach((node) => {
-                            if (node.nodeType === 1) {
-                                // Oznacz nowe przyciski
-                                if (node.tagName === 'BUTTON') {
-                                    node._singleTapProcessed = false;
-                                }
-                                node.querySelectorAll?.('button').forEach(btn => {
-                                    btn._singleTapProcessed = false;
-                                });
-                            }
-                        });
-                    }
-                });
-            });
-            
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
-        }
-        
-        initializeSpecialElements() {
-            // Inicjalizacja sliderów
-            document.querySelectorAll('input[type="checkbox"]').forEach(slider => {
-                if (!slider._singleTapProcessed) {
-                    slider._singleTapProcessed = true;
-                }
-            });
+            return;
         }
     }
-    
-    // Inicjalizacja systemu
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(() => {
-            window.SingleTap = new SingleTapSystem();
-            console.log('Single Tap System ready');
-        }, 1000);
-    });
-    
-    // Eksport dla debugowania
-    console.log('Single Tap Event System loaded');
+
+    // 4. POMOCNICZE FUNKCJE
+    function callMenuFunction(funcName, param = null) {
+        if (!window.Menu || !window.Menu[funcName]) {
+            console.error('Menu or function not available:', funcName);
+            return;
+        }
+
+        console.log('Calling Menu function:', funcName, param);
+
+        if (param !== null) {
+            window.Menu[funcName](param);
+        } else {
+            window.Menu[funcName]();
+        }
+    }
+
+    function addCoins() {
+        if (window.Menu) {
+            window.Menu.state.totalCoins += 1000;
+            window.Menu.saveData();
+            window.Menu.updateCoinsDisplay();
+            window.Menu.showNotification('Added 1000 coins!', 'success');
+        }
+    }
+
+    function showResetConfirm() {
+        // Stwórz custom modal
+        const modal = document.createElement('div');
+        modal.className = 'custom-confirm-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            font-family: 'Roboto', sans-serif;
+        `;
+
+        modal.innerHTML = `
+            <div style="
+                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                border-radius: 20px;
+                padding: 25px;
+                max-width: 90%;
+                width: 350px;
+                border: 2px solid rgba(74, 159, 255, 0.3);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+                text-align: center;
+            ">
+                <h3 style="
+                    color: #fff;
+                    margin-bottom: 15px;
+                    font-family: 'Orbitron', sans-serif;
+                    font-size: 20px;
+                ">Reset Progress</h3>
+                <p style="
+                    color: #aaa;
+                    margin-bottom: 25px;
+                    line-height: 1.5;
+                    font-size: 16px;
+                ">Are you sure you want to reset all progress? This action cannot be undone.</p>
+                <div style="display: flex; gap: 15px;">
+                    <button id="modal-cancel-btn" style="
+                        flex: 1;
+                        padding: 15px;
+                        background: rgba(255,107,107,0.2);
+                        border: 2px solid rgba(255,107,107,0.3);
+                        border-radius: 12px;
+                        color: white;
+                        font-size: 16px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        min-height: 50px;
+                    ">Cancel</button>
+                    <button id="modal-ok-btn" style="
+                        flex: 1;
+                        padding: 15px;
+                        background: linear-gradient(135deg, rgba(74,159,255,0.2), rgba(74,255,74,0.1));
+                        border: 2px solid rgba(74,159,255,0.3);
+                        border-radius: 12px;
+                        color: white;
+                        font-size: 16px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        min-height: 50px;
+                    ">OK</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Dodaj event listeners dla przycisków w modal
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+        const okBtn = document.getElementById('modal-ok-btn');
+
+        function closeModal() {
+            if (modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        }
+
+        cancelBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            closeModal();
+        });
+
+        okBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            closeModal();
+            if (window.Menu) {
+                window.Menu.resetData();
+                window.Menu.updateMainMenu();
+                window.Menu.showNotification('All data has been reset', 'warning');
+            }
+        });
+
+        // Zamknij modal przy kliknięciu w tło
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    }
+
+    function restartGame() {
+        if (window.Menu) {
+            window.Menu.saveGameProgress(true);
+            window.Menu.state.coinsInGame = 0;
+            const pauseMenu = document.getElementById('pause-menu');
+            if (pauseMenu) pauseMenu.classList.add('hidden');
+            window.Menu.startGame();
+        }
+    }
+
+    function quitToMenu() {
+        if (window.Menu) {
+            window.Menu.saveGameProgress(true);
+            window.Menu.state.coinsInGame = 0;
+            const pauseMenu = document.getElementById('pause-menu');
+            if (pauseMenu) pauseMenu.classList.add('hidden');
+            window.Menu.switchScreen('start');
+        }
+    }
+
+    function playAgain() {
+        if (window.Menu) {
+            window.Menu.saveGameProgress(false);
+            window.Menu.state.coinsInGame = 0;
+            const gameOverScreen = document.getElementById('game-over-screen');
+            if (gameOverScreen) gameOverScreen.classList.add('hidden');
+            window.Menu.startGame();
+        }
+    }
+
+    function handleSliderChange(slider) {
+        const settingMap = {
+            'auto-jump-toggle': 'autoJump',
+            'mobile-controls-toggle': 'mobileControls',
+            'accelerometer-toggle': 'accelerometer',
+            'wind-display-toggle': 'windDisplay',
+            'debug-info-toggle': 'debugInfo'
+        };
+
+        const settingKey = settingMap[slider.id];
+        if (settingKey && window.Menu) {
+            window.Menu.state.settings[settingKey] = slider.checked;
+            window.Menu.saveData();
+            window.Menu.applySettings();
+
+            if (window.Game && window.Game.applySettings) {
+                window.Game.applySettings();
+            }
+        }
+    }
+
+    async function requestAccelerometerAccess() {
+        if (typeof DeviceOrientationEvent !== 'undefined' && 
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                const permission = await DeviceOrientationEvent.requestPermission();
+                if (permission === 'granted') {
+                    if (window.Menu) {
+                        window.Menu.showNotification('Accelerometer access granted!', 'success');
+                    }
+                    if (window.Game && window.Game.setupIOSAccelerometer) {
+                        window.Game.setupIOSAccelerometer();
+                    }
+                } else {
+                    if (window.Menu) {
+                        window.Menu.showNotification('Accelerometer access denied', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Error requesting accelerometer permission:', error);
+                if (window.Menu) {
+                    window.Menu.showNotification('Failed to request access', 'error');
+                }
+            }
+        } else {
+            if (window.Menu) {
+                window.Menu.showNotification('Accelerometer already available', 'info');
+            }
+        }
+    }
+
+    // 5. INICJALIZACJA
+    function init() {
+        console.log('Initializing Single Tap System for standalone...');
+
+        // Usuń onclick atrybuty
+        removeOnClickAttributes();
+
+        // Ustaw globalny click handler
+        setupGlobalClickHandler();
+
+        console.log('Single Tap System initialized');
+    }
+
+    // Poczekaj na załadowanie DOM
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        setTimeout(init, 1000);
+    }
+
 })();

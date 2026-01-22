@@ -52,6 +52,11 @@ const Menu = {
         
         this.checkMobile();
         this.loadData();
+
+        // ZAWSZE setup event listeners
+        this.setupEventListeners();
+        this.updateUI();
+        this.switchScreen('start');
         
         
         if (document.readyState === 'loading') {

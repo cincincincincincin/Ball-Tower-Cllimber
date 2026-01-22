@@ -1466,3 +1466,147 @@ body.standalone #settings-screen {
         overflow-y: visible;
     }
 }
+
+/* DODAJ NA KONIEC PLIKU style.css */
+
+/* PRZEWIJANIE dla wszystkich ekranów z długą zawartością */
+#upgrades-screen,
+#settings-screen,
+#balls-screen {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+}
+
+/* Naprawa flexbox dla przewijania */
+#upgrades-screen .screen-header,
+#settings-screen .screen-header,
+#balls-screen .screen-header {
+    flex-shrink: 0;
+}
+
+#upgrades-list,
+.settings-content,
+.balls-container {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0; /* WAŻNE dla flex scroll */
+}
+
+/* Ustawienia zawartości */
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.settings-section {
+    flex-shrink: 0;
+}
+
+/* Dla iOS - lepsze przewijanie */
+@supports (-webkit-touch-callout: none) {
+    #upgrades-screen,
+    #settings-screen,
+    #balls-screen {
+        height: 100%;
+        overflow-y: scroll;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Dla przeglądarek desktop */
+@media (min-width: 768px) {
+    #upgrades-screen,
+    #settings-screen {
+        padding: 30px;
+    }
+    
+    .settings-content {
+        max-height: 70vh;
+    }
+}
+
+/* Naprawa dla standalone */
+body.standalone #upgrades-screen,
+body.standalone #settings-screen,
+body.standalone #balls-screen {
+    padding-top: max(20px, env(safe-area-inset-top)) !important;
+    padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+}
+
+/* Custom modal style */
+.custom-confirm-modal {
+    animation: fadeIn 0.3s ease;
+}
+
+.custom-confirm-modal div {
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Przyciski w modal - większe dla dotyku */
+.custom-confirm-modal button {
+    min-height: 50px !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+}
+
+/* Zapobieganie blokowaniu przewijania w modal */
+.custom-confirm-modal {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Dla przeglądarki - upewnij się że przewijanie działa */
+@media (hover: hover) {
+    #upgrades-list::-webkit-scrollbar,
+    .settings-content::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    #upgrades-list::-webkit-scrollbar-track,
+    .settings-content::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+    }
+    
+    #upgrades-list::-webkit-scrollbar-thumb,
+    .settings-content::-webkit-scrollbar-thumb {
+        background: rgba(74, 159, 255, 0.3);
+        border-radius: 4px;
+    }
+}
+/* Dodaj do istniejącego CSS */
+.custom-confirm-modal * {
+    pointer-events: auto !important;
+}
+
+.custom-confirm-modal button {
+    cursor: pointer !important;
+    -webkit-tap-highlight-color: rgba(74, 159, 255, 0.3) !important;
+}
+
+/* Zapobiegaj propagacji kliknięć z modal do document */
+.custom-confirm-modal > div {
+    pointer-events: auto;
+}
+
+.custom-confirm-modal > div * {
+    pointer-events: auto;
+}
