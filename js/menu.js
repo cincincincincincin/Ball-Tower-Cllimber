@@ -1,3 +1,5 @@
+
+
 const Menu = {
     
     state: {
@@ -12,13 +14,9 @@ const Menu = {
         coinsInGame: 0,
         scoreInGame: 0, 
         isMobile: false,
-        isStandalone: false,
         settings: {
-            autoJump: true,               
-            mobileControls: true,         
-            accelerometer: false,         // Domyslnie false, bo wymaga permisji
-            windDisplay: true,            
-            debugInfo: false
+            autoJump: true,                      
+            accelerometer: true,          
         },
         upgrades: {
             standard: {},
@@ -28,335 +26,98 @@ const Menu = {
         }
     },
 
-    // Debouncing variables
-    lastClickTime: 0,
-    debounceDelay: 350, // Zwiększone dla iOS standalone
-    
-    // Input handling
-    keys: {},
-    touchActive: false,
-    touchDirection: 0,
     
     init() {
-        console.log('Menu.init() - Initializing menu system');
+        console.log('Menu.init() - Menu initialization');
         
         this.checkMobile();
-        this.checkStandalone();
         this.loadData();
         
-        // Setup event listeners - teraz delegacja zdarzeń
-        this.setupEventDelegation();
         
-        // Update UI
-        this.updateAllUI();
-        
-        // Initialize screens
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.initializeAfterDOM();
+            });
+        } else {
+            this.initializeAfterDOM();
+        }
+    },
+    
+    initializeAfterDOM() {
+        this.setupEventListeners();
+        this.updateUI();
         this.switchScreen('start');
         
-        // Apply settings
-        this.applySettings();
         
-        console.log('Menu initialized - iOS standalone aware');
+        window.addEventListener('resize', () => {
+            this.handleResize();
+        });
+        
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                this.handleResize();
+            }, 100);
+        });
+        
+        console.log('Menu initialized - Responsive mode');
     },
+
     
     checkMobile() {
         this.state.isMobile = window.innerWidth <= GameConfig.MOBILE_BREAKPOINT || 
                               /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
         if (this.state.isMobile) {
             document.body.classList.add('mobile');
-            console.log('Mobile device detected');
+            this.setupViewport();
         }
     },
     
-    checkStandalone() {
-        this.state.isStandalone = window.navigator.standalone || 
-                                 (window.matchMedia('(display-mode: standalone)').matches);
-        
-        if (this.state.isStandalone) {
-            document.body.classList.add('standalone');
-            console.log('Running in standalone/PWA mode');
-        }
-    },
     
-    // Event Delegation - główna zmiana!
-    setupEventDelegation() {
-        console.log('Setting up event delegation...');
-        
-        // Delegacja kliknięć na cały dokument
-        document.addEventListener('click', (e) => {
-            this.handleClick(e);
-        }, true); // Używamy capture phase dla lepszej kontroli
-        
-        // Delegacja touch events dla kontrolek mobilnych
-        document.addEventListener('touchstart', (e) => {
-            this.handleTouchStart(e);
-        }, { passive: false });
-        
-        document.addEventListener('touchend', (e) => {
-            this.handleTouchEnd(e);
-        }, { passive: false });
-        
-        // Keyboard events
-        document.addEventListener('keydown', (e) => {
-            this.handleKeyDown(e);
-        });
-        
-        // Swipe/gesture prevention
-        document.addEventListener('touchmove', (e) => {
-            if (e.target.type === 'range') return;
-            e.preventDefault();
-        }, { passive: false });
-        
-        // iOS specific accelerometer setup
-        this.setupIOSAccelerometer();
-    },
-    
-    // Główny handler kliknięć
-    handleClick(e) {
-        // Debounce dla iOS standalone
-        const now = Date.now();
-        if (now - this.lastClickTime < this.debounceDelay) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Click debounced for iOS standalone');
-            return;
-        }
-        this.lastClickTime = now;
-        
-        // Znajdź najbliższy kliknięty element z data-action
-        const target = e.target.closest('[data-action], [data-target]');
-        if (!target) return;
-        
-        e.preventDefault();
-        e.stopPropagation();
-        
-        // Dodaj wizualną odpowiedź
-        this.addButtonFeedback(target);
-        
-        // Obsługa data-target (back buttons)
-        if (target.dataset.target) {
-            this.switchScreen(target.dataset.target);
-            return;
+    setupViewport() {
+        let viewport = document.querySelector('meta[name="viewport"]');
+        if (!viewport) {
+            viewport = document.createElement('meta');
+            viewport.name = 'viewport';
+            document.head.appendChild(viewport);
         }
         
-        // Obsługa data-action
-        if (target.dataset.action) {
-            this.handleAction(target.dataset.action, target);
-        }
-    },
-    
-    // Handler dla akcji
-    handleAction(action, element) {
-        console.log('Action triggered:', action, element);
         
-        switch(action) {
-            // Main menu actions
-            case 'play':
-                this.startGame();
-                break;
-            case 'balls':
-                this.switchScreen('balls');
-                break;
-            case 'upgrades':
-                this.switchScreen('upgrades');
-                break;
-            case 'settings':
-                this.switchScreen('settings');
-                break;
-                
-            // Ball selection actions
-            case 'select-ball':
-                const ballType = element.dataset.ball || element.closest('[data-ball]')?.dataset.ball;
-                if (ballType) this.selectBall(ballType);
-                break;
-            case 'unlock-ball':
-                const unlockBallType = element.dataset.ball || element.closest('[data-ball]')?.dataset.ball;
-                if (unlockBallType) this.unlockBall(unlockBallType);
-                break;
-                
-            // Game control actions
-            case 'pause':
-                this.togglePause();
-                break;
-            case 'resume':
-                this.togglePause();
-                break;
-            case 'restart':
-                this.restartGame();
-                break;
-            case 'quit-to-menu':
-                this.quitToMenu();
-                break;
-            case 'play-again':
-                this.playAgain();
-                break;
-            case 'quit-after-game':
-                this.quitAfterGame();
-                break;
-                
-            // Settings actions
-            case 'add-coins':
-                this.addCoins(1000);
-                break;
-            case 'reset-progress':
-                this.resetProgress();
-                break;
-            case 'request-accelerometer':
-                this.requestAccelerometerPermission();
-                break;
-                
-            // Upgrade actions
-            case 'buy-upgrade':
-                const upgradeId = element.dataset.upgrade;
-                const ballForUpgrade = element.dataset.ball;
-                if (upgradeId && ballForUpgrade) this.buyUpgrade(ballForUpgrade, upgradeId);
-                break;
-            case 'toggle-upgrade':
-                const toggleUpgradeId = element.dataset.upgrade;
-                const toggleBall = element.dataset.ball;
-                if (toggleUpgradeId && toggleBall) this.toggleUpgrade(toggleBall, toggleUpgradeId);
-                break;
-                
-            // Mobile controls
-            case 'move-left':
-                this.handleMove(-1);
-                break;
-            case 'move-right':
-                this.handleMove(1);
-                break;
-        }
+        viewport.setAttribute('content', 
+            'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
     },
+
     
-    // Touch handling dla kontrolek mobilnych
-    handleTouchStart(e) {
-        e.preventDefault();
+    handleResize() {
+        this.checkMobile();
+        this.updateUI();
         
-        // Sprawdź czy to kontrolka mobilna
-        const control = e.target.closest('[data-action="move-left"], [data-action="move-right"]');
-        if (control) {
-            const action = control.dataset.action;
-            if (action === 'move-left') this.handleMove(-1);
-            else if (action === 'move-right') this.handleMove(1);
-        }
-    },
-    
-    handleTouchEnd(e) {
-        e.preventDefault();
-        this.handleMove(0);
-    },
-    
-    handleMove(direction) {
-        if (window.Game) {
-            Game.touchActive = direction !== 0;
-            Game.touchDirection = direction;
-        }
-    },
-    
-    handleKeyDown(e) {
-        this.keys[e.key] = true;
         
-        // Keyboard shortcuts
-        if (e.key === 'p' || e.key === 'P') {
-            if (this.state.gameStarted && !this.state.isGameOver) {
-                this.togglePause();
-            }
+        if (window.Game && Game.resizeCanvas) {
+            Game.resizeCanvas();
         }
         
-        if (e.key === 'Escape') {
-            if (this.state.isPaused) {
-                this.togglePause();
-            } else if (this.state.isGameOver) {
-                this.switchScreen('start');
-            } else if (this.state.currentScreen === 'game') {
-                this.togglePause();
-            } else {
-                this.switchScreen('start');
-            }
-        }
-    },
-    
-    addButtonFeedback(element) {
-        // Dodaj klasę active dla wizualnej odpowiedzi
-        element.classList.add('active');
-        setTimeout(() => {
-            element.classList.remove('active');
-        }, 150);
-    },
-    
-    setupIOSAccelerometer() {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         
-        if (isIOS && typeof DeviceOrientationEvent !== 'undefined') {
-            // Automatyczne żądanie dostępu przy starcie
-            if (this.state.settings.accelerometer && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // Opóźnione żądanie, aby nie blokować interfejsu
-                setTimeout(() => {
-                    DeviceOrientationEvent.requestPermission()
-                        .then(permissionState => {
-                            if (permissionState === 'granted') {
-                                console.log('Accelerometer permission granted on iOS');
-                                window.addEventListener('deviceorientation', (e) => {
-                                    if (window.Game && Game.handleDeviceOrientation) {
-                                        Game.handleDeviceOrientation(e);
-                                    }
-                                });
-                            } else {
-                                console.log('Accelerometer permission denied on iOS');
-                                this.state.settings.accelerometer = false;
-                                this.saveData();
-                                this.updateSettingsScreen();
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Accelerometer permission error:', error);
-                            this.state.settings.accelerometer = false;
-                            this.saveData();
-                            this.updateSettingsScreen();
-                        });
-                }, 1000);
-            }
-        }
-    },
-    
-    async requestAccelerometerPermission() {
-        if (typeof DeviceOrientationEvent !== 'undefined' && 
-            typeof DeviceOrientationEvent.requestPermission === 'function') {
-            try {
-                const permission = await DeviceOrientationEvent.requestPermission();
-                if (permission === 'granted') {
-                    this.state.settings.accelerometer = true;
-                    this.saveData();
-                    this.updateSettingsScreen();
-                    this.showNotification('Accelerometer access granted!', 'success');
-                    
-                    // Dodaj event listener
-                    window.addEventListener('deviceorientation', (e) => {
-                        if (window.Game && Game.handleDeviceOrientation) {
-                            Game.handleDeviceOrientation(e);
-                        }
-                    });
-                } else {
-                    this.showNotification('Accelerometer access denied', 'error');
-                }
-            } catch (error) {
-                console.error('Error requesting accelerometer permission:', error);
-                this.showNotification('Failed to request access', 'error');
-            }
+        if (window.innerHeight > window.innerWidth) {
+            
+            document.body.classList.add('portrait');
+            document.body.classList.remove('landscape');
         } else {
-            this.showNotification('Accelerometer already available', 'info');
+            
+            document.body.classList.add('landscape');
+            document.body.classList.remove('portrait');
         }
     },
+
     
     loadData() {
-        console.log('Loading game data...');
+        console.log('Loading data...');
+        
         
         const savedData = localStorage.getItem('icy_tower_game_data');
         if (savedData) {
             try {
                 const data = JSON.parse(savedData);
                 
-                // Merge danych zachowując domyślne wartości
                 this.state.totalCoins = data.totalCoins || 0;
                 this.state.bestScore = data.bestScore || 0;
                 this.state.unlockedBalls = data.unlockedBalls || ['standard'];
@@ -370,50 +131,76 @@ const Menu = {
                     standard: {}, rubber: {}, beach: {}, golf: {}
                 };
                 
-                console.log('Data loaded successfully');
+                console.log('Data loaded from icy_tower_game_data:', data);
             } catch (e) {
                 console.error('Error loading data:', e);
                 this.resetData();
             }
         } else {
-            this.resetData();
+            
+            const oldData = localStorage.getItem('icyTowerData');
+            if (oldData) {
+                try {
+                    const data = JSON.parse(oldData);
+                    
+                    this.state.totalCoins = data.totalCoins || 0;
+                    this.state.bestScore = data.bestScore || 0;
+                    this.state.unlockedBalls = data.unlockedBalls || ['standard'];
+                    this.state.currentBall = data.currentBall || 'standard';
+                    
+                    if (data.settings) {
+                        this.state.settings = { ...this.state.settings, ...data.settings };
+                    }
+                    
+                    this.state.upgrades = data.upgrades || {
+                        standard: {}, rubber: {}, beach: {}, golf: {}
+                    };
+                    
+                    
+                    this.saveData();
+                    
+                    localStorage.removeItem('icyTowerData');
+                    
+                    console.log('Data migrated from icyTowerData');
+                } catch (e) {
+                    console.error('Error migrating data:', e);
+                    this.resetData();
+                }
+            } else {
+                this.resetData();
+            }
         }
         
         this.updateCoinsDisplay();
     },
-    
+
     resetData() {
-        this.state = {
-            currentScreen: 'start',
-            totalCoins: 0,
-            bestScore: 0,
-            unlockedBalls: ['standard'],
-            currentBall: 'standard',
-            gameStarted: false,
-            isPaused: false,
-            isGameOver: false,
-            coinsInGame: 0,
-            scoreInGame: 0,
-            isMobile: this.state.isMobile,
-            isStandalone: this.state.isStandalone,
-            settings: {
-                autoJump: true,
-                mobileControls: true,
-                accelerometer: false,
-                windDisplay: true,
-                debugInfo: false
-            },
-            upgrades: {
-                standard: {},
-                rubber: {},
-                beach: {},
-                golf: {}
-            }
+        this.state.totalCoins = 0;
+        this.state.bestScore = 0;
+        this.state.unlockedBalls = ['standard'];
+        this.state.currentBall = 'standard';
+        
+        
+        this.state.settings = {
+            autoJump: true,
+            mobileControls: true,
+            accelerometer: true,
+            windDisplay: true,
+            debugInfo: false
         };
         
-        localStorage.removeItem('icy_tower_game_data');
-        this.saveData();
+        this.state.upgrades = {
+            standard: {}, rubber: {}, beach: {}, golf: {}
+        };
         
+        
+        localStorage.removeItem('icy_tower_game_data');
+        localStorage.removeItem('icyTowerData');
+        localStorage.removeItem('icy_tower_high_score');
+        localStorage.removeItem('icy_tower_total_coins');
+        
+        
+        this.saveData();
         this.showNotification('All data has been reset', 'warning');
     },
     
@@ -429,42 +216,45 @@ const Menu = {
         
         localStorage.setItem('icy_tower_game_data', JSON.stringify(data));
     },
+
     
     switchScreen(screenName) {
         console.log('Switching screen to:', screenName);
         
-        // Ukryj wszystkie ekrany
+        
         document.querySelectorAll('.screen').forEach(screen => {
             screen.classList.remove('active');
         });
         
-        // Ukryj overlay menu
+        
         document.getElementById('pause-menu').classList.add('hidden');
         document.getElementById('game-over-screen').classList.add('hidden');
         
-        // Pokaż docelowy ekran
+        
         const targetScreen = document.getElementById(`${screenName}-screen`);
         if (targetScreen) {
             targetScreen.classList.add('active');
             this.state.currentScreen = screenName;
             
-            // Zresetuj scroll
-            const screenBody = targetScreen.querySelector('.screen-body');
-            if (screenBody) screenBody.scrollTop = 0;
             
-            // Aktualizuj UI ekranu
             this.updateScreenUI(screenName);
         }
         
-        // Jeśli wychodzimy z gry, zatrzymaj grę
+        
         if (screenName !== 'game') {
-            this.state.gameStarted = false;
             this.state.isPaused = false;
+            this.state.gameStarted = false;
             if (window.Game && Game.stopGame) {
                 Game.stopGame();
             }
         }
+        
+        
+        if (targetScreen) {
+            targetScreen.scrollTop = 0;
+        }
     },
+
     
     updateScreenUI(screenName) {
         switch(screenName) {
@@ -480,28 +270,31 @@ const Menu = {
             case 'settings':
                 this.updateSettingsScreen();
                 break;
-            case 'game':
-                this.updateGameHUD();
-                break;
         }
     },
-    
-    updateAllUI() {
-        this.updateMainMenu();
-        this.updateBallsScreen();
-        this.updateUpgradesScreen();
-        this.updateSettingsScreen();
-        this.updateGameHUD();
-    },
+
     
     updateMainMenu() {
-        this.updateElement('total-coins', this.state.totalCoins);
-        this.updateElement('best-score', this.state.bestScore);
-        this.updateElement('unlocked-balls', `${this.state.unlockedBalls.length}/4`);
+        
+        document.getElementById('total-coins').textContent = this.state.totalCoins;
+        document.getElementById('best-score').textContent = this.state.bestScore;
+        document.getElementById('unlocked-balls').textContent = 
+            `${this.state.unlockedBalls.length}/4`;
+            
+        
+        if (document.body.classList.contains('landscape')) {
+            const titleContainer = document.querySelector('.title-container');
+            if (titleContainer) {
+                titleContainer.style.marginBottom = '2vh';
+            }
+        }
     },
+
     
     updateBallsScreen() {
-        this.updateElement('balls-coins', this.state.totalCoins);
+        
+        document.getElementById('balls-coins').textContent = this.state.totalCoins;
+        
         
         const balls = ['standard', 'rubber', 'beach', 'golf'];
         balls.forEach(ballType => {
@@ -511,39 +304,64 @@ const Menu = {
             const isUnlocked = this.state.unlockedBalls.includes(ballType);
             const isCurrent = this.state.currentBall === ballType;
             
+            
             ballCard.classList.toggle('locked', !isUnlocked);
             ballCard.classList.toggle('active', isCurrent);
             
-            // Zaktualizuj przyciski
-            const existingBtn = ballCard.querySelector('button');
-            if (existingBtn) existingBtn.remove();
+            
+            const lockIcon = ballCard.querySelector('.fa-lock');
+            if (lockIcon) {
+                lockIcon.style.display = isUnlocked ? 'none' : 'block';
+            }
+            
+            
+            const existingUnlockBtn = ballCard.querySelector('.unlock-btn');
+            const existingSelectBtn = ballCard.querySelector('.select-ball-btn');
+            if (existingUnlockBtn) existingUnlockBtn.remove();
+            if (existingSelectBtn) existingSelectBtn.remove();
+            
             
             if (isUnlocked) {
                 const selectBtn = document.createElement('button');
                 selectBtn.className = 'select-ball-btn';
-                selectBtn.dataset.action = 'select-ball';
-                selectBtn.dataset.ball = ballType;
                 selectBtn.textContent = isCurrent ? 'Selected' : 'Select';
+                selectBtn.onclick = () => {
+                    this.selectBall(ballType);
+                };
                 ballCard.appendChild(selectBtn);
             } else {
+                
                 const unlockBtn = document.createElement('button');
                 unlockBtn.className = 'unlock-btn';
-                unlockBtn.dataset.action = 'unlock-ball';
-                unlockBtn.dataset.ball = ballType;
                 unlockBtn.dataset.cost = GameConfig.getBallUnlockPrice(ballType);
                 unlockBtn.innerHTML = `Unlock for ${unlockBtn.dataset.cost} <i class="fas fa-coins"></i>`;
                 unlockBtn.disabled = this.state.totalCoins < parseInt(unlockBtn.dataset.cost);
+                unlockBtn.onclick = () => {
+                    this.unlockBall(ballType);
+                };
                 ballCard.appendChild(unlockBtn);
             }
         });
         
-        this.updateElement('current-ball-name', GameConfig.getBallDisplayName(this.state.currentBall));
+        
+        document.getElementById('current-ball-name').textContent = 
+            GameConfig.getBallDisplayName(this.state.currentBall);
+            
+        
+        if (document.body.classList.contains('landscape')) {
+            const ballsContainer = document.querySelector('.balls-container');
+            if (ballsContainer) {
+                ballsContainer.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            }
+        }
     },
+
     
     updateUpgradesScreen() {
-        this.updateElement('upgrades-coins', this.state.totalCoins);
         
-        // Aktualizuj przyciski wyboru piłki
+        document.getElementById('upgrades-coins').textContent = this.state.totalCoins;
+        
+        
         const selector = document.querySelector('.ball-selector-buttons');
         if (selector) {
             selector.innerHTML = '';
@@ -551,18 +369,16 @@ const Menu = {
             this.state.unlockedBalls.forEach(ballType => {
                 const button = document.createElement('button');
                 button.className = `ball-select-btn ${this.state.currentBall === ballType ? 'active' : ''}`;
-                button.dataset.action = 'select-upgrade-ball';
-                button.dataset.ball = ballType;
                 button.textContent = GameConfig.getBallDisplayName(ballType);
-                button.addEventListener('click', () => {
+                button.onclick = () => {
                     this.state.currentBall = ballType;
                     this.updateUpgradesScreen();
-                });
+                };
                 selector.appendChild(button);
             });
         }
         
-        // Aktualizuj listę ulepszeń
+        
         const upgradesList = document.getElementById('upgrades-list');
         if (upgradesList) {
             upgradesList.innerHTML = '';
@@ -593,17 +409,13 @@ const Menu = {
                         </div>
                         ${currentLevel > 0 ? `
                             <button class="toggle-btn ${isActive ? '' : 'off'}"
-                                    data-action="toggle-upgrade"
-                                    data-ball="${this.state.currentBall}"
-                                    data-upgrade="${upgradeDef.id}">
+                                    onclick="Menu.toggleUpgrade('${this.state.currentBall}', '${upgradeDef.id}')">
                                 ${isActive ? 'ON' : 'OFF'}
                             </button>
                         ` : ''}
                         <button class="buy-btn" 
-                                data-action="buy-upgrade"
-                                data-ball="${this.state.currentBall}"
-                                data-upgrade="${upgradeDef.id}"
-                                ${isMaxLevel || !canAfford ? 'disabled' : ''}>
+                                ${isMaxLevel || !canAfford ? 'disabled' : ''}
+                                onclick="Menu.buyUpgrade('${this.state.currentBall}', '${upgradeDef.id}')">
                             ${isMaxLevel ? 'MAX' : 'Buy'}
                         </button>
                     </div>
@@ -613,48 +425,67 @@ const Menu = {
             });
         }
     },
+
     
     updateSettingsScreen() {
-        // Ustaw wartości przełączników
-        this.updateToggle('auto-jump-toggle', this.state.settings.autoJump);
-        this.updateToggle('mobile-controls-toggle', this.state.settings.mobileControls);
-        this.updateToggle('accelerometer-toggle', this.state.settings.accelerometer);
-        this.updateToggle('wind-display-toggle', this.state.settings.windDisplay);
-        this.updateToggle('debug-info-toggle', this.state.settings.debugInfo);
         
-        // Pokaż/ukryj debug info
-        const debugInfo = document.getElementById('debug-info');
-        if (debugInfo) {
-            debugInfo.classList.toggle('hidden', !this.state.settings.debugInfo);
-        }
+        document.getElementById('auto-jump-toggle').checked = this.state.settings.autoJump;
+        document.getElementById('accelerometer-toggle').checked = this.state.settings.accelerometer;
         
-        // Aktualizuj mobilne kontrole
-        const mobileControls = document.getElementById('mobile-controls-overlay');
-        if (mobileControls) {
-            mobileControls.style.display = this.state.settings.mobileControls ? 'flex' : 'none';
-        }
+        
+        document.getElementById('auto-jump-toggle').onchange = (e) => {
+            this.state.settings.autoJump = e.target.checked;
+            this.saveData();
+            this.applySettings();
+        };
+        
+        document.getElementById('accelerometer-toggle').onchange = (e) => {
+            this.state.settings.accelerometer = e.target.checked;
+            this.saveData();
+            this.applySettings();
+        };
+        
+        
+        
+        document.getElementById('add-coins-btn').onclick = () => {
+            this.state.totalCoins += 1000;
+            this.saveData();
+            this.updateCoinsDisplay();
+            this.showNotification('Added 1000 coins!', 'success');
+        };
+        
+        
+        document.getElementById('reset-progress-btn').onclick = () => {
+            if (confirm('Are you sure you want to reset all progress? This action cannot be undone.')) {
+                this.resetData();
+                this.updateMainMenu();
+                this.showNotification('All data has been reset', 'warning');
+            }
+        };
+        
+        document.getElementById('request-accelerometer-btn').onclick = async () => {
+            if (typeof DeviceOrientationEvent !== 'undefined' && 
+                typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === 'granted') {
+                        this.showNotification('Accelerometer access granted!', 'success');
+                        if (window.Game && Game.setupIOSAccelerometer) {
+                            Game.setupIOSAccelerometer();
+                        }
+                    } else {
+                        this.showNotification('Accelerometer access denied', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error requesting accelerometer permission:', error);
+                    this.showNotification('Failed to request access', 'error');
+                }
+            } else {
+                this.showNotification('Accelerometer already available', 'info');
+            }
+        };
     },
-    
-    updateGameHUD() {
-        this.updateElement('score-value', Math.floor(this.state.scoreInGame));
-        this.updateElement('coins-value', this.state.coinsInGame);
-    },
-    
-    updateCoinsDisplay() {
-        this.updateElement('total-coins', this.state.totalCoins);
-        this.updateElement('balls-coins', this.state.totalCoins);
-        this.updateElement('upgrades-coins', this.state.totalCoins);
-    },
-    
-    updateElement(id, value) {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value;
-    },
-    
-    updateToggle(id, checked) {
-        const toggle = document.getElementById(id);
-        if (toggle) toggle.checked = checked;
-    },
+
     
     getUpgradeLevelBar(current, max) {
         let bar = '';
@@ -663,185 +494,7 @@ const Menu = {
         }
         return bar;
     },
-    
-    startGame() {
-        console.log('Starting game with ball:', this.state.currentBall);
-        
-        this.state.gameStarted = true;
-        this.state.isPaused = false;
-        this.state.isGameOver = false;
-        this.state.coinsInGame = 0;
-        this.state.scoreInGame = 0;
-        
-        this.switchScreen('game');
-        this.updateGameHUD();
-        
-        if (window.Game && Game.startGame) {
-            Game.startGame(this.state.currentBall, this.getActiveUpgrades());
-        }
-        
-        this.showNotification('Game started!', 'success');
-    },
-    
-    togglePause() {
-        if (!this.state.gameStarted || this.state.isGameOver) return;
-        
-        this.state.isPaused = !this.state.isPaused;
-        
-        if (window.Game) {
-            Game.setPaused(this.state.isPaused);
-        }
-        
-        const pauseMenu = document.getElementById('pause-menu');
-        if (pauseMenu) {
-            pauseMenu.classList.toggle('hidden', !this.state.isPaused);
-            
-            if (this.state.isPaused) {
-                this.updateElement('pause-score', Math.floor(this.state.scoreInGame));
-                this.updateElement('pause-coins', this.state.coinsInGame);
-                this.updateElement('pause-ball', GameConfig.getBallDisplayName(this.state.currentBall));
-            }
-        }
-    },
-    
-    restartGame() {
-        // Zresetuj stan gry
-        this.state.coinsInGame = 0;
-        this.state.scoreInGame = 0;
-        
-        // Ukryj menu
-        document.getElementById('pause-menu').classList.add('hidden');
-        document.getElementById('game-over-screen').classList.add('hidden');
-        
-        // Restart gry
-        if (window.Game && Game.resetGameState) {
-            Game.resetGameState();
-        }
-        
-        this.startGame();
-    },
-    
-    quitToMenu() {
-        // Zapisz monety z gry
-        if (this.state.coinsInGame > 0) {
-            this.state.totalCoins += this.state.coinsInGame;
-            this.saveData();
-            this.updateCoinsDisplay();
-        }
-        
-        // Zresetuj stan gry
-        this.state.gameStarted = false;
-        this.state.isPaused = false;
-        this.state.coinsInGame = 0;
-        this.state.scoreInGame = 0;
-        
-        // Ukryj menu
-        document.getElementById('pause-menu').classList.add('hidden');
-        
-        // Wróć do głównego menu
-        this.switchScreen('start');
-    },
-    
-    playAgain() {
-        // Zapisz monety z gry
-        if (this.state.coinsInGame > 0) {
-            this.state.totalCoins += this.state.coinsInGame;
-            this.saveData();
-            this.updateCoinsDisplay();
-        }
-        
-        // Zresetuj stan gry
-        this.state.coinsInGame = 0;
-        this.state.scoreInGame = 0;
-        
-        // Ukryj ekran game over
-        document.getElementById('game-over-screen').classList.add('hidden');
-        
-        // Rozpocznij nową grę
-        this.startGame();
-    },
-    
-    quitAfterGame() {
-        // Zapisz monety z gry
-        if (this.state.coinsInGame > 0) {
-            this.state.totalCoins += this.state.coinsInGame;
-            this.saveData();
-            this.updateCoinsDisplay();
-        }
-        
-        // Zresetuj stan gry
-        this.state.gameStarted = false;
-        this.state.isGameOver = false;
-        this.state.coinsInGame = 0;
-        this.state.scoreInGame = 0;
-        
-        // Ukryj ekran game over
-        document.getElementById('game-over-screen').classList.add('hidden');
-        
-        // Wróć do głównego menu
-        this.switchScreen('start');
-    },
-    
-    gameOver() {
-        if (!this.state.gameStarted || this.state.isGameOver) return;
-        
-        console.log('=== GAME OVER ===');
-        console.log(`Score: ${this.state.scoreInGame}`);
-        console.log(`Coins in this game: ${this.state.coinsInGame}`);
-        
-        this.state.isGameOver = true;
-        this.state.gameStarted = false;
-        
-        // Sprawdź czy to nowy rekord
-        const isNewHighScore = this.state.scoreInGame > this.state.bestScore;
-        if (isNewHighScore) {
-            this.state.bestScore = Math.floor(this.state.scoreInGame);
-        }
-        
-        // Dodaj monety do total
-        this.state.totalCoins += this.state.coinsInGame;
-        
-        // Zapisz dane
-        this.saveData();
-        
-        // Pokaż ekran game over
-        const gameOverScreen = document.getElementById('game-over-screen');
-        if (gameOverScreen) {
-            gameOverScreen.classList.remove('hidden');
-            
-            this.updateElement('final-score', Math.floor(this.state.scoreInGame));
-            this.updateElement('final-coins', this.state.coinsInGame);
-            this.updateElement('final-highscore', this.state.bestScore);
-            
-            // Aktualizuj komunikat
-            const messageEl = document.getElementById('game-over-message-text');
-            let message = 'Try again!';
-            
-            if (isNewHighScore) {
-                message = 'NEW RECORD! 🎉';
-            }
-            if (this.state.coinsInGame > 50) {
-                message += ' Great coin haul! 💰';
-            }
-            
-            if (messageEl) messageEl.textContent = message;
-        }
-        
-        // Aktualizuj główne menu
-        this.updateMainMenu();
-        this.updateCoinsDisplay();
-        
-        console.log('=== END OF GAME OVER ===');
-    },
-    
-    selectBall(ballType) {
-        if (this.state.unlockedBalls.includes(ballType)) {
-            this.state.currentBall = ballType;
-            this.saveData();
-            this.updateBallsScreen();
-            this.showNotification(`Selected: ${GameConfig.getBallDisplayName(ballType)}`, 'success');
-        }
-    },
+
     
     unlockBall(ballType) {
         const cost = GameConfig.getBallUnlockPrice(ballType);
@@ -851,17 +504,31 @@ const Menu = {
             this.state.unlockedBalls.push(ballType);
             this.saveData();
             
+            
             this.updateBallsScreen();
             this.updateMainMenu();
             this.updateCoinsDisplay();
             
-            this.showNotification(`Unlocked: ${GameConfig.getBallDisplayName(ballType)}!`, 'success');
+            this.showNotification(`Unlocked ball: ${GameConfig.getBallDisplayName(ballType)}!`, 'success');
         } else if (this.state.unlockedBalls.includes(ballType)) {
             this.showNotification('Ball already unlocked!', 'warning');
         } else {
             this.showNotification('You don\'t have enough coins!', 'error');
         }
     },
+
+    
+    selectBall(ballType) {
+        if (this.state.unlockedBalls.includes(ballType)) {
+            this.state.currentBall = ballType;
+            this.saveData();
+            this.updateBallsScreen();
+            this.showNotification(`Selected ball: ${GameConfig.getBallDisplayName(ballType)}`, 'success');
+        } else {
+            this.showNotification('Unlock this ball first!', 'warning');
+        }
+    },
+
     
     buyUpgrade(ballType, upgradeId) {
         const upgradeDef = GameConfig.getUpgradeDefinitions(ballType).find(u => u.id === upgradeId);
@@ -872,6 +539,7 @@ const Menu = {
         
         if (this.state.totalCoins >= nextPrice && currentLevel < upgradeDef.maxLevel) {
             this.state.totalCoins -= nextPrice;
+            
             
             if (!this.state.upgrades[ballType]) {
                 this.state.upgrades[ballType] = {};
@@ -892,6 +560,7 @@ const Menu = {
             this.showNotification('You don\'t have enough coins!', 'error');
         }
     },
+
     
     toggleUpgrade(ballType, upgradeId) {
         const upgrade = this.state.upgrades[ballType]?.[upgradeId];
@@ -904,40 +573,190 @@ const Menu = {
             this.showNotification(`Upgrade ${state}`, 'success');
         }
     },
+
     
-    addCoins(amount) {
-        this.state.totalCoins += amount;
-        this.saveData();
-        this.updateAllUI();
-        this.showNotification(`Added ${amount} coins!`, 'success');
+    startGame() {
+        console.log('Starting game...');
+        console.log('State before starting:',
+            `scoreInGame=${this.state.scoreInGame},`,
+            `coinsInGame=${this.state.coinsInGame},`,
+            `totalCoins=${this.state.totalCoins}`);
+        
+        
+        this.state.gameStarted = true;
+        this.state.isPaused = false;
+        this.state.isGameOver = false;
+        this.state.coinsInGame = 0;
+        this.state.scoreInGame = 0;
+        
+        
+        this.switchScreen('game');
+        
+        
+        this.updateGameHUD();
+        
+        
+        if (window.Game && Game.startGame) {
+            Game.startGame(this.state.currentBall, this.getActiveUpgrades());
+        }
+    
+        
+        this.applySettings();
+    
+        this.showNotification('Game started! Use arrows or A/D to move.');
     },
+
     
-    resetProgress() {
-        if (confirm('Are you sure you want to reset all progress? This will delete all saved data including coins, unlocked balls, and upgrades.')) {
-            this.resetData();
-            this.updateAllUI();
+    togglePause() {
+        if (!this.state.gameStarted || this.state.isGameOver) return;
+
+        this.state.isPaused = !this.state.isPaused;
+
+        const pauseMenu = document.getElementById('pause-menu');
+        const gameScreen = document.getElementById('game-screen');
+
+        if (this.state.isPaused) {
+            if (pauseMenu) {
+                pauseMenu.classList.remove('hidden');
+            }
+
+            
+            if (window.Game && Game.setPaused) {
+                Game.setPaused(true);
+            }
+
+            
+            document.getElementById('pause-score').textContent = Math.floor(this.state.scoreInGame);
+            document.getElementById('pause-coins').textContent = this.state.coinsInGame;
+            document.getElementById('pause-ball').textContent = GameConfig.getBallDisplayName(this.state.currentBall);
+        } else {
+            if (pauseMenu) {
+                pauseMenu.classList.add('hidden');
+            }
+
+            
+            if (window.Game && Game.setPaused) {
+                Game.setPaused(false);
+            }
         }
     },
+
+    
+    gameOver() {
+        if (!this.state.gameStarted || this.state.isGameOver) return;
+
+        console.log('=== GAME OVER ===');
+        console.log(`Score: ${this.state.scoreInGame}`);
+        console.log(`Coins in this game: ${this.state.coinsInGame}`);
+        console.log(`Total coins before: ${this.state.totalCoins}`);
+
+        this.state.isGameOver = true;
+        this.state.gameStarted = false;
+
+        
+        const isNewHighScore = this.state.scoreInGame > this.state.bestScore;
+        if (isNewHighScore) {
+            this.state.bestScore = Math.floor(this.state.scoreInGame);
+            console.log(`NEW RECORD! ${this.state.scoreInGame}`);
+        }
+
+        
+        const coinsBefore = this.state.totalCoins;
+        this.state.totalCoins += this.state.coinsInGame;
+        console.log(`Added ${this.state.coinsInGame} coins. Total coins after: ${this.state.totalCoins}`);
+
+        
+        this.saveData();
+
+        
+        const gameOverScreen = document.getElementById('game-over-screen');
+        if (gameOverScreen) {
+            gameOverScreen.classList.remove('hidden');
+
+            
+            document.getElementById('final-score').textContent = Math.floor(this.state.scoreInGame);
+            document.getElementById('final-coins').textContent = this.state.coinsInGame;
+            document.getElementById('final-highscore').textContent = this.state.bestScore;
+
+            
+            document.getElementById('coins-value').textContent = this.state.totalCoins;
+
+            
+            const messageEl = document.getElementById('game-over-message-text');
+            let message = 'Try again!';
+
+            if (isNewHighScore) {
+                message = 'NEW RECORD! 🎉';
+            }
+            if (this.state.coinsInGame > 50) {
+                message += ' Great coin haul! 💰';
+            } else if (this.state.coinsInGame > 20) {
+                message += ' Good haul!';
+            }
+
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+        }
+
+        
+        this.updateMainMenu();
+        this.updateCoinsDisplay();
+
+        console.log('=== END OF GAME OVER ===');
+    },
+
+    
+    updateGameHUD() {
+        
+        const scoreValue = document.getElementById('score-value');
+        if (scoreValue) scoreValue.textContent = Math.floor(this.state.scoreInGame);
+        
+        
+        const coinsValue = document.getElementById('coins-value');
+        if (coinsValue) coinsValue.textContent = this.state.coinsInGame;
+    },
+
+    
+    updateCoinsDisplay() {
+        
+        const totalCoinsEl = document.getElementById('total-coins');
+        if (totalCoinsEl) totalCoinsEl.textContent = this.state.totalCoins;
+        
+        
+        const ballsCoins = document.getElementById('balls-coins');
+        if (ballsCoins) ballsCoins.textContent = this.state.totalCoins;
+        
+        
+        const upgradesCoins = document.getElementById('upgrades-coins');
+        if (upgradesCoins) upgradesCoins.textContent = this.state.totalCoins;
+    },
+
     
     applySettings() {
-        // Przekaż ustawienia do Game
-        if (window.Game && Game.applySettings) {
-            Game.applySettings();
+        if (!window.Game) return;
+
+        if (window.GameConfig) {
+            GameConfig.AUTO_JUMP_ENABLED = this.state.settings.autoJump;
+            GameConfig.USE_ACCELEROMETER = this.state.settings.accelerometer;
+            // Mobile controls zawsze włączone
+            GameConfig.MOBILE_CONTROLS_ENABLED = true;
+
+            if (window.Game.applySettings) {
+                window.Game.applySettings();
+            }
         }
-        
-        // Zastosuj ustawienia lokalnie
-        if (this.state.settings.debugInfo) {
-            document.getElementById('debug-info')?.classList.remove('hidden');
-        } else {
-            document.getElementById('debug-info')?.classList.add('hidden');
-        }
-        
-        // Pokaż/ukryj mobilne kontrole
-        const mobileControls = document.getElementById('mobile-controls-overlay');
-        if (mobileControls) {
-            mobileControls.style.display = this.state.settings.mobileControls ? 'flex' : 'none';
+
+        if (window.Game && window.Game.state) {
+            window.Game.state.settings = {
+                ...this.state.settings,
+                mobileControls: true,     // Zawsze włączone
+                windDisplay: true,
+                debugInfo: false         // Zawsze włączone
+            };
         }
     },
+
     
     getActiveUpgrades() {
         const upgrades = this.state.upgrades[this.state.currentBall] || {};
@@ -951,6 +770,7 @@ const Menu = {
         
         return activeUpgrades;
     },
+
     
     showNotification(message, type = 'info') {
         console.log('Notification:', message, type);
@@ -964,21 +784,153 @@ const Menu = {
         
         container.appendChild(notification);
         
+        
         setTimeout(() => {
             if (notification.parentNode === container) {
                 container.removeChild(notification);
             }
         }, 3000);
+    },
+
+    
+    setupEventListeners() {
+        console.log('Configuring event listeners...');
+        
+        
+        document.getElementById('play-btn').addEventListener('click', () => {
+            this.startGame();
+        });
+        
+        document.getElementById('balls-btn').addEventListener('click', () => {
+            this.switchScreen('balls');
+        });
+        
+        document.getElementById('upgrades-btn').addEventListener('click', () => {
+            this.switchScreen('upgrades');
+        });
+        
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            this.switchScreen('settings');
+        });
+        
+        
+        document.querySelectorAll('.back-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.switchScreen('start');
+            });
+        });
+        
+        
+        document.getElementById('pause-btn').addEventListener('click', () => {
+            this.togglePause();
+        });
+        
+        
+        document.getElementById('resume-btn').addEventListener('click', () => {
+            this.togglePause();
+        });
+
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            
+            this.saveGameProgress(true); 
+            this.state.coinsInGame = 0; 
+
+            document.getElementById('pause-menu').classList.add('hidden');
+            this.startGame();
+        });
+
+        document.getElementById('quit-to-menu-btn').addEventListener('click', () => {
+            
+            this.saveGameProgress(true); 
+            this.state.coinsInGame = 0; 
+
+            document.getElementById('pause-menu').classList.add('hidden');
+            this.switchScreen('start');
+        });
+
+        
+        document.getElementById('play-again-btn').addEventListener('click', () => {
+            
+            this.saveGameProgress(false); 
+            this.state.coinsInGame = 0; 
+
+            document.getElementById('game-over-screen').classList.add('hidden');
+            this.startGame();
+        });
+
+        document.getElementById('quit-after-game-btn').addEventListener('click', () => {
+            
+            document.getElementById('game-over-screen').classList.add('hidden');
+            this.switchScreen('start');
+        });
+        
+        
+        document.addEventListener('keydown', (e) => {
+            
+            if (e.key === 'p' || e.key === 'P') {
+                if (this.state.gameStarted && !this.state.isGameOver) {
+                    this.togglePause();
+                }
+            }
+            
+            
+            if (e.key === 'Escape') {
+                if (this.state.isPaused) {
+                    this.togglePause();
+                } else if (this.state.isGameOver) {
+                    this.switchScreen('start');
+                } else if (this.state.currentScreen === 'game') {
+                    this.togglePause();
+                } else {
+                    this.switchScreen('start');
+                }
+            }
+        });
+        
+        
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+        
+        console.log('Event listeners configured');
+    },
+
+    
+    saveGameProgress(shouldAddToTotal = true) {
+        console.log('Saving progress...', 
+            `coinsInGame: ${this.state.coinsInGame}, totalCoins before: ${this.state.totalCoins}`);
+        
+        if (shouldAddToTotal && this.state.coinsInGame > 0) {
+            
+            this.state.totalCoins += this.state.coinsInGame;
+            console.log(`Added ${this.state.coinsInGame} coins. New totalCoins: ${this.state.totalCoins}`);
+        }
+        
+        
+        this.saveData();
+        
+        
+        this.updateMainMenu();
+        this.updateCoinsDisplay();
+    },
+
+    
+    updateUI() {
+        this.updateMainMenu();
+        this.updateCoinsDisplay();
+        
+        
+        if (this.state.gameStarted) {
+            this.updateGameHUD();
+        }
     }
 };
 
-// Inicjalizacja Menu
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        if (window.Menu) Menu.init();
-    });
-} else {
-    if (window.Menu) Menu.init();
-}
 
 window.Menu = Menu;

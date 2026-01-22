@@ -17,10 +17,10 @@ html, body {
 
 :root {
     --vh: 1vh;
-    --safe-area-inset-top: env(safe-area-inset-top);
-    --safe-area-inset-bottom: env(safe-area-inset-bottom);
-    --safe-area-inset-left: env(safe-area-inset-left);
-    --safe-area-inset-right: env(safe-area-inset-right);
+    --safe-area-inset-top: 0px;
+    --safe-area-inset-bottom: 0px;
+    --safe-area-inset-left: 0px;
+    --safe-area-inset-right: 0px;
 }
 
 body {
@@ -43,6 +43,12 @@ body {
     bottom: 0;
     
     /* Zaktualizowane paddingi safe-area dla iOS */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    
+    /* Fallback dla przeglądarek bez env() */
     padding-top: var(--safe-area-inset-top);
     padding-bottom: var(--safe-area-inset-bottom);
     padding-left: var(--safe-area-inset-left);
@@ -51,39 +57,6 @@ body {
     /* Zapobiega przesuwaniu się strony na iOS Safari */
     overflow: hidden;
     position: fixed;
-}
-
-/* iOS standalone specific styles */
-body.standalone {
-    /* W standalone mode, używamy całej przestrzeni bez dodatkowych paddings */
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-}
-
-body.standalone::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: var(--safe-area-inset-top);
-    background: linear-gradient(135deg, #0f0c29, #302b63);
-    z-index: 9999;
-    pointer-events: none;
-}
-
-body.standalone::after {
-    content: '';
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: var(--safe-area-inset-bottom);
-    background: linear-gradient(135deg, #0f0c29, #302b63);
-    z-index: 9999;
-    pointer-events: none;
 }
 
 #game-container {
@@ -103,14 +76,21 @@ body.standalone::after {
     padding: 0;
 }
 
-/* Standalone mode - full coverage */
 body.standalone #game-container {
-    width: 100% !important;
-    height: 100% !important;
-    padding-top: var(--safe-area-inset-top) !important;
-    padding-bottom: var(--safe-area-inset-bottom) !important;
+    /* W standalone mode na iOS, usuń paddingi safe-area z kontenera */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
+    height: 100% !important;
+}
+
+body.standalone {
+    /* W standalone mode na iOS, użyj env() bezpośrednio */
+    padding-top: env(safe-area-inset-top) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+    padding-left: env(safe-area-inset-left) !important;
+    padding-right: env(safe-area-inset-right) !important;
 }
 
 .screen {
@@ -123,44 +103,21 @@ body.standalone #game-container {
     display: none;
     flex-direction: column;
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    overflow-x: hidden;
-    padding-top: calc(20px + var(--safe-area-inset-top));
-    padding-bottom: calc(20px + var(--safe-area-inset-bottom));
-}
-
-/* Scrollable body for settings and other long screens */
-.screen-body {
-    flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-    padding-bottom: 20px;
-}
-
-/* Hide scrollbar but keep functionality */
-.screen-body::-webkit-scrollbar {
-    display: none;
-}
-
-.scrollable {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
 }
 
 #game-screen {
     padding: 0 !important;
     /* Dodaj padding safe-area tylko dla game screen */
-    padding-top: var(--safe-area-inset-top) !important;
-    padding-bottom: var(--safe-area-inset-bottom) !important;
+    padding-top: env(safe-area-inset-top) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
 }
 
 body.standalone #game-screen {
     /* W standalone mode, używamy całej przestrzeni */
     padding-top: 0 !important;
     padding-bottom: 0 !important;
-    height: calc(100% - var(--safe-area-inset-top) - var(--safe-area-inset-bottom)) !important;
-    margin-top: var(--safe-area-inset-top) !important;
-    margin-bottom: var(--safe-area-inset-bottom) !important;
 }
 
 .screen.active {
@@ -173,8 +130,8 @@ body.standalone #game-screen {
     text-align: center;
     padding: 20px;
     /* Dodaj padding safe-area */
-    padding-top: calc(20px + var(--safe-area-inset-top)) !important;
-    padding-bottom: calc(20px + var(--safe-area-inset-bottom)) !important;
+    padding-top: calc(20px + env(safe-area-inset-top)) !important;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
 }
 
 .title-container {
@@ -231,53 +188,22 @@ body.standalone #game-screen {
     max-width: min(320px, 80vw);
 }
 
-/* Enhanced button styles for better touch targets */
-.menu-btn, .back-btn, .select-ball-btn, .unlock-btn, .debug-btn, .danger-btn, 
-.pause-btn, .game-over-btn, .hud-btn, .ball-select-btn, .toggle-btn, .buy-btn,
-.action-btn {
-    min-height: 44px; /* Apple's minimum touch target size */
-    padding: 12px 20px;
+.menu-btn {
+    padding: clamp(12px, 3vh, 18px) clamp(15px, 4vw, 25px);
+    background: linear-gradient(135deg, rgba(74, 159, 255, 0.2), rgba(74, 255, 74, 0.1));
+    border: 2px solid rgba(74, 159, 255, 0.3);
+    border-radius: 15px;
+    color: white;
     font-size: clamp(16px, 4vw, 18px);
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-    outline: none;
-    border: none;
-    border-radius: 12px;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    font-weight: 500;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-}
-
-/* Button active state for better feedback */
-.menu-btn:active, .back-btn:active, .select-ball-btn:active, 
-.unlock-btn:active, .debug-btn:active, .danger-btn:active,
-.pause-btn:active, .game-over-btn:active, .hud-btn:active,
-.ball-select-btn:active, .toggle-btn:active, .buy-btn:active {
-    transform: scale(0.95);
-    opacity: 0.9;
-}
-
-/* Prevent double-tap zoom on buttons */
-@media (hover: none) and (pointer: coarse) {
-    .menu-btn, .back-btn, .select-ball-btn, .unlock-btn, .debug-btn, 
-    .danger-btn, .pause-btn, .game-over-btn, .hud-btn, .ball-select-btn, 
-    .toggle-btn, .buy-btn {
-        -webkit-user-select: none;
-        user-select: none;
-    }
-}
-
-.menu-btn {
-    background: linear-gradient(135deg, rgba(74, 159, 255, 0.2), rgba(74, 255, 74, 0.1));
-    border: 2px solid rgba(74, 159, 255, 0.3);
-    color: white;
     backdrop-filter: blur(10px);
+    min-height: 44px;
 }
 
 .menu-btn:hover {
@@ -285,6 +211,10 @@ body.standalone #game-screen {
     background: linear-gradient(135deg, rgba(74, 159, 255, 0.3), rgba(74, 255, 74, 0.2));
     border-color: rgba(74, 159, 255, 0.5);
     box-shadow: 0 5px 20px rgba(74, 159, 255, 0.3);
+}
+
+.menu-btn:active {
+    transform: translateY(0);
 }
 
 .menu-btn i {
@@ -304,7 +234,8 @@ body.standalone #game-screen {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
    
     /* Uwzględnij safe-area dla dolnego paska nawigacji */
-    padding-bottom: calc(2vh + var(--safe-area-inset-bottom));
+    padding-bottom: max(2vh, env(safe-area-inset-bottom));
+    padding-bottom: max(2vh, var(--safe-area-inset-bottom));
 }
 
 body.standalone .stats-bar {
@@ -319,8 +250,7 @@ body.standalone .stats-bar {
     margin-bottom: 3vh;
     padding-bottom: 2vh;
     border-bottom: 2px solid rgba(74, 159, 255, 0.3);
-    padding-top: var(--safe-area-inset-top);
-    flex-shrink: 0;
+    padding-top: env(safe-area-inset-top);
 }
 
 .screen-header h2 {
@@ -343,6 +273,8 @@ body.standalone .stats-bar {
     border: 1px solid rgba(74, 159, 255, 0.3);
     border-radius: 8px;
     color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -469,6 +401,8 @@ body.standalone .stats-bar {
     border: none;
     border-radius: 8px;
     font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -543,6 +477,7 @@ body.standalone .stats-bar {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: white;
+    cursor: pointer;
     transition: all 0.3s ease;
     font-size: clamp(14px, 3.5vw, 16px);
 }
@@ -618,6 +553,7 @@ body.standalone .stats-bar {
     border-radius: 5px;
     border: none;
     color: white;
+    cursor: pointer;
     font-size: clamp(11px, 3vw, 12px);
     font-weight: 500;
 }
@@ -654,7 +590,7 @@ body.standalone .stats-bar {
 .settings-content {
     flex: 1;
     overflow-y: auto;
-    padding-bottom: var(--safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 .settings-section {
@@ -695,7 +631,6 @@ body.standalone .stats-bar {
     display: inline-block;
     width: 50px;
     height: 24px;
-    flex-shrink: 0;
 }
 
 .switch input {
@@ -742,6 +677,7 @@ input:checked + .slider:before {
     border-radius: 8px;
     border: none;
     color: white;
+    cursor: pointer;
     font-weight: 500;
     display: flex;
     align-items: center;
@@ -767,7 +703,6 @@ input:checked + .slider:before {
     opacity: 0.8;
 }
 
-/* Game Canvas */
 #game-canvas {
     display: block;
     background-color: #111;
@@ -780,15 +715,9 @@ input:checked + .slider:before {
     height: 100%;
 }
 
-/* Standalone canvas positioning */
-body.standalone #game-canvas {
-    top: var(--safe-area-inset-top) !important;
-    height: calc(100% - var(--safe-area-inset-top) - var(--safe-area-inset-bottom)) !important;
-}
-
 #debug-info {
     position: absolute;
-    top: calc(20px + var(--safe-area-inset-top));
+    top: calc(20px + env(safe-area-inset-top));
     left: 10px;
     z-index: 100;
     display: flex;
@@ -838,13 +767,13 @@ body.standalone #game-canvas {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: max(2vh, var(--safe-area-inset-top)) 3vw 2vh 3vw;
+    padding: max(2vh, env(safe-area-inset-top)) 3vw 2vh 3vw;
     pointer-events: none;
 }
 
 body.standalone .hud-top {
     /* W standalone mode, górny pasek jest bliżej krawędzi */
-    padding-top: max(1vh, var(--safe-area-inset-top)) !important;
+    padding-top: max(1vh, env(safe-area-inset-top)) !important;
 }
 
 .hud-left,
@@ -868,6 +797,7 @@ body.standalone .hud-top {
     background: rgba(74, 159, 255, 0.15);
     border: 2px solid rgba(74, 159, 255, 0.4);
     color: white;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -966,11 +896,11 @@ body.standalone .hud-top {
     pointer-events: auto;
     display: flex;
     z-index: 100;
-    padding-bottom: var(--safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 body.standalone .mobile-controls-overlay {
-    padding-bottom: var(--safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 .control-left,
@@ -979,11 +909,6 @@ body.standalone .mobile-controls-overlay {
     height: 100%;
     opacity: 0.3;
     transition: opacity 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: rgba(255, 255, 255, 0.7);
 }
 
 .control-left {
@@ -999,12 +924,6 @@ body.standalone .mobile-controls-overlay {
     opacity: 0.6;
 }
 
-/* Prevent text selection on controls */
-.control-left, .control-right {
-    -webkit-user-select: none;
-    user-select: none;
-}
-
 .overlay-menu {
     position: absolute;
     top: 0;
@@ -1016,8 +935,8 @@ body.standalone .mobile-controls-overlay {
     align-items: center;
     justify-content: center;
     z-index: 200;
-    padding-top: var(--safe-area-inset-top);
-    padding-bottom: var(--safe-area-inset-bottom);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 .overlay-menu.hidden {
@@ -1038,8 +957,8 @@ body.standalone .mobile-controls-overlay {
 
 body.standalone .pause-content,
 body.standalone .game-over-content {
-    margin-top: var(--safe-area-inset-top);
-    margin-bottom: var(--safe-area-inset-bottom);
+    margin-top: env(safe-area-inset-top);
+    margin-bottom: env(safe-area-inset-bottom);
 }
 
 .overlay-menu h2 {
@@ -1097,6 +1016,8 @@ body.standalone .game-over-content {
     border-radius: 12px;
     font-size: clamp(14px, 4vw, 16px);
     font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1140,7 +1061,7 @@ body.standalone .game-over-content {
 
 #notification-container {
     position: fixed;
-    top: calc(20px + var(--safe-area-inset-top));
+    top: calc(20px + env(safe-area-inset-top));
     right: 20px;
     z-index: 1000;
     display: flex;
@@ -1219,23 +1140,6 @@ body.standalone .game-over-content {
     .mobile-controls-overlay {
         display: none !important;
     }
-    
-    /* Landscape mode for settings */
-    #settings-screen .screen-body,
-    #upgrades-screen .screen-body,
-    #balls-screen .screen-body {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        align-items: start;
-    }
-    
-    #settings-screen .settings-section,
-    #upgrades-screen .ball-selector,
-    #upgrades-screen #upgrades-list {
-        height: 100%;
-        overflow-y: auto;
-    }
 }
 
 @media (max-height: 600px) {
@@ -1306,7 +1210,7 @@ body.standalone #game-screen {
 }
 
 body.standalone .hud-top {
-    padding-top: calc(var(--safe-area-inset-top) + 10px);
+    padding-top: calc(env(safe-area-inset-top) + 10px);
 }
 
 body.standalone::after {
@@ -1325,14 +1229,6 @@ body.standalone::after {
         padding-top: 59px !important;
         padding-bottom: 34px !important;
     }
-    
-    body.standalone::before {
-        height: 59px !important;
-    }
-    
-    body.standalone::after {
-        height: 34px !important;
-    }
 }
 
 /* iPhone without Dynamic Island */
@@ -1346,14 +1242,6 @@ body.standalone::after {
     body.standalone {
         padding-top: 47px !important;
         padding-bottom: 34px !important;
-    }
-    
-    body.standalone::before {
-        height: 47px !important;
-    }
-    
-    body.standalone::after {
-        height: 34px !important;
     }
 }
 
@@ -1369,83 +1257,4 @@ body.standalone::after {
         padding-top: 20px !important;
         padding-bottom: 0px !important;
     }
-    
-    body.standalone::before {
-        height: 20px !important;
-    }
-    
-    body.standalone::after {
-        height: 0px !important;
-    }
-}
-
-/* Active state for buttons */
-button.active {
-    transform: scale(0.95) !important;
-    opacity: 0.9 !important;
-}
-
-/* Prevent iOS text size adjustment */
-html {
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-}
-
-/* Fix for iOS input zoom */
-@media screen and (max-width: 767px) {
-    input, select, textarea {
-        font-size: 16px !important;
-    }
-}
-
-/* Improve touch targets for standalone */
-@media (hover: none) and (pointer: coarse) {
-    button, [role="button"], .switch {
-        min-height: 44px;
-        min-width: 44px;
-    }
-    
-    .hud-btn {
-        width: 60px !important;
-        height: 60px !important;
-    }
-}
-
-/* Smooth transitions for screen switching */
-.screen {
-    transition: opacity 0.3s ease;
-}
-
-/* Loading indicator */
-.loading {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
-
-.loading.hidden {
-    opacity: 0;
-    pointer-events: none;
-}
-
-.loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 3px solid rgba(74, 159, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: #4a9eff;
-    animation: spin 1s ease-in-out infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
 }
