@@ -1396,3 +1396,73 @@ body.standalone .hud-top {
         padding-bottom: 0px !important;
     }
 }
+
+#upgrades-screen {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+}
+
+#upgrades-list {
+    overflow-y: visible !important;
+    max-height: none !important;
+    flex: 1 !important;
+}
+
+/* PRZEWIJANIE dla ekranu ustawień */
+#settings-screen {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+}
+
+.settings-content {
+    overflow-y: visible !important;
+    max-height: none !important;
+    flex: 1 !important;
+}
+
+/* Naprawa wysokości dla przewijania */
+#upgrades-screen .screen-header,
+#settings-screen .screen-header {
+    flex-shrink: 0;
+}
+
+#upgrades-list,
+.settings-content {
+    min-height: 0; /* Potrzebne dla flex scroll */
+}
+
+/* Dla trybu standalone - lepsze przewijanie */
+body.standalone #upgrades-screen,
+body.standalone #settings-screen {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+}
+
+/* Upewnij się, że zawartość nie wychodzi poza ekran */
+.upgrade-item {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+/* Naprawa dla iOS Safari */
+@supports (-webkit-touch-callout: none) {
+    #upgrades-screen,
+    #settings-screen {
+        height: 100%;
+        overflow-y: scroll;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Uniwersalne style przewijania dla mobilnych */
+@media (max-width: 768px) {
+    #upgrades-screen,
+    #settings-screen {
+        overflow-y: auto !important;
+    }
+    
+    .balls-container {
+        overflow-y: visible;
+    }
+}

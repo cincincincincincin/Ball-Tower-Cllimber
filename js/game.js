@@ -230,18 +230,12 @@ window.Game = {
     },
     
     initEventListeners() {
-        // JEŚLI STANDALONE, NIE DODAWAJ EVENT LISTENERÓW
-        if (window.navigator.standalone) {
-            console.log('Standalone mode - skipping game event listeners');
-            
-            // Tylko absolutnie niezbędne event listeners
-            window.addEventListener('resize', () => {
-                this.resizeCanvas();
-            });
-            
-            return;
-        }
+        console.log('Game.initEventListeners() - Initializing game controls');
         
+        // NIE USUWAJ event listeners dla sterowania - one są potrzebne
+        // Dodajemy je bez względu na tryb
+        
+        // Keyboard events - zawsze potrzebne
         window.addEventListener('keydown', (e) => {
             if (!this.keys[e.key]) {
                 this.keysPressedThisFrame[e.key] = true;
@@ -253,7 +247,7 @@ window.Game = {
             this.keys[e.key] = false;
         });
         
-        
+        // Touch events dla canvas - zawsze potrzebne
         this.canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
             this.handleTouchStart(e);
@@ -269,14 +263,14 @@ window.Game = {
             this.handleTouchStart(e);
         }, { passive: false });
         
-        
+        // Device orientation - zawsze potrzebne
         if ('DeviceOrientationEvent' in window) {
             window.addEventListener('deviceorientation', (e) => {
                 this.handleDeviceOrientation(e);
             });
         }
         
-        
+        // Mouse events - dla desktop
         this.canvas.addEventListener('mousedown', (e) => {
             const pos = this.convertScreenToCanvas(e.clientX, e.clientY);
             
@@ -299,25 +293,20 @@ window.Game = {
             this.touchActive = false;
             this.touchDirection = 0;
         });
-        this.setupIOSAccelerometer();
-
-            // Specjalny fix dla przycisku pauzy w standalone
-        const pauseBtn = document.getElementById('pause-btn');
-        if (pauseBtn && window.isStandalone) {
-            // Usuń stare event listeners
-            const newPauseBtn = pauseBtn.cloneNode(true);
-            pauseBtn.parentNode.replaceChild(newPauseBtn, pauseBtn);
-
-            newPauseBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Pause button clicked in game');
-                if (window.Menu && window.Menu.togglePause) {
-                    window.Menu.togglePause();
-                }
-                return false;
-            });
+        
+        // W standalone, NIE dodawaj event listenerów dla przycisków HUD
+        // ponieważ obsługuje je Single Tap System
+        if (!isStandaloneMode) {
+            // Tylko w trybie przeglądarki dodajemy event listeners dla przycisków
+            const pauseBtn = document.getElementById('pause-btn');
+            if (pauseBtn) {
+                pauseBtn.addEventListener('click', () => {
+                    if (window.Menu) window.Menu.togglePause();
+                });
+            }
         }
+        
+        this.setupIOSAccelerometer();
     },
 
     setupIOSAccelerometer() {

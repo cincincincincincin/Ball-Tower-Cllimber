@@ -1,4 +1,19 @@
+// Sprawdź czy jesteśmy w trybie standalone
+const isStandaloneMode = window.navigator.standalone || 
+                        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
 
+// Jeśli standalone, NIE dodawaj event listeners
+if (isStandaloneMode) {
+    console.log('Standalone mode detected - using Single Tap System');
+    
+    // Nadpisz setupEventListeners aby nic nie robił w standalone
+    Menu.setupEventListeners = function() {
+        console.log('Skipping menu event listeners in standalone mode');
+        // Tylko zainicjuj UI
+        this.updateUI();
+        this.switchScreen('start');
+    };
+}
 
 const Menu = {
     
