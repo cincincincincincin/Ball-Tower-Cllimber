@@ -230,17 +230,6 @@ window.Game = {
     },
     
     initEventListeners() {
-        // JEŚLI STANDALONE, NIE DODAWAJ EVENT LISTENERÓW
-        if (window.navigator.standalone) {
-            console.log('Standalone mode - skipping game event listeners');
-            
-            // Tylko absolutnie niezbędne event listeners
-            window.addEventListener('resize', () => {
-                this.resizeCanvas();
-            });
-            
-            return;
-        }
         
         window.addEventListener('keydown', (e) => {
             if (!this.keys[e.key]) {
@@ -300,29 +289,11 @@ window.Game = {
             this.touchDirection = 0;
         });
         this.setupIOSAccelerometer();
-
-            // Specjalny fix dla przycisku pauzy w standalone
-        const pauseBtn = document.getElementById('pause-btn');
-        if (pauseBtn && window.isStandalone) {
-            // Usuń stare event listeners
-            const newPauseBtn = pauseBtn.cloneNode(true);
-            pauseBtn.parentNode.replaceChild(newPauseBtn, pauseBtn);
-
-            newPauseBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Pause button clicked in game');
-                if (window.Menu && window.Menu.togglePause) {
-                    window.Menu.togglePause();
-                }
-                return false;
-            });
-        }
     },
 
     setupIOSAccelerometer() {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
+        
         if (isIOS && typeof DeviceOrientationEvent !== 'undefined') {
             // Natychmiastowe żądanie dostępu do żyroskopu
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {

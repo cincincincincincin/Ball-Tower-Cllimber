@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- W <head> pliku index.html: -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -25,23 +26,38 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     
-    <!-- Styly dla iOS PWA -->
+    <!-- Critical CSS inline for better performance -->
     <style>
-        /* Uniwersalne resetowanie tap-highlight dla iOS standalone */
-        body.standalone * {
-            -webkit-tap-highlight-color: transparent !important;
+        /* Prevent double-tap zoom on iOS */
+        * {
+            -webkit-tap-highlight-color: transparent;
         }
         
-        body.standalone button,
-        body.standalone .hud-btn,
-        body.standalone .menu-btn,
-        body.standalone .back-btn {
-            -webkit-tap-highlight-color: transparent !important;
+        /* iOS standalone specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            .screen {
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            button, [role="button"] {
+                cursor: pointer;
+            }
         }
         
-        /* Zapobiegaj zoomowaniu na iOS */
-        body.standalone {
-            touch-action: pan-x pan-y;
+        /* Prevent text selection */
+        .no-select {
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        /* Hide scrollbar but keep functionality */
+        .scrollable::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .scrollable {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 </head>
@@ -57,16 +73,16 @@
             </div>
             
             <div class="menu-buttons">
-                <button id="play-btn" class="menu-btn">
+                <button id="play-btn" class="menu-btn" data-action="play">
                     <i class="fas fa-play"></i> Play
                 </button>
-                <button id="balls-btn" class="menu-btn">
+                <button id="balls-btn" class="menu-btn" data-action="balls">
                     <i class="fas fa-basketball-ball"></i> Choose Ball
                 </button>
-                <button id="upgrades-btn" class="menu-btn">
+                <button id="upgrades-btn" class="menu-btn" data-action="upgrades">
                     <i class="fas fa-sliders-h"></i> Upgrades
                 </button>
-                <button id="settings-btn" class="menu-btn">
+                <button id="settings-btn" class="menu-btn" data-action="settings">
                     <i class="fas fa-cogs"></i> Settings
                 </button>
             </div>
@@ -91,7 +107,7 @@
         <!-- Ball Selection Screen -->
         <div id="balls-screen" class="screen">
             <div class="screen-header">
-                <button class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
+                <button class="back-btn" data-target="start"><i class="fas fa-arrow-left"></i> Back</button>
                 <div class="header-actions">
                         <h2><i class="fas fa-basketball-ball"></i> Choose ball</h2>
                     <div class="coins-display">
@@ -100,59 +116,61 @@
                 </div>
             </div>
             
-            <div class="balls-container">
-                <!-- Standard ball -->
-                <div class="ball-card active" data-ball="standard">
-                    <div class="ball-preview standard-ball"></div>
-                    <h3>Standard</h3>
-                    <p>Standard ball, normal physics, perfect for start</p>
-                    <div class="ball-stats">
+            <div class="screen-body scrollable">
+                <div class="balls-container">
+                    <!-- Standard ball -->
+                    <div class="ball-card active" data-ball="standard">
+                        <div class="ball-preview standard-ball"></div>
+                        <h3>Standard</h3>
+                        <p>Standard ball, normal physics, perfect for start</p>
+                        <div class="ball-stats">
+                        </div>
+                        <button class="select-ball-btn" data-action="select-ball" data-ball="standard">Selected</button>
                     </div>
-                    <button class="select-ball-btn">Selected</button>
+                    
+                    <!-- Rubber ball -->
+                    <div class="ball-card locked" data-ball="rubber">
+                        <div class="ball-preview rubber-ball">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <h3>Gumball</h3>
+                        <p>High Wall Boost</p>
+                        <div class="ball-stats">
+                        </div>
+                        <button class="unlock-btn" data-cost="50" data-action="unlock-ball" data-ball="rubber">Unlock for 50 <i class="fas fa-coins"></i></button>
+                    </div>
+                    
+                    <!-- Beach ball -->
+                    <div class="ball-card locked" data-ball="beach">
+                        <div class="ball-preview beach-ball">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <h3>Beach Ball</h3>
+                        <p>Sensitive to wind</p>
+                        <button class="unlock-btn" data-cost="100" data-action="unlock-ball" data-ball="beach">Unlock for 100 <i class="fas fa-coins"></i></button>
+                    </div>
+                    
+                    <!-- Golf ball -->
+                    <div class="ball-card locked" data-ball="golf">
+                        <div class="ball-preview golf-ball">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <h3>Golf</h3>
+                        <p>Cannon Access</p>
+                        <button class="unlock-btn" data-cost="150" data-action="unlock-ball" data-ball="golf">Unlock for 150 <i class="fas fa-coins"></i></button>
+                    </div>
                 </div>
                 
-                <!-- Rubber ball -->
-                <div class="ball-card locked" data-ball="rubber">
-                    <div class="ball-preview rubber-ball">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <h3>Gumball</h3>
-                    <p>High Wall Boost</p>
-                    <div class="ball-stats">
-                    </div>
-                    <button class="unlock-btn" data-cost="50">Unlock for 50 <i class="fas fa-coins"></i></button>
+                <div class="selected-ball-info">
+                    <h3>Selected ball: <span id="current-ball-name">Standard</span></h3>
                 </div>
-                
-                <!-- Beach ball -->
-                <div class="ball-card locked" data-ball="beach">
-                    <div class="ball-preview beach-ball">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <h3>Beach Ball</h3>
-                    <p>Sensitive to wind</p>
-                    <button class="unlock-btn" data-cost="100">Unlock for 100 <i class="fas fa-coins"></i></button>
-                </div>
-                
-                <!-- Golf ball -->
-                <div class="ball-card locked" data-ball="golf">
-                    <div class="ball-preview golf-ball">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <h3>Golf</h3>
-                    <p>Cannon Access</p>
-                    <button class="unlock-btn" data-cost="150">Unlock for 150 <i class="fas fa-coins"></i></button>
-                </div>
-            </div>
-            
-            <div class="selected-ball-info">
-                <h3>Selected ball: <span id="current-ball-name">Standard</span></h3>
             </div>
         </div>
         
         <!-- Upgrades Screen -->
         <div id="upgrades-screen" class="screen">
             <div class="screen-header">
-                <button class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
+                <button class="back-btn" data-target="start"><i class="fas fa-arrow-left"></i> Back</button>
                 <div class="header-actions">
                         <h2><i class="fas fa-cogs"></i> Upgrades</h2>
                     <div class="coins-display">
@@ -161,30 +179,32 @@
                 </div>
             </div>
             
-            <div class="ball-selector">
-                <h3>Select ball to upgrade:</h3>
-                <div class="ball-selector-buttons">
-                    <!-- Ball selection buttons will be generated dynamically -->
+            <div class="screen-body scrollable">
+                <div class="ball-selector">
+                    <h3>Select ball to upgrade:</h3>
+                    <div class="ball-selector-buttons">
+                        <!-- Ball selection buttons will be generated dynamically -->
+                    </div>
                 </div>
-            </div>
-            
-            <div id="upgrades-list">
-                <!-- Upgrades list will be generated dynamically -->
-            </div>
-            
-            <div class="upgrades-info">
-                <p><i class="fas fa-info-circle"></i> Upgrades can be enabled/disabled before starting the game. They are specific to each ball.</p>
+                
+                <div id="upgrades-list">
+                    <!-- Upgrades list will be generated dynamically -->
+                </div>
+                
+                <div class="upgrades-info">
+                    <p><i class="fas fa-info-circle"></i> Upgrades can be enabled/disabled before starting the game. They are specific to each ball.</p>
+                </div>
             </div>
         </div>
         
         <!-- Settings Screen -->
         <div id="settings-screen" class="screen">
             <div class="screen-header">
-                <button class="back-btn"><i class="fas fa-arrow-left"></i> Back</button>
+                <button class="back-btn" data-target="start"><i class="fas fa-arrow-left"></i> Back</button>
                 <h2><i class="fas fa-sliders-h"></i> Settings</h2>
             </div>
             
-            <div class="settings-content">
+            <div class="screen-body scrollable">
                 <div class="settings-section">
                     <h3><i class="fas fa-gamepad"></i> Controls</h3>
                     
@@ -252,7 +272,7 @@
                             <h4>Add coins (debug)</h4>
                             <p>Add 1000 coins to test purchases</p>
                         </div>
-                        <button id="add-coins-btn" class="debug-btn">
+                        <button id="add-coins-btn" class="debug-btn" data-action="add-coins">
                             <i class="fas fa-coins"></i> Add 1000 coins
                         </button>
                     </div>
@@ -262,7 +282,7 @@
                             <h4>Reset progress</h4>
                             <p>Delete all saved data and start over</p>
                         </div>
-                        <button id="reset-progress-btn" class="danger-btn">
+                        <button id="reset-progress-btn" class="danger-btn" data-action="reset-progress">
                             <i class="fas fa-trash"></i> Reset progress
                         </button>
                     </div>
@@ -272,7 +292,7 @@
                             <h4>Request Accelerometer Access</h4>
                             <p>Tap to enable tilt controls on iOS</p>
                         </div>
-                        <button id="request-accelerometer-btn" class="debug-btn">
+                        <button id="request-accelerometer-btn" class="debug-btn" data-action="request-accelerometer">
                             <i class="fas fa-compass"></i> Request Access
                         </button>
                     </div>
@@ -302,7 +322,7 @@
                 <!-- Top HUD bar -->
                 <div class="hud-top">
                     <div class="hud-left">
-                        <button id="pause-btn" class="hud-btn" title="Pause (P)">
+                        <button id="pause-btn" class="hud-btn" title="Pause (P)" data-action="pause">
                             <i class="fas fa-pause"></i>
                         </button>
                     </div>
@@ -323,8 +343,8 @@
                 
                 <!-- Mobile Controls Overlay -->
                 <div id="mobile-controls-overlay" class="mobile-controls-overlay">
-                    <div class="control-left" id="control-left"></div>
-                    <div class="control-right" id="control-right"></div>
+                    <div class="control-left" id="control-left" data-action="move-left"></div>
+                    <div class="control-right" id="control-right" data-action="move-right"></div>
                 </div>
             </div>
             
@@ -348,13 +368,13 @@
                         </div>
                     </div>
                     <div class="pause-buttons">
-                        <button id="resume-btn" class="pause-btn">
+                        <button id="resume-btn" class="pause-btn" data-action="resume">
                             <i class="fas fa-play"></i> Resume Game
                         </button>
-                        <button id="restart-btn" class="pause-btn">
+                        <button id="restart-btn" class="pause-btn" data-action="restart">
                             <i class="fas fa-redo"></i> Start Over
                         </button>
-                        <button id="quit-to-menu-btn" class="pause-btn">
+                        <button id="quit-to-menu-btn" class="pause-btn" data-action="quit-to-menu">
                             <i class="fas fa-home"></i> Exit to Menu
                         </button>
                     </div>
@@ -382,10 +402,10 @@
                     </div>
                     
                     <div class="game-over-buttons">
-                        <button id="play-again-btn" class="game-over-btn">
+                        <button id="play-again-btn" class="game-over-btn" data-action="play-again">
                             <i class="fas fa-redo"></i> Play Again
                         </button>
-                        <button id="quit-after-game-btn" class="game-over-btn">
+                        <button id="quit-after-game-btn" class="game-over-btn" data-action="quit-after-game">
                             <i class="fas fa-home"></i> Main Menu
                         </button>
                     </div>
@@ -403,478 +423,415 @@
     
     <!-- JavaScript Scripts -->
     <script src="js/config.js"></script>
-    <script src="js/standalone-fix.js"></script> <!-- TERAZ PRZED menu.js -->
     <script src="js/menu.js"></script>
     <script src="js/game.js"></script>
     
-
-    <!-- Enhanced PWA and iOS Standalone Script -->
-<!-- Enhanced PWA and iOS Standalone Script -->
+    <!-- Enhanced iOS Standalone and Touch Handling -->
     <script>
-        // Rejestracja Service Worker dla PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful');
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
+        (function() {
+            'use strict';
+            
+            // Singleton App Manager for iOS/PWA
+            window.AppManager = {
+                isStandalone: window.navigator.standalone,
+                isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
+                lastClickTime: 0,
+                clickDebounceDelay: 400, // Increased for iOS standalone
+                
+                init() {
+                    console.log('AppManager: Initializing for', this.isIOS ? 'iOS' : 'Other');
+                    
+                    // Register Service Worker
+                    this.registerServiceWorker();
+                    
+                    // Apply platform-specific fixes
+                    this.applyPlatformFixes();
+                    
+                    // Setup global event listeners
+                    this.setupGlobalListeners();
+                    
+                    // Update safe area
+                    this.updateSafeArea();
+                    
+                    // Initialize after DOM is ready
+                    setTimeout(() => this.initializeApp(), 100);
+                },
+                
+                registerServiceWorker() {
+                    if ('serviceWorker' in navigator) {
+                        navigator.serviceWorker.register('/service-worker.js')
+                            .then(registration => {
+                                console.log('ServiceWorker registered:', registration.scope);
+                            })
+                            .catch(err => {
+                                console.log('ServiceWorker registration failed:', err);
+                            });
+                    }
+                },
+                
+                applyPlatformFixes() {
+                    // iOS specific fixes
+                    if (this.isIOS) {
+                        // Prevent elastic scrolling
+                        document.body.style.overscrollBehavior = 'none';
+                        
+                        // Prevent zoom on double-tap
+                        document.addEventListener('touchstart', (e) => {
+                            if (e.touches.length > 1) {
+                                e.preventDefault();
+                            }
+                        }, { passive: false });
+                        
+                        // Prevent scrolling when touching inputs
+                        document.addEventListener('touchmove', (e) => {
+                            if (e.target.type === 'range') return;
+                            e.preventDefault();
+                        }, { passive: false });
+                        
+                        // Fix for standalone mode
+                        if (this.isStandalone) {
+                            document.body.classList.add('standalone');
+                            console.log('Running in iOS standalone mode');
+                            
+                            // Additional standalone fixes
+                            this.applyStandaloneFixes();
+                        }
+                    }
+                },
+                
+                applyStandaloneFixes() {
+                    // Fix for double-tap zoom in standalone
+                    let lastTouchEnd = 0;
+                    document.addEventListener('touchend', (e) => {
+                        const now = Date.now();
+                        if (now - lastTouchEnd < 300) {
+                            e.preventDefault();
+                        }
+                        lastTouchEnd = now;
+                    }, false);
+                    
+                    // Prevent context menu on long press
+                    document.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        return false;
                     });
-            });
-        }
-
-        // Globalna zmienna do śledzenia stanu standalone
-        window.isStandalone = false;
-
-        // Rozwiązanie dla fullscreen na iOS
-        document.addEventListener('DOMContentLoaded', () => {
-            // Sprawdź czy jesteśmy w trybie standalone
-            if (window.navigator.standalone) {
-                document.body.classList.add('standalone');
-                window.isStandalone = true;
-                console.log('Running in standalone mode (added to home screen)');
-            } else {
-                console.log('Running in browser mode');
-                window.isStandalone = false;
-            }
-
-            // Fix dla iOS scroll - tylko dla elementów które nie są interaktywne
-            document.addEventListener('touchmove', function(e) {
-                if(e.target.type === 'range' || 
-                   e.target.tagName === 'BUTTON' || 
-                   e.target.tagName === 'INPUT' ||
-                   e.target.tagName === 'SELECT' ||
-                   e.target.isContentEditable) {
-                    return;
+                },
+                
+                setupGlobalListeners() {
+                    // Global click debouncing to prevent double-tap
+                    document.addEventListener('click', (e) => {
+                        const now = Date.now();
+                        if (now - this.lastClickTime < this.clickDebounceDelay) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Click debounced');
+                            return;
+                        }
+                        this.lastClickTime = now;
+                    }, true);
+                    
+                    // Handle orientation changes
+                    window.addEventListener('resize', () => this.updateSafeArea());
+                    window.addEventListener('orientationchange', () => {
+                        setTimeout(() => {
+                            this.updateSafeArea();
+                            if (window.Game && Game.resizeCanvas) {
+                                Game.resizeCanvas();
+                            }
+                        }, 100);
+                    });
+                    
+                    // Prevent zoom with Ctrl+/- or pinch
+                    document.addEventListener('wheel', (e) => {
+                        if (e.ctrlKey) e.preventDefault();
+                    }, { passive: false });
+                    
+                    document.addEventListener('gesturestart', (e) => e.preventDefault());
+                    document.addEventListener('gesturechange', (e) => e.preventDefault());
+                    document.addEventListener('gestureend', (e) => e.preventDefault());
+                },
+                
+                updateSafeArea() {
+                    const vh = window.innerHeight * 0.01;
+                    document.documentElement.style.setProperty('--vh', `${vh}px`);
+                    
+                    // Dynamic safe area for different iPhones
+                    if (this.isIOS) {
+                        const height = window.innerHeight;
+                        let topInset = '47px';
+                        let bottomInset = '34px';
+                        
+                        // iPhone 14/15 Pro Max with Dynamic Island
+                        if (height >= 932 || height >= 852) {
+                            topInset = '59px';
+                            bottomInset = '34px';
+                        }
+                        // iPhone X/XS/11 Pro/12/13
+                        else if (height >= 844 || height >= 896) {
+                            topInset = '47px';
+                            bottomInset = '34px';
+                        }
+                        // Older iPhones
+                        else if (height <= 667) {
+                            topInset = '20px';
+                            bottomInset = '0px';
+                        }
+                        
+                        document.documentElement.style.setProperty('--safe-area-inset-top', topInset);
+                        document.documentElement.style.setProperty('--safe-area-inset-bottom', bottomInset);
+                        
+                        console.log('Safe Area updated:', { height, topInset, bottomInset });
+                    }
+                },
+                
+                async requestAccelerometerPermission() {
+                    if (!this.isIOS) return Promise.resolve(true);
+                    
+                    if (typeof DeviceOrientationEvent !== 'undefined' && 
+                        typeof DeviceOrientationEvent.requestPermission === 'function') {
+                        try {
+                            const permission = await DeviceOrientationEvent.requestPermission();
+                            const granted = permission === 'granted';
+                            console.log('Accelerometer permission:', granted ? 'granted' : 'denied');
+                            return granted;
+                        } catch (error) {
+                            console.error('Accelerometer permission error:', error);
+                            return false;
+                        }
+                    }
+                    
+                    return Promise.resolve(true);
+                },
+                
+                initializeApp() {
+                    // Initialize Menu
+                    if (window.Menu && typeof Menu.init === 'function') {
+                        Menu.init();
+                    }
+                    
+                    // Initialize Game
+                    if (window.Game && typeof Game.init === 'function') {
+                        Game.init();
+                    }
+                    
+                    // Setup enhanced button handlers
+                    this.setupEnhancedButtonHandlers();
+                    
+                    // Force safe area update
+                    setTimeout(() => this.updateSafeArea(), 300);
+                    setTimeout(() => this.updateSafeArea(), 1000);
+                    
+                    console.log('AppManager: Initialization complete');
+                },
+                
+                setupEnhancedButtonHandlers() {
+                    // Use event delegation for all buttons
+                    document.addEventListener('click', (e) => {
+                        const button = e.target.closest('button');
+                        if (!button) return;
+                        
+                        // Add visual feedback
+                        this.addButtonFeedback(button);
+                        
+                        // Handle data-action attributes
+                        const action = button.dataset.action;
+                        if (action) {
+                            this.handleButtonAction(action, button);
+                        }
+                        
+                        // Handle data-target for back buttons
+                        const target = button.dataset.target;
+                        if (target && button.classList.contains('back-btn')) {
+                            e.preventDefault();
+                            if (window.Menu && Menu.switchScreen) {
+                                Menu.switchScreen(target);
+                            }
+                        }
+                    });
+                    
+                    // Setup mobile controls
+                    this.setupMobileControls();
+                },
+                
+                addButtonFeedback(button) {
+                    // Add active class for visual feedback
+                    button.classList.add('active');
+                    setTimeout(() => button.classList.remove('active'), 150);
+                },
+                
+                handleButtonAction(action, button) {
+                    console.log('Button action:', action, button);
+                    
+                    if (!window.Menu) return;
+                    
+                    switch(action) {
+                        case 'play':
+                            Menu.startGame();
+                            break;
+                        case 'balls':
+                            Menu.switchScreen('balls');
+                            break;
+                        case 'upgrades':
+                            Menu.switchScreen('upgrades');
+                            break;
+                        case 'settings':
+                            Menu.switchScreen('settings');
+                            break;
+                        case 'select-ball':
+                            const ballType = button.dataset.ball;
+                            if (ballType) Menu.selectBall(ballType);
+                            break;
+                        case 'unlock-ball':
+                            const unlockBallType = button.dataset.ball;
+                            if (unlockBallType) Menu.unlockBall(unlockBallType);
+                            break;
+                        case 'add-coins':
+                            Menu.addCoins(1000);
+                            break;
+                        case 'reset-progress':
+                            if (confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+                                Menu.resetData();
+                            }
+                            break;
+                        case 'request-accelerometer':
+                            this.requestAccelerometerPermission().then(granted => {
+                                if (granted) {
+                                    Menu.showNotification('Accelerometer enabled!', 'success');
+                                    if (window.Game && Game.setupIOSAccelerometer) {
+                                        Game.setupIOSAccelerometer();
+                                    }
+                                } else {
+                                    Menu.showNotification('Accelerometer permission denied', 'error');
+                                }
+                            });
+                            break;
+                        case 'pause':
+                            Menu.togglePause();
+                            break;
+                        case 'resume':
+                            Menu.togglePause();
+                            break;
+                        case 'restart':
+                            Menu.restartGame();
+                            break;
+                        case 'quit-to-menu':
+                            Menu.quitToMenu();
+                            break;
+                        case 'play-again':
+                            Menu.playAgain();
+                            break;
+                        case 'quit-after-game':
+                            Menu.quitAfterGame();
+                            break;
+                    }
+                },
+                
+                setupMobileControls() {
+                    const leftControl = document.getElementById('control-left');
+                    const rightControl = document.getElementById('control-right');
+                    
+                    if (leftControl && rightControl && window.Game) {
+                        const handleControl = (direction) => {
+                            Game.touchActive = true;
+                            Game.touchDirection = direction;
+                        };
+                        
+                        const releaseControl = () => {
+                            Game.touchActive = false;
+                            Game.touchDirection = 0;
+                        };
+                        
+                        // Touch events
+                        leftControl.addEventListener('touchstart', (e) => {
+                            e.preventDefault();
+                            handleControl(-1);
+                        });
+                        
+                        leftControl.addEventListener('touchend', (e) => {
+                            e.preventDefault();
+                            releaseControl();
+                        });
+                        
+                        rightControl.addEventListener('touchstart', (e) => {
+                            e.preventDefault();
+                            handleControl(1);
+                        });
+                        
+                        rightControl.addEventListener('touchend', (e) => {
+                            e.preventDefault();
+                            releaseControl();
+                        });
+                        
+                        // Mouse events for desktop testing
+                        leftControl.addEventListener('mousedown', () => handleControl(-1));
+                        leftControl.addEventListener('mouseup', releaseControl);
+                        rightControl.addEventListener('mousedown', () => handleControl(1));
+                        rightControl.addEventListener('mouseup', releaseControl);
+                        
+                        console.log('Mobile controls initialized');
+                    }
+                },
+                
+                showNotification(message, type = 'info') {
+                    const container = document.getElementById('notification-container');
+                    if (!container) return;
+                    
+                    const notification = document.createElement('div');
+                    notification.className = `notification ${type}`;
+                    notification.textContent = message;
+                    
+                    container.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        if (notification.parentNode === container) {
+                            container.removeChild(notification);
+                        }
+                    }, 3000);
                 }
-                e.preventDefault();
-            }, { passive: false });
-
-            // Fix dla iOS zoom
-            document.addEventListener('gesturestart', function(e) {
-                e.preventDefault();
-            });
-
-            // Inicjalizacja safe area
-            updateSafeArea();
-
-            // Rozwiązanie problemu z przyciskami w standalone mode
-            setTimeout(() => {
-                if (window.isStandalone) {
-                    setupUniversalEventDelegation();
-                }
-            }, 300);
-        });
-
-        // Rozwiązanie dla safe area dynamicznie
-        function updateSafeArea() {
-            const vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-
-            if (CSS.supports('padding-top: env(safe-area-inset-top)')) {
-                document.documentElement.style.setProperty('--safe-area-inset-top', 'env(safe-area-inset-top)');
-                document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
-                document.documentElement.style.setProperty('--safe-area-inset-left', 'env(safe-area-inset-left)');
-                document.documentElement.style.setProperty('--safe-area-inset-right', 'env(safe-area-inset-right)');
-            }
-        }
-
-        // UNIWERSALNA EVENT DELEGATION DLA WSZYSTKICH PRZYCISKÓW W STANDALONE
-        function setupUniversalEventDelegation() {
-            console.log('Setting up universal event delegation for standalone mode');
-
-            // Usuń wszystkie istniejące event listeners z przycisków przez klonowanie
-            document.querySelectorAll('button').forEach(button => {
-                const newButton = button.cloneNode(true);
-                button.parentNode.replaceChild(newButton, button);
-            });
-
-            // Globalny event listener dla WSZYSTKICH kliknięć
-            document.addEventListener('click', function(e) {
-                if (!window.isStandalone) return;
-
-                e.preventDefault();
-                e.stopPropagation();
-
-                const target = e.target;
-                const button = target.closest('button');
-                if (!button) return;
-
-                console.log('Standalone click detected:', {
-                    id: button.id,
-                    className: button.className,
-                    text: button.textContent?.trim()
+            };
+            
+            // Initialize AppManager when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    window.AppManager.init();
                 });
-
-                // Obsługa z opóźnieniem (dla iOS)
-                setTimeout(() => handleStandaloneButtonClick(button), 10);
-
-                return false;
-            }, true);
-
-            // Touch events dla iOS
-            document.addEventListener('touchstart', function(e) {
-                if (!window.isStandalone) return;
-
-                const target = e.target;
-                const button = target.closest('button');
-                if (!button) return;
-
-                e.preventDefault();
-                e.stopPropagation();
-
-                // Symuluj kliknięcie
-                setTimeout(() => handleStandaloneButtonClick(button), 10);
-
-                return false;
-            }, { passive: false });
-        }
-
-        // GŁÓWNA FUNKCJA OBSŁUGUJĄCA WSZYSTKIE PRZYCISKI
-        function handleStandaloneButtonClick(button) {
-            console.log('Handling standalone button click:', button.id || button.className);
-
-            // Upewnij się, że Menu jest dostępne
-            if (!window.Menu) {
-                console.error('Menu not available');
-                return;
+            } else {
+                window.AppManager.init();
             }
-
-            const buttonId = button.id;
-            const buttonClass = button.className;
-
-            // 1. PRZYCISKI MENU GŁÓWNEGO
-            if (buttonId === 'play-btn') {
-                console.log('Play button clicked in standalone');
-                window.Menu.startGame();
-                return;
-            }
-
-            if (buttonId === 'balls-btn') {
-                console.log('Balls button clicked in standalone');
-                window.Menu.switchScreen('balls');
-                return;
-            }
-
-            if (buttonId === 'upgrades-btn') {
-                console.log('Upgrades button clicked in standalone');
-                window.Menu.switchScreen('upgrades');
-                return;
-            }
-
-            if (buttonId === 'settings-btn') {
-                console.log('Settings button clicked in standalone');
-                window.Menu.switchScreen('settings');
-                return;
-            }
-
-            // 2. PRZYCISKI EKRANU PIŁEK
-            if (buttonClass.includes('select-ball-btn')) {
-                const ballCard = button.closest('.ball-card');
-                if (ballCard) {
-                    const ballType = ballCard.dataset.ball;
-                    console.log('Select ball button clicked:', ballType);
-                    window.Menu.selectBall(ballType);
-                }
-                return;
-            }
-
-            if (buttonClass.includes('unlock-btn')) {
-                const ballCard = button.closest('.ball-card');
-                if (ballCard) {
-                    const ballType = ballCard.dataset.ball;
-                    console.log('Unlock ball button clicked:', ballType);
-                    window.Menu.unlockBall(ballType);
-                }
-                return;
-            }
-
-            // 3. PRZYCISKI EKRANU ULEPSZEŃ
-            if (buttonClass.includes('buy-btn') && !button.disabled) {
-                // Pobierz ID ulepszenia z atrybutu onclick
-                const onClickAttr = button.getAttribute('onclick');
-                if (onClickAttr) {
-                    const match = onClickAttr.match(/['"]([^'"]+)['"]/);
-                    if (match && match[1]) {
-                        const upgradeId = match[1];
-                        const ballType = window.Menu.state.currentBall;
-                        console.log('Buy upgrade button clicked:', upgradeId, 'for ball:', ballType);
-                        window.Menu.buyUpgrade(ballType, upgradeId);
-                    }
-                }
-                return;
-            }
-
-            if (buttonClass.includes('toggle-btn')) {
-                const onClickAttr = button.getAttribute('onclick');
-                if (onClickAttr) {
-                    const match = onClickAttr.match(/['"]([^'"]+)['"]/);
-                    if (match && match[1]) {
-                        const upgradeId = match[1];
-                        const ballType = window.Menu.state.currentBall;
-                        console.log('Toggle upgrade button clicked:', upgradeId);
-                        window.Menu.toggleUpgrade(ballType, upgradeId);
-                    }
-                }
-                return;
-            }
-
-            if (buttonClass.includes('ball-select-btn') && !buttonClass.includes('active')) {
-                const ballName = button.textContent.trim();
-                console.log('Ball select button clicked:', ballName);
-
-                // Znajdź typ piłki na podstawie nazwy
-                const ballTypes = ['standard', 'rubber', 'beach', 'golf'];
-                const ballDisplayNames = ballTypes.map(type => GameConfig.getBallDisplayName(type));
-                const ballIndex = ballDisplayNames.findIndex(name => name === ballName);
-
-                if (ballIndex !== -1) {
-                    const ballType = ballTypes[ballIndex];
-                    window.Menu.state.currentBall = ballType;
-                    window.Menu.updateUpgradesScreen();
-                }
-                return;
-            }
-
-            // 4. PRZYCISKI USTAWIEN
-            if (buttonId === 'add-coins-btn') {
-                console.log('Add coins button clicked');
-                window.Menu.state.totalCoins += 1000;
-                window.Menu.saveData();
-                window.Menu.updateCoinsDisplay();
-                window.Menu.showNotification('Added 1000 coins!', 'success');
-                return;
-            }
-
-            if (buttonId === 'reset-progress-btn') {
-                console.log('Reset progress button clicked');
-                if (confirm('Are you sure you want to reset all progress? This action cannot be undone.')) {
-                    window.Menu.resetData();
-                    window.Menu.updateMainMenu();
-                    window.Menu.showNotification('All data has been reset', 'warning');
-                }
-                return;
-            }
-
-            if (buttonId === 'request-accelerometer-btn') {
-                console.log('Request accelerometer button clicked');
-                // Ta funkcja powinna być zdefiniowana w menu.js
-                if (window.Menu && window.Menu.requestAccelerometerAccess) {
-                    window.Menu.requestAccelerometerAccess();
-                }
-                return;
-            }
-
-            // 5. PRZYCISKI PAUZY
-            if (buttonId === 'pause-btn') {
-                console.log('Pause button clicked');
-                if (window.Menu) window.Menu.togglePause();
-                return;
-            }
-
-            if (buttonId === 'resume-btn') {
-                console.log('Resume button clicked');
-                if (window.Menu) window.Menu.togglePause();
-                return;
-            }
-
-            if (buttonId === 'restart-btn') {
-                console.log('Restart button clicked');
-                if (window.Menu) {
-                    window.Menu.saveGameProgress(true);
-                    window.Menu.state.coinsInGame = 0;
-                    document.getElementById('pause-menu').classList.add('hidden');
-                    window.Menu.startGame();
-                }
-                return;
-            }
-
-            if (buttonId === 'quit-to-menu-btn') {
-                console.log('Quit to menu button clicked');
-                if (window.Menu) {
-                    window.Menu.saveGameProgress(true);
-                    window.Menu.state.coinsInGame = 0;
-                    document.getElementById('pause-menu').classList.add('hidden');
-                    window.Menu.switchScreen('start');
-                }
-                return;
-            }
-
-            // 6. PRZYCISKI GAME OVER
-            if (buttonId === 'play-again-btn') {
-                console.log('Play again button clicked');
-                if (window.Menu) {
-                    window.Menu.saveGameProgress(false);
-                    window.Menu.state.coinsInGame = 0;
-                    document.getElementById('game-over-screen').classList.add('hidden');
-                    window.Menu.startGame();
-                }
-                return;
-            }
-
-            if (buttonId === 'quit-after-game-btn') {
-                console.log('Quit after game button clicked');
-                document.getElementById('game-over-screen').classList.add('hidden');
-                window.Menu.switchScreen('start');
-                return;
-            }
-
-            // 7. PRZYCISKI POWROTU (BACK)
-            if (buttonClass.includes('back-btn')) {
-                console.log('Back button clicked');
-                window.Menu.switchScreen('start');
-                return;
-            }
-
-            console.log('Unhandled button click:', buttonId, buttonClass);
-        }
-
-        // Rozwiązanie dla białego paska w Safari
-        function fixSafariWhiteBar() {
-            if (!window.isStandalone && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
-                console.log('Fixing Safari white bar issue');
-
+            
+            // Hide address bar on mobile
+            window.addEventListener('load', function() {
+                setTimeout(function() {
+                    window.scrollTo(0, 1);
+                }, 0);
+            });
+            
+            // Fix for iOS viewport height
+            function updateViewportHeight() {
                 const vh = window.innerHeight * 0.01;
                 document.documentElement.style.setProperty('--vh', `${vh}px`);
-
-                setTimeout(() => {
-                    window.scrollTo(0, 0);
-                    document.body.style.height = `${window.innerHeight}px`;
-                }, 100);
-
-                window.addEventListener('orientationchange', () => {
-                    setTimeout(() => {
-                        const newVh = window.innerHeight * 0.01;
-                        document.documentElement.style.setProperty('--vh', `${newVh}px`);
-                        document.body.style.height = `${window.innerHeight}px`;
-                        window.scrollTo(0, 0);
-                    }, 300);
-                });
             }
-        }
-
-        // Event listeners dla zmiany rozmiaru
-        window.addEventListener('resize', updateSafeArea);
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                updateSafeArea();
-                fixSafariWhiteBar();
-                if (window.Game && Game.resizeCanvas) {
-                    Game.resizeCanvas();
-                }
-            }, 100);
-        });
-
-        // Initial call
-        setTimeout(() => {
-            updateSafeArea();
-            fixSafariWhiteBar();
-        }, 100);
-
-        // Ukryj pasek adresu na mobilnych urządzeniach
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                if (!window.isStandalone) {
-                    window.scrollTo(0, 1);
-                }
-            }, 0);
-        });
-
-        // Zapobiegaj domyślnemu menu kontekstowemu w standalone
-        document.addEventListener('contextmenu', function(e) {
-            if (window.isStandalone) {
-                e.preventDefault();
-                return false;
-            }
-        });
-
-        // Dodatkowa inicjalizacja po załadowaniu
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                if (window.isStandalone) {
-                    console.log('Re-initializing standalone mode...');
-                    setupUniversalEventDelegation();
-
-                    // Wymuś ciemne tło dla safe area
-                    document.documentElement.style.backgroundColor = '#0a0a1a';
-                    document.body.style.backgroundColor = '#0a0a1a';
-
-                    // Ukryj pasek adresu (jeśli jeszcze widoczny)
-                    setTimeout(() => {
-                        window.scrollTo(0, 0);
-                    }, 100);
-                }
-            }, 1000);
-        });
+            
+            window.addEventListener('resize', updateViewportHeight);
+            window.addEventListener('orientationchange', updateViewportHeight);
+            updateViewportHeight();
+            
+        })();
     </script>
     
     <!-- Initialization after page load -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize menu
-            if (window.Menu) Menu.init();
-            
             // Force recalculation after everything loads
             setTimeout(() => {
-                updateSafeArea();
-                fixSafariWhiteBar();
+                if (window.AppManager && AppManager.updateSafeArea) {
+                    AppManager.updateSafeArea();
+                }
                 if (window.Game && Game.resizeCanvas) {
                     Game.resizeCanvas();
                 }
-                
-                // Dodatkowe optymalizacje dla standalone
-                if (document.body.classList.contains('standalone')) {
-                    // Wymuś ciemne tło dla safe area
-                    document.documentElement.style.backgroundColor = '#0a0a1a';
-                    document.body.style.backgroundColor = '#0a0a1a';
-                    
-                    // Ukryj pasek adresu (jeśli jeszcze widoczny)
-                    setTimeout(() => {
-                        window.scrollTo(0, 0);
-                    }, 100);
-                }
-            }, 300);
-        });
-    </script>
-    <script>
-        // Force initialization after all scripts loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing...');
-            
-            // Poczekaj na załadowanie wszystkich skryptów
-            setTimeout(function() {
-                // Initialize Menu (jeśli nie jest standalone)
-                if (!window.navigator.standalone && window.Menu && window.Menu.init) {
-                    window.Menu.init();
-                }
-                
-                // Initialize Game
-                if (window.Game && window.Game.init) {
-                    window.Game.init();
-                }
-                
-                // Jeśli standalone, wywołaj reinit fixa
-                if (window.navigator.standalone && window.StandaloneFix && window.StandaloneFix.reinit) {
-                    setTimeout(() => {
-                        window.StandaloneFix.reinit();
-                    }, 500);
-                }
             }, 500);
         });
-        
-        // Zapobiegaj domyślnemu zachowaniu w standalone
-        if (window.navigator.standalone) {
-            document.addEventListener('touchstart', function(e) {
-                if (e.touches.length > 1) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-            
-            document.addEventListener('gesturestart', function(e) {
-                e.preventDefault();
-            });
-        }
     </script>
 </body>
 </html>

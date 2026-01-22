@@ -17,16 +17,14 @@ html, body {
 
 :root {
     --vh: 1vh;
-    --safe-area-inset-top: 0px;
-    --safe-area-inset-bottom: 0px;
-    --safe-area-inset-left: 0px;
-    --safe-area-inset-right: 0px;
-    --game-background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-    --game-dark-bg: #0a0a1a;
+    --safe-area-inset-top: env(safe-area-inset-top);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom);
+    --safe-area-inset-left: env(safe-area-inset-left);
+    --safe-area-inset-right: env(safe-area-inset-right);
 }
 
 body {
-    background: var(--game-background);
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -44,13 +42,7 @@ body {
     right: 0;
     bottom: 0;
     
-    /* Użyj env() dla safe-area */
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    
-    /* Fallback dla przeglądarek bez env() */
+    /* Zaktualizowane paddingi safe-area dla iOS */
     padding-top: var(--safe-area-inset-top);
     padding-bottom: var(--safe-area-inset-bottom);
     padding-left: var(--safe-area-inset-left);
@@ -61,13 +53,13 @@ body {
     position: fixed;
 }
 
+/* iOS standalone specific styles */
 body.standalone {
-    /* W standalone mode - minimalne paddingi, tło takie jak gra */
-    background: var(--game-dark-bg) !important;
-    padding-top: env(safe-area-inset-top) !important;
-    padding-bottom: 0px !important; /* Minimalny dolny padding */
-    padding-left: 0px !important;
-    padding-right: 0px !important;
+    /* W standalone mode, używamy całej przestrzeni bez dodatkowych paddings */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
 }
 
 body.standalone::before {
@@ -76,9 +68,10 @@ body.standalone::before {
     top: 0;
     left: 0;
     right: 0;
-    height: env(safe-area-inset-top);
-    background: var(--game-dark-bg);
-    z-index: 1000;
+    height: var(--safe-area-inset-top);
+    background: linear-gradient(135deg, #0f0c29, #302b63);
+    z-index: 9999;
+    pointer-events: none;
 }
 
 body.standalone::after {
@@ -87,9 +80,10 @@ body.standalone::after {
     bottom: 0;
     left: 0;
     right: 0;
-    height: max(0px, env(safe-area-inset-bottom));
-    background: var(--game-dark-bg);
-    z-index: 1000;
+    height: var(--safe-area-inset-bottom);
+    background: linear-gradient(135deg, #0f0c29, #302b63);
+    z-index: 9999;
+    pointer-events: none;
 }
 
 #game-container {
@@ -109,14 +103,14 @@ body.standalone::after {
     padding: 0;
 }
 
+/* Standalone mode - full coverage */
 body.standalone #game-container {
-    /* W standalone mode na iOS, usuń paddingi safe-area z kontenera */
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding-top: var(--safe-area-inset-top) !important;
+    padding-bottom: var(--safe-area-inset-bottom) !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
-    height: 100% !important;
-    background: #000; /* Tło canvasa */
 }
 
 .screen {
@@ -129,21 +123,44 @@ body.standalone #game-container {
     display: none;
     flex-direction: column;
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    overflow-x: hidden;
+    padding-top: calc(20px + var(--safe-area-inset-top));
+    padding-bottom: calc(20px + var(--safe-area-inset-bottom));
+}
+
+/* Scrollable body for settings and other long screens */
+.screen-body {
+    flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    padding-bottom: 20px;
+}
+
+/* Hide scrollbar but keep functionality */
+.screen-body::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollable {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 #game-screen {
     padding: 0 !important;
-    /* Dodaj minimalny padding safe-area tylko dla game screen */
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
+    /* Dodaj padding safe-area tylko dla game screen */
+    padding-top: var(--safe-area-inset-top) !important;
+    padding-bottom: var(--safe-area-inset-bottom) !important;
 }
 
 body.standalone #game-screen {
     /* W standalone mode, używamy całej przestrzeni */
     padding-top: 0 !important;
     padding-bottom: 0 !important;
+    height: calc(100% - var(--safe-area-inset-top) - var(--safe-area-inset-bottom)) !important;
+    margin-top: var(--safe-area-inset-top) !important;
+    margin-bottom: var(--safe-area-inset-bottom) !important;
 }
 
 .screen.active {
@@ -156,13 +173,8 @@ body.standalone #game-screen {
     text-align: center;
     padding: 20px;
     /* Dodaj padding safe-area */
-    padding-top: calc(20px + env(safe-area-inset-top)) !important;
-    padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
-}
-
-body.standalone #start-screen {
-    padding-top: calc(20px + env(safe-area-inset-top)) !important;
-    padding-bottom: 20px !important; /* Minimalny dolny padding */
+    padding-top: calc(20px + var(--safe-area-inset-top)) !important;
+    padding-bottom: calc(20px + var(--safe-area-inset-bottom)) !important;
 }
 
 .title-container {
@@ -219,22 +231,53 @@ body.standalone #start-screen {
     max-width: min(320px, 80vw);
 }
 
-.menu-btn {
-    padding: clamp(12px, 3vh, 18px) clamp(15px, 4vw, 25px);
-    background: linear-gradient(135deg, rgba(74, 159, 255, 0.2), rgba(74, 255, 74, 0.1));
-    border: 2px solid rgba(74, 159, 255, 0.3);
-    border-radius: 15px;
-    color: white;
+/* Enhanced button styles for better touch targets */
+.menu-btn, .back-btn, .select-ball-btn, .unlock-btn, .debug-btn, .danger-btn, 
+.pause-btn, .game-over-btn, .hud-btn, .ball-select-btn, .toggle-btn, .buy-btn,
+.action-btn {
+    min-height: 44px; /* Apple's minimum touch target size */
+    padding: 12px 20px;
     font-size: clamp(16px, 4vw, 18px);
-    font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    outline: none;
+    border: none;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
+    font-weight: 500;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Button active state for better feedback */
+.menu-btn:active, .back-btn:active, .select-ball-btn:active, 
+.unlock-btn:active, .debug-btn:active, .danger-btn:active,
+.pause-btn:active, .game-over-btn:active, .hud-btn:active,
+.ball-select-btn:active, .toggle-btn:active, .buy-btn:active {
+    transform: scale(0.95);
+    opacity: 0.9;
+}
+
+/* Prevent double-tap zoom on buttons */
+@media (hover: none) and (pointer: coarse) {
+    .menu-btn, .back-btn, .select-ball-btn, .unlock-btn, .debug-btn, 
+    .danger-btn, .pause-btn, .game-over-btn, .hud-btn, .ball-select-btn, 
+    .toggle-btn, .buy-btn {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+}
+
+.menu-btn {
+    background: linear-gradient(135deg, rgba(74, 159, 255, 0.2), rgba(74, 255, 74, 0.1));
+    border: 2px solid rgba(74, 159, 255, 0.3);
+    color: white;
     backdrop-filter: blur(10px);
-    min-height: 44px;
 }
 
 .menu-btn:hover {
@@ -242,10 +285,6 @@ body.standalone #start-screen {
     background: linear-gradient(135deg, rgba(74, 159, 255, 0.3), rgba(74, 255, 74, 0.2));
     border-color: rgba(74, 159, 255, 0.5);
     box-shadow: 0 5px 20px rgba(74, 159, 255, 0.3);
-}
-
-.menu-btn:active {
-    transform: translateY(0);
 }
 
 .menu-btn i {
@@ -265,14 +304,12 @@ body.standalone #start-screen {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
    
     /* Uwzględnij safe-area dla dolnego paska nawigacji */
-    padding-bottom: max(2vh, env(safe-area-inset-bottom));
-    padding-bottom: max(2vh, var(--safe-area-inset-bottom));
+    padding-bottom: calc(2vh + var(--safe-area-inset-bottom));
 }
 
 body.standalone .stats-bar {
     /* W standalone mode, dolny pasek nawigacji jest ukryty */
     padding-bottom: 2vh;
-    background: rgba(10, 10, 26, 0.95); /* Ciemne tło pasujące do gry */
 }
 
 .screen-header {
@@ -282,11 +319,8 @@ body.standalone .stats-bar {
     margin-bottom: 3vh;
     padding-bottom: 2vh;
     border-bottom: 2px solid rgba(74, 159, 255, 0.3);
-    padding-top: env(safe-area-inset-top);
-}
-
-body.standalone .screen-header {
-    padding-top: calc(10px + env(safe-area-inset-top)); /* Mniejszy padding */
+    padding-top: var(--safe-area-inset-top);
+    flex-shrink: 0;
 }
 
 .screen-header h2 {
@@ -309,8 +343,6 @@ body.standalone .screen-header {
     border: 1px solid rgba(74, 159, 255, 0.3);
     border-radius: 8px;
     color: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -437,8 +469,6 @@ body.standalone .screen-header {
     border: none;
     border-radius: 8px;
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -513,7 +543,6 @@ body.standalone .screen-header {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     color: white;
-    cursor: pointer;
     transition: all 0.3s ease;
     font-size: clamp(14px, 3.5vw, 16px);
 }
@@ -589,7 +618,6 @@ body.standalone .screen-header {
     border-radius: 5px;
     border: none;
     color: white;
-    cursor: pointer;
     font-size: clamp(11px, 3vw, 12px);
     font-weight: 500;
 }
@@ -626,11 +654,7 @@ body.standalone .screen-header {
 .settings-content {
     flex: 1;
     overflow-y: auto;
-    padding-bottom: env(safe-area-inset-bottom);
-}
-
-body.standalone .settings-content {
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    padding-bottom: var(--safe-area-inset-bottom);
 }
 
 .settings-section {
@@ -671,6 +695,7 @@ body.standalone .settings-content {
     display: inline-block;
     width: 50px;
     height: 24px;
+    flex-shrink: 0;
 }
 
 .switch input {
@@ -717,7 +742,6 @@ input:checked + .slider:before {
     border-radius: 8px;
     border: none;
     color: white;
-    cursor: pointer;
     font-weight: 500;
     display: flex;
     align-items: center;
@@ -743,6 +767,7 @@ input:checked + .slider:before {
     opacity: 0.8;
 }
 
+/* Game Canvas */
 #game-canvas {
     display: block;
     background-color: #111;
@@ -755,26 +780,20 @@ input:checked + .slider:before {
     height: 100%;
 }
 
+/* Standalone canvas positioning */
 body.standalone #game-canvas {
-    /* W standalone mode, canvas używa całej przestrzeni */
-    width: 100% !important;
-    height: 100% !important;
-    top: 0 !important;
-    left: 0 !important;
+    top: var(--safe-area-inset-top) !important;
+    height: calc(100% - var(--safe-area-inset-top) - var(--safe-area-inset-bottom)) !important;
 }
 
 #debug-info {
     position: absolute;
-    top: calc(10px + env(safe-area-inset-top));
+    top: calc(20px + var(--safe-area-inset-top));
     left: 10px;
     z-index: 100;
     display: flex;
     flex-direction: column;
     gap: 5px;
-}
-
-body.standalone #debug-info {
-    top: 10px; /* Bez dodatkowego marginesu w standalone */
 }
 
 #height-display,
@@ -819,14 +838,13 @@ body.standalone #debug-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: max(1vh, env(safe-area-inset-top)) 3vw 1vh 3vw;
+    padding: max(2vh, var(--safe-area-inset-top)) 3vw 2vh 3vw;
     pointer-events: none;
 }
 
 body.standalone .hud-top {
     /* W standalone mode, górny pasek jest bliżej krawędzi */
-    padding-top: max(0.5vh, env(safe-area-inset-top)) !important;
-    padding-bottom: 0.5vh !important;
+    padding-top: max(1vh, var(--safe-area-inset-top)) !important;
 }
 
 .hud-left,
@@ -844,30 +862,21 @@ body.standalone .hud-top {
 }
 
 .hud-btn {
-    width: clamp(44px, 12vw, 50px);
-    height: clamp(44px, 12vw, 50px);
+    width: clamp(50px, 15vw, 60px);
+    height: clamp(50px, 15vw, 60px);
     border-radius: 50%;
     background: rgba(74, 159, 255, 0.15);
     border: 2px solid rgba(74, 159, 255, 0.4);
     color: white;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(16px, 4vw, 20px);
+    font-size: clamp(18px, 5vw, 22px);
     transition: all 0.3s ease;
     pointer-events: auto;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     min-height: 44px;
-    -webkit-tap-highlight-color: transparent;
-}
-
-body.standalone .hud-btn {
-    /* W standalone mode, przyciski bez efektów highlight */
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    -webkit-user-select: none;
 }
 
 .hud-btn:hover {
@@ -879,7 +888,7 @@ body.standalone .hud-btn {
 
 .score-display {
     font-family: 'Orbitron', sans-serif;
-    font-size: clamp(16px, 4vw, 20px);
+    font-size: clamp(18px, 5vw, 24px);
     font-weight: 800;
     color: white;
     text-shadow: 
@@ -892,28 +901,22 @@ body.standalone .hud-btn {
 .hud-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     background: rgba(0, 0, 0, 0.2);
-    padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 18px);
-    border-radius: 30px;
-    font-size: clamp(16px, 4vw, 20px);
+    padding: clamp(10px, 3vw, 14px) clamp(16px, 4vw, 22px);
+    border-radius: 35px;
+    font-size: clamp(18px, 5vw, 24px);
     font-weight: 700;
     border: 2px solid rgba(255, 215, 0, 0.3);
     backdrop-filter: blur(15px);
     box-shadow: 
         inset 0 0 20px rgba(255, 215, 0, 0.1),
         0 4px 15px rgba(0, 0, 0, 0.4);
-    -webkit-tap-highlight-color: transparent;
-}
-
-body.standalone .hud-item {
-    /* W standalone mode, elementy HUD bez efektów highlight */
-    -webkit-tap-highlight-color: transparent;
 }
 
 .hud-item i {
     color: #FFD700;
-    font-size: clamp(18px, 5vw, 24px);
+    font-size: clamp(20px, 6vw, 28px);
     text-shadow: 
         0 0 10px rgba(255, 215, 0, 0.7),
         0 0 20px rgba(255, 215, 0, 0.4);
@@ -921,27 +924,27 @@ body.standalone .hud-item {
 
 @media (min-width: 768px) and (min-height: 500px) {
     .hud-top {
-        padding: 15px 20px;
+        padding: 20px 25px;
     }
     
     .hud-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 18px;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
     }
     
     .score-display {
-        font-size: 18px;
+        font-size: 22px;
     }
     
     .hud-item {
-        font-size: 18px;
-        padding: 8px 15px;
-        gap: 8px;
+        font-size: 20px;
+        padding: 10px 18px;
+        gap: 10px;
     }
     
     .hud-item i {
-        font-size: 20px;
+        font-size: 22px;
     }
 }
 
@@ -959,22 +962,15 @@ body.standalone .hud-item {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 25%;
+    height: 30%;
     pointer-events: auto;
     display: flex;
     z-index: 100;
-    padding-bottom: 0;
-    opacity: 0.2;
-    transition: opacity 0.2s;
+    padding-bottom: var(--safe-area-inset-bottom);
 }
 
 body.standalone .mobile-controls-overlay {
-    padding-bottom: 0;
-    opacity: 0.15; /* Jeszcze bardziej przezroczyste w standalone */
-}
-
-.mobile-controls-overlay:active {
-    opacity: 0.3;
+    padding-bottom: var(--safe-area-inset-bottom);
 }
 
 .control-left,
@@ -983,12 +979,11 @@ body.standalone .mobile-controls-overlay {
     height: 100%;
     opacity: 0.3;
     transition: opacity 0.2s;
-    -webkit-tap-highlight-color: transparent;
-}
-
-body.standalone .control-left,
-body.standalone .control-right {
-    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .control-left {
@@ -1001,22 +996,13 @@ body.standalone .control-right {
 
 .control-left:active,
 .control-right:active {
-    opacity: 0.5;
+    opacity: 0.6;
 }
 
-/* Usuń efekty highlight z wszystkich elementów w standalone */
-body.standalone * {
-    -webkit-tap-highlight-color: transparent !important;
-    outline: none !important;
-}
-
-body.standalone button,
-body.standalone .hud-btn,
-body.standalone .menu-btn,
-body.standalone .back-btn {
-    -webkit-tap-highlight-color: transparent !important;
-    user-select: none !important;
-    -webkit-user-select: none !important;
+/* Prevent text selection on controls */
+.control-left, .control-right {
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .overlay-menu {
@@ -1025,13 +1011,13 @@ body.standalone .back-btn {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.85);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 200;
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: var(--safe-area-inset-top);
+    padding-bottom: var(--safe-area-inset-bottom);
 }
 
 .overlay-menu.hidden {
@@ -1042,8 +1028,8 @@ body.standalone .back-btn {
 .game-over-content {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     border-radius: 20px;
-    padding: 25px;
-    max-width: min(380px, 90vw);
+    padding: 30px;
+    max-width: min(400px, 90vw);
     width: 90%;
     text-align: center;
     border: 2px solid rgba(74, 159, 255, 0.3);
@@ -1052,18 +1038,18 @@ body.standalone .back-btn {
 
 body.standalone .pause-content,
 body.standalone .game-over-content {
-    margin-top: env(safe-area-inset-top);
-    margin-bottom: max(10px, env(safe-area-inset-bottom));
+    margin-top: var(--safe-area-inset-top);
+    margin-bottom: var(--safe-area-inset-bottom);
 }
 
 .overlay-menu h2 {
     font-family: 'Orbitron', sans-serif;
-    font-size: clamp(22px, 6vw, 28px);
-    margin-bottom: 20px;
+    font-size: clamp(24px, 7vw, 32px);
+    margin-bottom: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 15px;
 }
 
 .overlay-menu h2 i {
@@ -1074,14 +1060,14 @@ body.standalone .game-over-content {
 .game-over-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin: 20px 0;
+    gap: 15px;
+    margin: 25px 0;
 }
 
 .stat-box {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
-    padding: 12px 8px;
+    padding: 15px 10px;
 }
 
 .stat-box h3 {
@@ -1091,7 +1077,7 @@ body.standalone .game-over-content {
 }
 
 .stat-value {
-    font-size: clamp(18px, 5vw, 22px);
+    font-size: clamp(20px, 6vw, 24px);
     font-weight: 700;
     color: white;
 }
@@ -1100,8 +1086,8 @@ body.standalone .game-over-content {
 .game-over-buttons {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-top: 20px;
+    gap: 12px;
+    margin-top: 25px;
 }
 
 .pause-btn,
@@ -1111,19 +1097,11 @@ body.standalone .game-over-content {
     border-radius: 12px;
     font-size: clamp(14px, 4vw, 16px);
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
     min-height: 44px;
-    -webkit-tap-highlight-color: transparent;
-}
-
-body.standalone .pause-btn,
-body.standalone .game-over-btn {
-    -webkit-tap-highlight-color: transparent;
 }
 
 .pause-btn {
@@ -1149,8 +1127,8 @@ body.standalone .game-over-btn {
 }
 
 .game-over-message {
-    margin-top: 15px;
-    padding: 12px;
+    margin-top: 20px;
+    padding: 15px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
 }
@@ -1162,8 +1140,8 @@ body.standalone .game-over-btn {
 
 #notification-container {
     position: fixed;
-    top: calc(15px + env(safe-area-inset-top));
-    right: 15px;
+    top: calc(20px + var(--safe-area-inset-top));
+    right: 20px;
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -1171,19 +1149,15 @@ body.standalone .game-over-btn {
     pointer-events: none;
 }
 
-body.standalone #notification-container {
-    top: calc(10px + env(safe-area-inset-top));
-}
-
 .notification {
-    padding: 12px 18px;
-    background: rgba(0, 0, 0, 0.9);
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.8);
     border-left: 4px solid #4a9eff;
     border-radius: 8px;
     color: white;
     font-size: clamp(13px, 3.5vw, 14px);
     animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
-    max-width: min(280px, 80vw);
+    max-width: min(300px, 80vw);
     backdrop-filter: blur(10px);
 }
 
@@ -1245,6 +1219,23 @@ body.standalone #notification-container {
     .mobile-controls-overlay {
         display: none !important;
     }
+    
+    /* Landscape mode for settings */
+    #settings-screen .screen-body,
+    #upgrades-screen .screen-body,
+    #balls-screen .screen-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+    
+    #settings-screen .settings-section,
+    #upgrades-screen .ball-selector,
+    #upgrades-screen #upgrades-list {
+        height: 100%;
+        overflow-y: auto;
+    }
 }
 
 @media (max-height: 600px) {
@@ -1265,7 +1256,7 @@ body.standalone #notification-container {
     }
     
     .mobile-controls-overlay {
-        height: 30%;
+        height: 40%;
     }
 }
 
@@ -1282,14 +1273,14 @@ body.standalone #notification-container {
     }
     
     .hud-top {
-        padding-top: max(1vh, env(safe-area-inset-top));
+        padding-top: max(3vh, env(safe-area-inset-top));
     }
     
     body.standalone {
         padding-top: env(safe-area-inset-top);
-        padding-bottom: 0px !important;
-        padding-left: 0px !important;
-        padding-right: 0px !important;
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
     }
     
     body.standalone #game-container {
@@ -1315,7 +1306,11 @@ body.standalone #game-screen {
 }
 
 body.standalone .hud-top {
-    padding-top: max(0.5vh, env(safe-area-inset-top)) !important;
+    padding-top: calc(var(--safe-area-inset-top) + 10px);
+}
+
+body.standalone::after {
+    display: none;
 }
 
 /* iPhone 14 Pro/15 Pro with Dynamic Island */
@@ -1328,15 +1323,15 @@ body.standalone .hud-top {
     
     body.standalone {
         padding-top: 59px !important;
-        padding-bottom: 0px !important;
+        padding-bottom: 34px !important;
     }
     
     body.standalone::before {
-        height: 59px;
+        height: 59px !important;
     }
     
     body.standalone::after {
-        height: 0px;
+        height: 34px !important;
     }
 }
 
@@ -1350,15 +1345,15 @@ body.standalone .hud-top {
     
     body.standalone {
         padding-top: 47px !important;
-        padding-bottom: 0px !important;
+        padding-bottom: 34px !important;
     }
     
     body.standalone::before {
-        height: 47px;
+        height: 47px !important;
     }
     
     body.standalone::after {
-        height: 0px;
+        height: 34px !important;
     }
 }
 
@@ -1376,23 +1371,81 @@ body.standalone .hud-top {
     }
     
     body.standalone::before {
-        height: 20px;
+        height: 20px !important;
     }
     
     body.standalone::after {
-        height: 0px;
+        height: 0px !important;
     }
 }
 
-/* Tablet */
-@media only screen and (min-width: 768px) and (min-height: 1024px) {
-    :root {
-        --safe-area-inset-top: 20px;
-        --safe-area-inset-bottom: 20px;
+/* Active state for buttons */
+button.active {
+    transform: scale(0.95) !important;
+    opacity: 0.9 !important;
+}
+
+/* Prevent iOS text size adjustment */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+/* Fix for iOS input zoom */
+@media screen and (max-width: 767px) {
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* Improve touch targets for standalone */
+@media (hover: none) and (pointer: coarse) {
+    button, [role="button"], .switch {
+        min-height: 44px;
+        min-width: 44px;
     }
     
-    body.standalone {
-        padding-top: 20px !important;
-        padding-bottom: 0px !important;
+    .hud-btn {
+        width: 60px !important;
+        height: 60px !important;
     }
+}
+
+/* Smooth transitions for screen switching */
+.screen {
+    transition: opacity 0.3s ease;
+}
+
+/* Loading indicator */
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.loading.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(74, 159, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #4a9eff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
