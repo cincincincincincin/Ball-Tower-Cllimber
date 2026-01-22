@@ -1,12 +1,13 @@
 {
-  "name": "Ball Tower Climber",
-  "short_name": "Ball Tower",
-  "description": "Climb the tower with different balls!",
-  "start_url": "/",
+  "name": "Ball Tower Jumper",
+  "short_name": "BallTower",
+  "description": "Jump and collect coins with different balls",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#0a0a1a",
+  "background_color": "#1a1a2e",
   "theme_color": "#1a1a2e",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
+  "scope": "./",
   "icons": [
     {
       "src": "icon-192.png",
@@ -17,6 +18,12 @@
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
