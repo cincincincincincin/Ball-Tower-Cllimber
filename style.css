@@ -1171,3 +1171,33 @@ body.standalone .game-over-content {
         padding-right: 0;
     }
 }
+
+/* DIAGNOSTYKA - TYMCZASOWO DODAJ */
+body {
+    background-color: red !important; /* Sprawdź czy całe tło jest czerwone */
+}
+
+#game-container {
+    background-color: blue !important; /* Kontener powinien być niebieski */
+}
+
+#game-canvas {
+    background-color: green !important; /* Canvas powinien być zielony */
+}
+
+/* Po sprawdzeniu usuń te kolory diagnostyczne */
+
+/* DIAGNOSTYKA - TYMCZASOWO DODAJ */
+.standalone.body {
+    background-color: rgb(238, 255, 0) !important; /* Sprawdź czy całe tło jest czerwone */
+}
+
+.standalone#game-container {
+    background-color: rgb(187, 0, 255) !important; /* Kontener powinien być niebieski */
+}
+
+.standalone#game-canvas {
+    background-color: rgb(74, 1, 74) !important; /* Canvas powinien być zielony */
+}
+
+/* Po sprawdzeniu usuń te kolory diagnostyczne */
