@@ -42,7 +42,7 @@ body {
     touch-action: manipulation;
     width: 100vw;
     height: 100vh;
-    height: calc(var(--vh, 1vh) * 100+2);
+    height: calc(var(--vh, 1vh) * 100+10);
     position: fixed;
     top: 0;
     left: 0;
@@ -1244,30 +1244,30 @@ body.standalone .game-over-content {
 
 /* DIAGNOSTYKA - TYMCZASOWO DODAJ */
 body {
-    background-color: red !important; /* Sprawdź czy całe tło jest czerwone */
+    background-color: red; /* Sprawdź czy całe tło jest czerwone */
 }
 
 #game-container {
-    background-color: blue !important; /* Kontener powinien być niebieski */
+    background-color: blue; /* Kontener powinien być niebieski */
 }
 
 #game-canvas {
-    background-color: green !important; /* Canvas powinien być zielony */
+    background-color: green; /* Canvas powinien być zielony */
 }
 
 /* Po sprawdzeniu usuń te kolory diagnostyczne */
 
-/* DIAGNOSTYKA - TYMCZASOWO DODAJ */
-.standalone.body {
-    background-color: rgb(238, 255, 0) !important; /* Sprawdź czy całe tło jest czerwone */
+/* DIAGNOSTYKA - TYMCZASOWO DODAJ - POPRAWIONE SELEKTORY */
+body.standalone {
+    background-color: rgb(238, 255, 0); /* Żółty w standalone */
 }
 
-.standalone#game-container {
-    background-color: rgb(187, 0, 255) !important; /* Kontener powinien być niebieski */
+body.standalone #game-container {
+    background-color: rgb(187, 0, 255); /* Fioletowy w standalone */
 }
 
-.standalone#game-canvas {
-    background-color: rgb(74, 1, 74) !important; /* Canvas powinien być zielony */
+body.standalone #game-canvas {
+    background-color: rgb(74, 1, 74); /* Ciemnofioletowy w standalone */
 }
 
 /* Po sprawdzeniu usuń te kolory diagnostyczne */
