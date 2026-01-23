@@ -1252,19 +1252,17 @@ body {
     background-color: green !important; /* Canvas powinien być zielony */
 }
 
-/* Po sprawdzeniu usuń te kolory diagnostyczne */
-
-/* DIAGNOSTYKA - TYMCZASOWO DODAJ */
-.standalone.body {
-    background-color: rgb(238, 255, 0) !important; /* Sprawdź czy całe tło jest czerwone */
+body.standalone {
+    background-color: rgb(238, 255, 0) !important; /* Żółty w standalone */
+    height: 100vh;
 }
 
-.standalone#game-container {
-    background-color: rgb(187, 0, 255) !important; /* Kontener powinien być niebieski */
+body.standalone #game-container {
+    background-color: rgb(187, 0, 255) !important; /* Fioletowy w standalone */
+    height: 100vh;
 }
 
-.standalone#game-canvas {
-    background-color: rgb(74, 1, 74) !important; /* Canvas powinien być zielony */
+body.standalone #game-canvas {
+    background-color: rgb(74, 1, 74) !important; /* Ciemnofioletowy w standalone */
+    height: 100vh;
 }
-
-/* Po sprawdzeniu usuń te kolory diagnostyczne */
