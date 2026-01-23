@@ -1268,7 +1268,7 @@ body.standalone .screen {
 }
 
 body.standalone #game-container {
-    padding-top: 0;
+    padding-top: 57px;
     padding-bottom: 0;
     padding-left: 0;
     padding-right: 0;
