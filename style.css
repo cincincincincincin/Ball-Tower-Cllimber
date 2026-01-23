@@ -1,3 +1,6 @@
+/* ==================== */
+/* RESET & BASE STYLES */
+/* ==================== */
 * {
     margin: 0;
     padding: 0;
@@ -15,6 +18,9 @@ html, body {
     position: fixed;
 }
 
+/* ==================== */
+/* CSS VARIABLES */
+/* ==================== */
 :root {
     --vh: 1vh;
     --safe-area-inset-top: 0px;
@@ -23,6 +29,9 @@ html, body {
     --safe-area-inset-right: 0px;
 }
 
+/* ==================== */
+/* BODY & MAIN CONTAINER */
+/* ==================== */
 body {
     background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
     display: flex;
@@ -42,23 +51,31 @@ body {
     right: 0;
     bottom: 0;
     
-    /* Zaktualizowane paddingi safe-area dla iOS */
+    /* Safe-area padding for iOS */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
     
-    /* Fallback dla przeglądarek bez env() */
+    /* Fallback for browsers without env() */
     padding-top: var(--safe-area-inset-top);
     padding-bottom: var(--safe-area-inset-bottom);
     padding-left: var(--safe-area-inset-left);
     padding-right: var(--safe-area-inset-right);
     
-    /* Zapobiega przesuwaniu się strony na iOS Safari */
     overflow: hidden;
-    position: fixed;
 }
 
+body.standalone {
+    padding-top: env(safe-area-inset-top) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+    padding-left: env(safe-area-inset-left) !important;
+    padding-right: env(safe-area-inset-right) !important;
+}
+
+/* ==================== */
+/* GAME CONTAINER */
+/* ==================== */
 #game-container {
     position: relative;
     width: 100vw;
@@ -71,13 +88,10 @@ body {
     background: #000;
     max-width: 100%;
     max-height: 100%;
-    
-    /* W standalone mode używamy całej dostępnej przestrzeni */
     padding: 0;
 }
 
 body.standalone #game-container {
-    /* W standalone mode na iOS, usuń paddingi safe-area z kontenera */
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     padding-left: 0 !important;
@@ -85,14 +99,9 @@ body.standalone #game-container {
     height: 100% !important;
 }
 
-body.standalone {
-    /* W standalone mode na iOS, użyj env() bezpośrednio */
-    padding-top: env(safe-area-inset-top) !important;
-    padding-bottom: env(safe-area-inset-bottom) !important;
-    padding-left: env(safe-area-inset-left) !important;
-    padding-right: env(safe-area-inset-right) !important;
-}
-
+/* ==================== */
+/* SCREENS SYSTEM */
+/* ==================== */
 .screen {
     position: absolute;
     top: 0;
@@ -107,33 +116,35 @@ body.standalone {
     overflow-x: hidden;
 }
 
-#game-screen {
-    padding: 0 !important;
-    /* Dodaj padding safe-area tylko dla game screen */
-    padding-top: env(safe-area-inset-top) !important;
-    padding-bottom: env(safe-area-inset-bottom) !important;
-}
-
-body.standalone #game-screen {
-    /* W standalone mode, używamy całej przestrzeni */
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-}
-
 .screen.active {
     display: flex;
 }
 
+/* Start Screen */
 #start-screen {
     justify-content: center;
     align-items: center;
     text-align: center;
     padding: 20px;
-    /* Dodaj padding safe-area */
     padding-top: calc(20px + env(safe-area-inset-top)) !important;
     padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
 }
 
+/* Game Screen */
+#game-screen {
+    padding: 0 !important;
+    padding-top: env(safe-area-inset-top) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+}
+
+body.standalone #game-screen {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* ==================== */
+/* START SCREEN ELEMENTS */
+/* ==================== */
 .title-container {
     margin-bottom: 5vh;
     animation: float 3s ease-in-out infinite;
@@ -180,6 +191,9 @@ body.standalone #game-screen {
     font-weight: 300;
 }
 
+/* ==================== */
+/* BUTTONS */
+/* ==================== */
 .menu-buttons {
     display: flex;
     flex-direction: column;
@@ -221,28 +235,9 @@ body.standalone #game-screen {
     font-size: clamp(18px, 5vw, 20px);
 }
 
-.stats-bar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-around;
-    padding: 2vh 20px;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(10px);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-   
-    /* Uwzględnij safe-area dla dolnego paska nawigacji */
-    padding-bottom: max(2vh, env(safe-area-inset-bottom));
-    padding-bottom: max(2vh, var(--safe-area-inset-bottom));
-}
-
-body.standalone .stats-bar {
-    /* W standalone mode, dolny pasek nawigacji jest ukryty */
-    padding-bottom: 2vh;
-}
-
+/* ==================== */
+/* SCREEN HEADERS & NAV */
+/* ==================== */
 .screen-header {
     display: flex;
     justify-content: space-between;
@@ -301,17 +296,14 @@ body.standalone .stats-bar {
     color: #FFD700;
 }
 
+/* ==================== */
+/* BALL SELECTION */
+/* ==================== */
 .balls-container {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
     margin-bottom: 30px;
-}
-
-@media (min-width: 768px) {
-    .balls-container {
-        grid-template-columns: repeat(4, 1fr);
-    }
 }
 
 .ball-card {
@@ -350,6 +342,7 @@ body.standalone .stats-bar {
     color: rgba(255, 255, 255, 0.5);
 }
 
+/* Ball Types */
 .standard-ball {
     background: radial-gradient(circle at 30% 30%, #4a9eff, #1a5fb4);
     box-shadow: 0 0 20px rgba(74, 159, 255, 0.5);
@@ -394,6 +387,7 @@ body.standalone .stats-bar {
     font-size: clamp(10px, 2.5vw, 11px);
 }
 
+/* Ball Buttons */
 .select-ball-btn,
 .unlock-btn {
     width: 100%;
@@ -436,57 +430,9 @@ body.standalone .stats-bar {
     cursor: not-allowed;
 }
 
-.selected-ball-info {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 15px;
-    border-radius: 10px;
-    margin-top: 10px;
-    text-align: center;
-}
-
-.selected-ball-info h3 {
-    margin-bottom: 5px;
-    color: #4a9eff;
-    font-size: clamp(16px, 4.5vw, 18px);
-}
-
-.selected-ball-info p {
-    font-size: clamp(11px, 3vw, 12px);
-    color: #aaa;
-}
-
-.ball-selector {
-    margin-bottom: 3vh;
-}
-
-.ball-selector h3 {
-    margin-bottom: 15px;
-    font-size: clamp(14px, 4vw, 16px);
-    color: #aaa;
-}
-
-.ball-selector-buttons {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.ball-select-btn {
-    padding: 8px 15px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: clamp(14px, 3.5vw, 16px);
-}
-
-.ball-select-btn.active {
-    background: rgba(74, 159, 255, 0.2);
-    border-color: #4a9eff;
-}
-
+/* ==================== */
+/* UPGRADES SYSTEM */
+/* ==================== */
 #upgrades-list {
     flex: 1;
     overflow-y: auto;
@@ -579,14 +525,9 @@ body.standalone .stats-bar {
     cursor: not-allowed;
 }
 
-.upgrades-info {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 10px 15px;
-    border-radius: 8px;
-    font-size: clamp(11px, 3vw, 12px);
-    color: #aaa;
-}
-
+/* ==================== */
+/* SETTINGS */
+/* ==================== */
 .settings-content {
     flex: 1;
     overflow-y: auto;
@@ -626,6 +567,7 @@ body.standalone .stats-bar {
     color: #aaa;
 }
 
+/* Toggle Switch */
 .switch {
     position: relative;
     display: inline-block;
@@ -671,38 +613,9 @@ input:checked + .slider:before {
     transform: translateX(26px);
 }
 
-.debug-btn,
-.danger-btn {
-    padding: 8px 15px;
-    border-radius: 8px;
-    border: none;
-    color: white;
-    cursor: pointer;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    font-size: clamp(14px, 3.5vw, 16px);
-}
-
-.debug-btn {
-    background: rgba(255, 215, 0, 0.2);
-    border: 1px solid rgba(255, 215, 0, 0.5);
-    color: #FFD700;
-}
-
-.danger-btn {
-    background: rgba(255, 107, 107, 0.2);
-    border: 1px solid rgba(255, 107, 107, 0.5);
-    color: #ff6b6b;
-}
-
-.debug-btn:hover,
-.danger-btn:hover {
-    opacity: 0.8;
-}
-
+/* ==================== */
+/* GAME CANVAS & HUD */
+/* ==================== */
 #game-canvas {
     display: block;
     background-color: #111;
@@ -714,44 +627,6 @@ input:checked + .slider:before {
     width: 100%;
     height: 100%;
 }
-
-#debug-info {
-    position: absolute;
-    top: calc(20px + env(safe-area-inset-top));
-    left: 10px;
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-#height-display,
-#max-height-display,
-#velocity-x-display,
-#max-velocity-x-display,
-#velocity-y-display,
-#max-velocity-y-display,
-#current-floor-display,
-#max-floor-display,
-#high-score-display {
-    position: static !important;
-    font-size: clamp(12px, 3vw, 14px) !important;
-    background-color: rgba(0, 0, 0, 0.7) !important;
-    padding: 4px 8px !important;
-    border-radius: 5px !important;
-    margin-bottom: 2px !important;
-    width: fit-content !important;
-}
-
-#height-display { color: #4a9eff; border-left: 3px solid #4a9eff; }
-#max-height-display { color: #ff4a4a; border-left: 3px solid #ff4a4a; }
-#velocity-x-display { color: #4aff4a; border-left: 3px solid #4aff4a; }
-#max-velocity-x-display { color: #ff4aff; border-left: 3px solid #ff4aff; }
-#velocity-y-display { color: #4affff; border-left: 3px solid #4affff; }
-#max-velocity-y-display { color: #ffaa00; border-left: 3px solid #ffaa00; }
-#current-floor-display { color: #ff9a4a; border-left: 3px solid #ff9a4a; }
-#max-floor-display { color: #9a4aff; border-left: 3px solid #9a4aff; }
-#high-score-display { color: #4aff9a; border-left: 3px solid #4aff9a; }
 
 #game-hud {
     position: absolute;
@@ -769,11 +644,6 @@ input:checked + .slider:before {
     align-items: center;
     padding: max(2vh, env(safe-area-inset-top)) 3vw 2vh 3vw;
     pointer-events: none;
-}
-
-body.standalone .hud-top {
-    /* W standalone mode, górny pasek jest bliżej krawędzi */
-    padding-top: max(1vh, env(safe-area-inset-top)) !important;
 }
 
 .hud-left,
@@ -852,32 +722,6 @@ body.standalone .hud-top {
         0 0 20px rgba(255, 215, 0, 0.4);
 }
 
-@media (min-width: 768px) and (min-height: 500px) {
-    .hud-top {
-        padding: 20px 25px;
-    }
-    
-    .hud-btn {
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
-    }
-    
-    .score-display {
-        font-size: 22px;
-    }
-    
-    .hud-item {
-        font-size: 20px;
-        padding: 10px 18px;
-        gap: 10px;
-    }
-    
-    .hud-item i {
-        font-size: 22px;
-    }
-}
-
 #coins-value {
     color: #FFD700;
     font-weight: 800;
@@ -886,22 +730,9 @@ body.standalone .hud-top {
         0 0 20px rgba(255, 215, 0, 0.3);
 }
 
-/* Mobile Controls Overlay */
-.mobile-controls-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 30%;
-    pointer-events: auto;
-    display: flex;
-    z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom);
-}
-
-body.standalone .mobile-controls-overlay {
-    padding-bottom: env(safe-area-inset-bottom);
-}
+/* ==================== */
+/* MOBILE CONTROLS */
+/* ==================== */
 
 .control-left,
 .control-right {
@@ -924,6 +755,9 @@ body.standalone .mobile-controls-overlay {
     opacity: 0.6;
 }
 
+/* ==================== */
+/* OVERLAY MENUS */
+/* ==================== */
 .overlay-menu {
     position: absolute;
     top: 0;
@@ -958,7 +792,6 @@ body.standalone .mobile-controls-overlay {
 body.standalone .pause-content,
 body.standalone .game-over-content {
     margin-top: env(safe-area-inset-top);
-    margin-bottom: env(safe-area-inset-bottom);
 }
 
 .overlay-menu h2 {
@@ -973,6 +806,24 @@ body.standalone .game-over-content {
 
 .overlay-menu h2 i {
     color: #4a9eff;
+}
+
+/* ==================== */
+/* STATS & INFO DISPLAYS */
+/* ==================== */
+.stats-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    padding: 2vh 20px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: max(2vh, env(safe-area-inset-bottom));
+    padding-bottom: max(2vh, var(--safe-area-inset-bottom));
 }
 
 .pause-stats,
@@ -1001,64 +852,50 @@ body.standalone .game-over-content {
     color: white;
 }
 
-.pause-buttons,
-.game-over-buttons {
+/* ==================== */
+/* DEBUG INFO */
+/* ==================== */
+#debug-info {
+    position: absolute;
+    top: calc(20px + env(safe-area-inset-top));
+    left: 10px;
+    z-index: 100;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-top: 25px;
+    gap: 5px;
 }
 
-.pause-btn,
-.game-over-btn {
-    padding: clamp(12px, 3vh, 15px) clamp(15px, 4vw, 20px);
-    border: none;
-    border-radius: 12px;
-    font-size: clamp(14px, 4vw, 16px);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-height: 44px;
+#height-display,
+#max-height-display,
+#velocity-x-display,
+#max-velocity-x-display,
+#velocity-y-display,
+#max-velocity-y-display,
+#current-floor-display,
+#max-floor-display,
+#high-score-display {
+    position: static !important;
+    font-size: clamp(12px, 3vw, 14px) !important;
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    padding: 4px 8px !important;
+    border-radius: 5px !important;
+    margin-bottom: 2px !important;
+    width: fit-content !important;
 }
 
-.pause-btn {
-    background: linear-gradient(135deg, rgba(74, 159, 255, 0.2), rgba(74, 255, 74, 0.1));
-    border: 2px solid rgba(74, 159, 255, 0.3);
-    color: white;
-}
+#height-display { color: #4a9eff; border-left: 3px solid #4a9eff; }
+#max-height-display { color: #ff4a4a; border-left: 3px solid #ff4a4a; }
+#velocity-x-display { color: #4aff4a; border-left: 3px solid #4aff4a; }
+#max-velocity-x-display { color: #ff4aff; border-left: 3px solid #ff4aff; }
+#velocity-y-display { color: #4affff; border-left: 3px solid #4affff; }
+#max-velocity-y-display { color: #ffaa00; border-left: 3px solid #ffaa00; }
+#current-floor-display { color: #ff9a4a; border-left: 3px solid #ff9a4a; }
+#max-floor-display { color: #9a4aff; border-left: 3px solid #9a4aff; }
+#high-score-display { color: #4aff9a; border-left: 3px solid #4aff9a; }
 
-.pause-btn:hover {
-    background: linear-gradient(135deg, rgba(74, 159, 255, 0.3), rgba(74, 255, 74, 0.2));
-    transform: translateY(-3px);
-}
-
-.game-over-btn {
-    background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 159, 74, 0.1));
-    border: 2px solid rgba(255, 107, 107, 0.3);
-    color: white;
-}
-
-.game-over-btn:hover {
-    background: linear-gradient(135deg, rgba(255, 107, 107, 0.3), rgba(255, 159, 74, 0.2));
-    transform: translateY(-3px);
-}
-
-.game-over-message {
-    margin-top: 20px;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-}
-
-#game-over-message-text {
-    color: #ffd166;
-    font-size: clamp(12px, 3.5vw, 14px);
-}
-
+/* ==================== */
+/* NOTIFICATIONS */
+/* ==================== */
 #notification-container {
     position: fixed;
     top: calc(20px + env(safe-area-inset-top));
@@ -1094,6 +931,9 @@ body.standalone .game-over-content {
     border-left-color: #ffd166;
 }
 
+/* ==================== */
+/* ANIMATIONS */
+/* ==================== */
 @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
@@ -1109,20 +949,54 @@ body.standalone .game-over-content {
     to { opacity: 0; }
 }
 
-@media (min-height: 1000px) {
-    #game-container {
-        max-width: 430px;
-        max-height: 932px;
-    }
+/* ==================== */
+/* UTILITY CLASSES */
+/* ==================== */
+.hidden {
+    display: none !important;
 }
 
+/* ==================== */
+/* RESPONSIVE DESIGN */
+/* ==================== */
+
+/* Desktop/Tablet */
 @media (min-width: 768px) {
+    .balls-container {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
     #game-container {
         max-width: 430px;
         max-height: 932px;
     }
+    
+    .hud-top {
+        padding: 20px 25px;
+    }
+    
+    .hud-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .score-display {
+        font-size: 22px;
+    }
+    
+    .hud-item {
+        font-size: 20px;
+        padding: 10px 18px;
+        gap: 10px;
+    }
+    
+    .hud-item i {
+        font-size: 22px;
+    }
 }
 
+/* Landscape Mode */
 @media (orientation: landscape) {
     #start-screen {
         justify-content: flex-start;
@@ -1142,6 +1016,15 @@ body.standalone .game-over-content {
     }
 }
 
+/* Tall Mobile */
+@media (min-height: 1000px) {
+    #game-container {
+        max-width: 430px;
+        max-height: 932px;
+    }
+}
+
+/* Short Mobile */
 @media (max-height: 600px) {
     .title-container {
         margin-bottom: 2vh;
@@ -1164,6 +1047,49 @@ body.standalone .game-over-content {
     }
 }
 
+/* iPhone Dynamic Island Models */
+@media only screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3),
+       only screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
+    :root {
+        --safe-area-inset-top: 59px;
+        --safe-area-inset-bottom: 34px;
+    }
+    
+    body.standalone {
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+    }
+}
+
+/* iPhone Standard Models */
+@media only screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
+       only screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) {
+    :root {
+        --safe-area-inset-top: 47px;
+        --safe-area-inset-bottom: 34px;
+    }
+    
+    body.standalone {
+        padding-top: 0px !important;
+        padding-bottom: 0px !important;
+    }
+}
+
+/* Older iPhones */
+@media only screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2),
+       only screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) {
+    :root {
+        --safe-area-inset-top: 20px;
+        --safe-area-inset-bottom: 0px;
+    }
+    
+    body.standalone {
+        padding-top: 20px !important;
+        padding-bottom: 0px !important;
+    }
+}
+
+/* Safe-area Support */
 @supports (padding: max(0px)) {
     body {
         padding-left: min(0px, env(safe-area-inset-left));
@@ -1180,81 +1106,10 @@ body.standalone .game-over-content {
         padding-top: max(3vh, env(safe-area-inset-top));
     }
     
-    body.standalone {
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
-    }
-    
     body.standalone #game-container {
         padding-top: 0;
         padding-bottom: 0;
         padding-left: 0;
         padding-right: 0;
-    }
-}
-
-.hidden {
-    display: none !important;
-}
-
-body.standalone #game-container {
-    padding-top: 0;
-    padding-bottom: 0;
-}
-
-body.standalone #game-screen {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-}
-
-body.standalone .hud-top {
-    padding-top: calc(env(safe-area-inset-top) + 10px);
-}
-
-body.standalone::after {
-    display: none;
-}
-
-/* iPhone 14 Pro/15 Pro with Dynamic Island */
-@media only screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3),
-       only screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) {
-    :root {
-        --safe-area-inset-top: 59px;
-        --safe-area-inset-bottom: 34px;
-    }
-    
-    body.standalone {
-        padding-top: 59px !important;
-        padding-bottom: 34px !important;
-    }
-}
-
-/* iPhone without Dynamic Island */
-@media only screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3),
-       only screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) {
-    :root {
-        --safe-area-inset-top: 47px;
-        --safe-area-inset-bottom: 34px;
-    }
-    
-    body.standalone {
-        padding-top: 47px !important;
-        padding-bottom: 34px !important;
-    }
-}
-
-/* Older iPhones */
-@media only screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2),
-       only screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) {
-    :root {
-        --safe-area-inset-top: 20px;
-        --safe-area-inset-bottom: 0px;
-    }
-    
-    body.standalone {
-        padding-top: 20px !important;
-        padding-bottom: 0px !important;
     }
 }
