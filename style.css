@@ -42,7 +42,7 @@ body {
     touch-action: manipulation;
     width: 100vw;
     height: 100vh;
-    height: calc(var(--vh, 1vh) * 100+10);
+    height: calc(var(--vh, 1vh) * 100);
     position: fixed;
     top: 0;
     left: 0;
@@ -62,11 +62,6 @@ body {
     padding-right: var(--safe-area-inset-right);
     
     overflow: hidden;
-}
-
-body.standalone {
-    height : 100%;
-    padding-bottom: 0px;
 }
 
 /* ==================== */
@@ -1244,6 +1239,7 @@ body.standalone .game-over-content {
 
 /* DIAGNOSTYKA - TYMCZASOWO DODAJ */
 body {
+    height: 100vh;
     background-color: red; /* Sprawdź czy całe tło jest czerwone */
 }
 
@@ -1259,14 +1255,17 @@ body {
 
 /* DIAGNOSTYKA - TYMCZASOWO DODAJ - POPRAWIONE SELEKTORY */
 body.standalone {
+    height: 100%;
     background-color: rgb(238, 255, 0); /* Żółty w standalone */
 }
 
 body.standalone #game-container {
+    height: 100%;
     background-color: rgb(187, 0, 255); /* Fioletowy w standalone */
 }
 
 body.standalone #game-canvas {
+    height: 100%;
     background-color: rgb(74, 1, 74); /* Ciemnofioletowy w standalone */
 }
 
