@@ -910,7 +910,7 @@ window.Game = {
 
         
         const arrowX = GameConfig.CANVAS_WIDTH - 50;
-        const arrowY = 150; 
+        const arrowY = 250; 
         const arrowSize = 25;
         const arrowLength = 40;
 
