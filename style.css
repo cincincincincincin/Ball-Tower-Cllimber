@@ -1240,18 +1240,6 @@ body.standalone .game-over-content {
     }
 }
 
-/* DIAGNOSTYKA - TYMCZASOWO DODAJ */
-body {
-    background-color: red !important; /* Sprawdź czy całe tło jest czerwone */
-}
-
-#game-container {
-    background-color: blue !important; /* Kontener powinien być niebieski */
-}
-
-#game-canvas {
-    background-color: green !important; /* Canvas powinien być zielony */
-}
 /* 1. Dla trybu standalone - cała strona czarna */
 body.standalone {
     background: #000 !important;
