@@ -1255,14 +1255,17 @@ body {
 body.standalone {
     background-color: rgb(238, 255, 0) !important; /* Żółty w standalone */
     height: 100vh;
+    padding-bottom: 0px;
 }
 
 body.standalone #game-container {
     background-color: rgb(187, 0, 255) !important; /* Fioletowy w standalone */
     height: 100vh;
+    padding-bottom: 0px;
 }
 
 body.standalone #game-canvas {
     background-color: rgb(74, 1, 74) !important; /* Ciemnofioletowy w standalone */
     height: 100vh;
+    padding-bottom: 0px;
 }
