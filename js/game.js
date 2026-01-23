@@ -6,14 +6,11 @@ window.Game = {
         this.canvas = document.getElementById('game-canvas');
         this.ctx = this.canvas.getContext('2d');
         
-        
         this.resizeCanvas();
-        
         
         window.addEventListener('resize', () => {
             this.resizeCanvas();
         });
-        
         
         window.addEventListener('orientationchange', () => {
             setTimeout(() => {
@@ -35,14 +32,9 @@ window.Game = {
         console.log('Game initialized - Responsive mode active');
     },
     
-    
     handleOrientationChange() {
-        
         this.initEventListeners();
-        
-        
         this.applySettings();
-        
         
         if (this.gameStarted && window.Menu) {
             window.Menu.updateGameHUD();
@@ -56,7 +48,6 @@ window.Game = {
         const containerWidth = container.clientWidth;
         const containerHeight = container.height || container.clientHeight;
 
-        
         const targetRatio = GameConfig.CANVAS_WIDTH / GameConfig.CANVAS_HEIGHT;
         const containerRatio = containerWidth / containerHeight;
 
@@ -64,59 +55,47 @@ window.Game = {
         let renderWidth, renderHeight;
 
         if (containerRatio > targetRatio) {
-            
             scale = containerHeight / GameConfig.CANVAS_HEIGHT;
             renderHeight = containerHeight;
             renderWidth = GameConfig.CANVAS_WIDTH * scale;
         } else {
-            
             scale = containerWidth / GameConfig.CANVAS_WIDTH;
             renderWidth = containerWidth;
             renderHeight = GameConfig.CANVAS_HEIGHT * scale;
         }
 
-        
         this.canvas.style.width = renderWidth + 'px';
         this.canvas.style.height = renderHeight + 'px';
 
-        
         this.canvas.width = GameConfig.CANVAS_WIDTH;
         this.canvas.height = GameConfig.CANVAS_HEIGHT;
 
-        
         this.scaleFactor = scale;
         this.canvasStyleWidth = renderWidth;
         this.canvasStyleHeight = renderHeight;
 
-        
         this.canvasOffsetX = (containerWidth - renderWidth) / 2;
         this.canvasOffsetY = (containerHeight - renderHeight) / 2;
 
-        
         this.canvas.style.position = 'absolute';
         this.canvas.style.left = this.canvasOffsetX + 'px';
         this.canvas.style.top = this.canvasOffsetY + 'px';
-        this.canvas.style.transform = 'none'; 
+        this.canvas.style.transform = 'none';
 
         console.log(`Canvas resized: ${renderWidth}x${renderHeight}, scale: ${scale.toFixed(2)}, offsetX: ${this.canvasOffsetX.toFixed(0)}, offsetY: ${this.canvasOffsetY.toFixed(0)}`);
 
-        
         const gameContainer = document.getElementById('game-container');
         if (gameContainer) {
             gameContainer.style.backgroundColor = '#000';
         }
     },
     
-    
     convertScreenToCanvas(screenX, screenY) {
-        
         const rect = this.canvas.getBoundingClientRect();
 
-        
         const x = (screenX - rect.left) / this.scaleFactor;
         const y = (screenY - rect.top) / this.scaleFactor;
 
-        
         return {
             x: Math.max(0, Math.min(x, GameConfig.CANVAS_WIDTH)),
             y: Math.max(0, Math.min(y, GameConfig.CANVAS_HEIGHT))
@@ -124,12 +103,11 @@ window.Game = {
     },
     
     initPlayer() {
-        
         const defaultBallConfig = GameConfig.getBaseBallConfig('standard');
         this.player = {
             x: GameConfig.PLAYER_START_X,
             y: GameConfig.PLAYER_START_Y,
-            radius: defaultBallConfig.RADIUS, 
+            radius: defaultBallConfig.RADIUS,
             velocityX: 0,
             velocityY: 0,
             onGround: false,
@@ -180,14 +158,13 @@ window.Game = {
         this.keys = {};
         this.keysPressedThisFrame = {};
         
-        
         this.touchActive = false;
         this.touchDirection = 0;
         this.tiltX = 0;
         
         this.autoJumpActive = false;
-        this.mobileControlsEnabled = false; 
-        this.useAccelerometer = false; 
+        this.mobileControlsEnabled = false;
+        this.useAccelerometer = false;
         
         this.coins = [];
         this.collectedCoins = 0;
@@ -211,8 +188,8 @@ window.Game = {
         this.currentBallType = 'standard';
         this.currentBallConfig = GameConfig.getBaseBallConfig(this.currentBallType);
         this.activeUpgrades = {};
-        this.score = 0; 
-        this.highScore = 0; 
+        this.score = 0;
+        this.highScore = 0;
         this.state = {
             settings: {
                 debugInfo: false,
@@ -223,6 +200,13 @@ window.Game = {
             }
         };
         
+        // Performance tracking
+        this.lastFrameTime = 0;
+        this.accumulator = 0;
+        this.frameInterval = 1000 / 60; // 60 FPS
+        this.frameTimes = [];
+        this.lastFpsUpdate = 0;
+        
         this.loadHighScore();
         this.loadTotalCoins();
         this.initWind();
@@ -230,7 +214,6 @@ window.Game = {
     },
     
     initEventListeners() {
-        
         window.addEventListener('keydown', (e) => {
             if (!this.keys[e.key]) {
                 this.keysPressedThisFrame[e.key] = true;
@@ -241,7 +224,6 @@ window.Game = {
         window.addEventListener('keyup', (e) => {
             this.keys[e.key] = false;
         });
-        
         
         this.canvas.addEventListener('touchstart', (e) => {
             e.preventDefault();
@@ -258,13 +240,11 @@ window.Game = {
             this.handleTouchStart(e);
         }, { passive: false });
         
-        
         if ('DeviceOrientationEvent' in window) {
             window.addEventListener('deviceorientation', (e) => {
                 this.handleDeviceOrientation(e);
             });
         }
-        
         
         this.canvas.addEventListener('mousedown', (e) => {
             const pos = this.convertScreenToCanvas(e.clientX, e.clientY);
@@ -289,15 +269,22 @@ window.Game = {
             this.touchDirection = 0;
         });
         this.setupIOSAccelerometer();
+        
+        // Debounced resize
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.resizeCanvas();
+            }, 250);
+        });
     },
 
     setupIOSAccelerometer() {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         
         if (isIOS && typeof DeviceOrientationEvent !== 'undefined') {
-            // Natychmiastowe żądanie dostępu do żyroskopu
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // Nie czekamy na interakcję - próbujemy od razu
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
@@ -307,7 +294,7 @@ window.Game = {
                             });
                         } else {
                             console.log('Accelerometer permission denied on iOS');
-                            this.useAccelerometer = false; // Wyłącz jeśli odmówiono
+                            this.useAccelerometer = false;
                             if (window.Menu) {
                                 window.Menu.state.settings.accelerometer = false;
                                 window.Menu.saveData();
@@ -319,13 +306,11 @@ window.Game = {
                         this.useAccelerometer = false;
                     });
             } else {
-                // Android/Desktop - od razu dodajemy listener
                 window.addEventListener('deviceorientation', (e) => {
                     this.handleDeviceOrientation(e);
                 });
             }
         } else {
-            // Non-iOS devices
             window.addEventListener('deviceorientation', (e) => {
                 this.handleDeviceOrientation(e);
             });
@@ -380,7 +365,8 @@ window.Game = {
 
         if (!this.gameLoopRunning) {
             this.gameLoopRunning = true;
-            this.gameLoop();
+            this.lastFrameTime = performance.now();
+            requestAnimationFrame(this.gameLoop.bind(this));
         }
         
         console.log('Game started - Responsive mode');
@@ -394,17 +380,13 @@ window.Game = {
         return this.startGame(ballType, upgrades);
     },
     
-    
     changeBall(ballType, upgrades = {}) {
         this.currentBallType = ballType;
         this.activeUpgrades = upgrades;
         
-        
         this.currentBallConfig = GameConfig.getBallConfigWithUpgrades(ballType, { [ballType]: upgrades });
         
-        
         this.updatePlayerFromConfig();
-        
         
         if (window.Menu) {
             window.Menu.updateGameHUD();
@@ -413,15 +395,11 @@ window.Game = {
         console.log('Changed ball to:', ballType, 'config:', this.currentBallConfig);
     },
     
-    
     updatePlayerFromConfig() {
-        
         this.player.radius = this.currentBallConfig.RADIUS;
     },
     
-    
     resetGameState() {
-        
         this.player.x = GameConfig.PLAYER_START_X;
         this.player.y = GameConfig.PLAYER_START_Y;
         this.player.velocityX = 0;
@@ -429,9 +407,7 @@ window.Game = {
         this.player.onGround = false;
         this.player.isSmall = false;
         
-        
         this.cameraY = 0;
-        
         
         this.currentHeight = 0;
         this.maxJumpHeight = 0;
@@ -442,13 +418,11 @@ window.Game = {
         this.maxFloorReached = 0;
         this.gameOver = false;
         
-        
         this.canWallBoost = false;
         this.wallBoostDirection = null;
         this.wallBoostDistance = 0;
         this.boostActivated = false;
         this.boostActivatedFrames = 0;
-        
         
         this.currentDifficulty = 1.0;
         this.difficultyActive = false;
@@ -456,11 +430,9 @@ window.Game = {
         this.nextFloorToFade = 0;
         this.fadeProcessActive = false;
         
-        
         this.coins = [];
         this.collectedCoins = 0;
         this.coinEffects = [];
-        
         
         if (window.Menu) {
             window.Menu.state.coinsInGame = 0;
@@ -468,56 +440,54 @@ window.Game = {
             window.Menu.updateGameHUD();
         }
         
-        
         this.touchActive = false;
         this.touchDirection = 0;
         this.tiltX = 0;
         this.autoJumpActive = false;
         
-        
         this.initWind();
-        
         
         this.floors = [];
         this.initFloors();
         
-        
         this.keys = {};
         this.keysPressedThisFrame = {};
-        
         
         this.updateGameHUD();
     },
     
-    
     applySettings() {
-        
         if (window.Menu) {
             const settings = window.Menu.state.settings;
 
-            
             this.state.settings = { ...settings };
-            
             
             this.autoJumpActive = settings.autoJump;
             this.mobileControlsEnabled = settings.mobileControls;
             this.useAccelerometer = settings.accelerometer;
 
-            
             const debugInfo = document.getElementById('debug-info');
             if (debugInfo) {
                 debugInfo.classList.toggle('hidden', !settings.debugInfo);
             }
 
-            
             GameConfig.AUTO_JUMP_ENABLED = settings.autoJump;
             GameConfig.MOBILE_CONTROLS_ENABLED = settings.mobileControls;
             GameConfig.USE_ACCELEROMETER = settings.accelerometer;
         }
     },
     
-    
-    
+    getVisibleObjects() {
+        const visibleRange = 800;
+        const visibleFloors = this.floors.filter(floor => 
+            Math.abs(floor.y - this.player.y) < visibleRange
+        );
+        const visibleCoins = this.coins.filter(coin =>
+            Math.abs(coin.y - this.player.y) < visibleRange
+        );
+        
+        return { visibleFloors, visibleCoins };
+    },
     
     initFloors() {
         this.floors.push(this.generateFloor(0));
@@ -526,7 +496,6 @@ window.Game = {
             this.floors.push(this.generateFloor(i));
         }
     },
-    
     
     generateFloor(floorNumber) {
         let width, x, color, floorType;
@@ -577,7 +546,6 @@ window.Game = {
             shrinkDelay = GameConfig.SHRINKING_FLOOR_START_DELAY * (this.difficultyActive ? this.shrinkingDelayMultiplier : 1.0);
         }
         
-        
         let hasCannon = false;
         let cannonSide = null;
         if (GameConfig.CANNON_ENABLED && floorNumber >= 5 && Math.random() < GameConfig.CANNON_CHANCE) {
@@ -609,7 +577,6 @@ window.Game = {
             coins: []
         };
         
-        
         if (GameConfig.COINS_ENABLED) {
             floor.coins = this.generateCoinsForFloor(floor);
             floor.coins.forEach(coin => {
@@ -620,9 +587,7 @@ window.Game = {
         return floor;
     },
     
-    
     determineFloorType(floorNumber) {
-        
         if (floorNumber % GameConfig.SPECIAL_FLOOR_INTERVAL === 0 && floorNumber >= 5) {
             return 'special';
         }
@@ -661,17 +626,14 @@ window.Game = {
         return 'normal';
     },
     
-    
     generateCoinsForFloor(floor) {
         if (!GameConfig.COINS_ENABLED) return [];
         if (floor.number < GameConfig.MIN_FLOOR_FOR_COINS) return [];
-        
         
         let coinChance = GameConfig.COIN_CHANCE_BASE + (floor.number * GameConfig.COIN_CHANCE_PER_FLOOR);
         coinChance = Math.min(coinChance, GameConfig.COIN_MAX_CHANCE);
         
         if (Math.random() > coinChance) return [];
-        
         
         const baseCoins = GameConfig.MIN_COINS_PER_FLOOR + 
             Math.floor(Math.random() * (GameConfig.MAX_COINS_PER_FLOOR - GameConfig.MIN_COINS_PER_FLOOR + 1));
@@ -702,7 +664,6 @@ window.Game = {
         return floorCoins;
     },
     
-    
     getFloorXPosition(floorNumber, width) {
         let x;
         
@@ -730,7 +691,6 @@ window.Game = {
         return x;
     },
     
-    
     generateMoreFloorsIfNeeded() {
         const highestGeneratedFloor = this.floors.length > 0 ? 
             Math.max(...this.floors.map(f => f.number)) : 0;
@@ -752,9 +712,6 @@ window.Game = {
         this.floors = this.floors.filter(floor => floor.number >= lowestNeededFloor && floor.number >= 0);
     },
     
-    
-    
-    
     initWind() {
         console.log('initWind() - initializing wind system');
 
@@ -763,7 +720,6 @@ window.Game = {
         this.windDirection = Math.random() > 0.5 ? 1 : -1;
         this.windState = 'break';
 
-        
         const minBreak = this.currentBallConfig.WIND_MIN_BREAK_DURATION;
         const maxBreak = this.currentBallConfig.WIND_MAX_BREAK_DURATION;
 
@@ -777,7 +733,6 @@ window.Game = {
     },
     
     updateWind() {
-        
         if (!this.currentBallConfig.WIND_ENABLED) {
             if (this.windForce !== 0) {
                 this.windForce = 0;
@@ -788,7 +743,6 @@ window.Game = {
 
         this.windTimer--;
 
-        
         const WIND_MIN_FORCE = this.currentBallConfig.WIND_MIN_FORCE;
         const WIND_MAX_FORCE = this.currentBallConfig.WIND_MAX_FORCE;
         const WIND_MIN_BURST_DURATION = this.currentBallConfig.WIND_MIN_BURST_DURATION;
@@ -869,9 +823,7 @@ window.Game = {
         this.applyWindForce();
     },
     
-    
     applyWindForce() {
-        
         if (!this.currentBallConfig.WIND_ENABLED) {
             return;
         }
@@ -880,85 +832,77 @@ window.Game = {
         const windAffectsAir = this.currentBallConfig.WIND_AFFECTS_AIR;
         const windAirMultiplier = this.currentBallConfig.WIND_AIR_MULTIPLIER;
 
-        
         if ((this.player.onGround && !windAffectsGrounded) || (!this.player.onGround && !windAffectsAir)) {
             return;
         }
 
         let windMultiplier = 1.0;
 
-        
         if (!this.player.onGround && windAffectsAir) {
             windMultiplier = windAirMultiplier;
         }
 
-        
         const windForce = this.windForce * windMultiplier;
         this.player.velocityX += windForce;
     },
-    
+        
     renderWindArrow() {
-        
-        
         const ballHasWind = this.currentBallConfig.WIND_ENABLED;
-        
         const windIsActive = this.windState !== 'break';
-        
         const windIsBlowing = Math.abs(this.windForce) > 0.001;
-
+    
         if (!ballHasWind || !windIsActive || !windIsBlowing) return;
-
-        
-        const arrowX = GameConfig.CANVAS_WIDTH - 50;
-        const arrowY = 250; 
+    
+        // Ustaw pozycję w zależności od kierunku wiatru
+        let arrowX, arrowY = 150;
         const arrowSize = 25;
         const arrowLength = 40;
-
+        
+        // Jeśli wiatr wieje w prawo (pozytywny kierunek), pokaż strzałkę po prawej
+        // Jeśli wiatr wieje w lewo (negatywny kierunek), pokaż strzałkę po lewej
+        if (this.windDirection === 1) {
+            // Wiatr w prawo - strzałka po prawej stronie ekranu
+            arrowX = GameConfig.CANVAS_WIDTH - 60; // 60px od prawej krawędzi
+        } else {
+            // Wiatr w lewo - strzałka po lewej stronie ekranu
+            arrowX = 60; // 60px od lewej krawędzi
+        }
+    
         this.ctx.save();
         this.ctx.translate(arrowX, arrowY);
-
         
-        
+        // Jeśli wiatr wieje w lewo, obróć strzałkę o 180 stopni
         if (this.windDirection === -1) {
-            this.ctx.rotate(Math.PI); 
+            this.ctx.rotate(Math.PI);
         }
-
-        
-        
+    
+        // Oblicz siłę wiatru dla przezroczystości i rozmiaru
         let forceRatio = 0;
 
         if (this.windState === 'ramp_up') {
-            
             forceRatio = Math.abs(this.windForce) / Math.abs(this.windTargetForce);
         } else if (this.windState === 'active') {
-            
             forceRatio = 1.0;
         } else if (this.windState === 'ramp_down') {
-            
             forceRatio = Math.abs(this.windForce) / Math.abs(this.windStartForce);
         }
 
-        
         forceRatio = Math.max(0, Math.min(1, forceRatio));
 
-        
         const alpha = 0.3 + 0.7 * forceRatio;
 
         this.ctx.globalAlpha = alpha;
-        this.ctx.strokeStyle = "#87CEEB"; 
+        this.ctx.strokeStyle = "#87CEEB";
         this.ctx.fillStyle = "#87CEEB";
         this.ctx.lineWidth = 2;
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
 
-        
         this.ctx.beginPath();
 
-        
         this.ctx.moveTo(-arrowLength/2, 0);
         this.ctx.lineTo(arrowLength/2, 0);
 
-        
         this.ctx.moveTo(arrowLength/2 - 1, 0);
         this.ctx.lineTo(arrowLength/2 - 15, -8);
         this.ctx.lineTo(arrowLength/2 - 15, 8);
@@ -967,10 +911,9 @@ window.Game = {
         this.ctx.fill();
         this.ctx.stroke();
 
-        
         this.ctx.globalAlpha = 1.0;
-        const displayValue = this.windForce*100
-        this.ctx.restore(); 
+        const displayValue = this.windForce*100;
+        this.ctx.restore();
         this.ctx.fillStyle = "#87CEEB";
         this.ctx.font = "14px monospace";
         this.ctx.textAlign = "center";
@@ -982,47 +925,38 @@ window.Game = {
         this.ctx.textAlign = "left";
         this.ctx.textBaseline = "alphabetic";
     },
-
     
-
-    
-    checkCoinCollisions() {
+    checkCoinCollisions(visibleCoins = this.coins) {
         if (!GameConfig.COINS_ENABLED) return;
         
-        for (let i = this.coins.length - 1; i >= 0; i--) {
-            const coin = this.coins[i];
+        for (let i = visibleCoins.length - 1; i >= 0; i--) {
+            const coin = visibleCoins[i];
             
             if (coin.collected) continue;
-            
             
             if (this.magnetActive && this.currentBallConfig.MAGNET_ENABLED) {
                 this.applyMagnetForce(coin);
             }
-            
             
             const dx = this.player.x - coin.x;
             const dy = this.player.y - coin.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
             if (distance < this.player.radius + coin.radius) {
-                
                 this.collectCoin(i, coin);
             }
         }
     },
     
-    
     collectCoin(coinIndex, coin) {
         coin.collected = true;
         this.collectedCoins++;
 
-        
         if (window.Menu) {
             window.Menu.state.coinsInGame = this.collectedCoins;
             window.Menu.updateGameHUD();
         }
 
-        
         if (GameConfig.COIN_COLLECT_EFFECT_ENABLED) {
             this.coinEffects.push({
                 x: coin.x,
@@ -1034,22 +968,17 @@ window.Game = {
             });
         }
 
-        
         this.coins.splice(coinIndex, 1);
     },
 
-    
     applyMagnetForce(coin) {
         const dx = this.player.x - coin.x;
         const dy = this.player.y - coin.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        
         if (distance < this.magnetRange) {
-            
             const dirX = dx / distance;
             const dirY = dy / distance;
-            
             
             const force = (1 - distance / this.magnetRange) * this.currentBallConfig.MAGNET_FORCE;
             
@@ -1057,7 +986,6 @@ window.Game = {
             coin.y += dirY * force;
         }
     },
-    
     
     updateCoinEffects() {
         if (!GameConfig.COIN_COLLECT_EFFECT_ENABLED) return;
@@ -1072,7 +1000,6 @@ window.Game = {
         }
     },
     
-    
     renderCoinCounter() {
         if (!this.state.settings.debugInfo) return;
         
@@ -1080,10 +1007,8 @@ window.Game = {
         this.ctx.font = GameConfig.COIN_COUNTER_FONT;
         this.ctx.textAlign = "right";
         
-        
         this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
         this.ctx.fillRect(GameConfig.COIN_COUNTER_POS_X - 120, GameConfig.COIN_COUNTER_POS_Y - 20, 110, 30);
-        
         
         this.ctx.beginPath();
         this.ctx.arc(GameConfig.COIN_COUNTER_POS_X - 15, GameConfig.COIN_COUNTER_POS_Y, 8, 0, Math.PI * 2);
@@ -1095,18 +1020,13 @@ window.Game = {
         this.ctx.fillStyle = GameConfig.COIN_OUTLINE_COLOR;
         this.ctx.fill();
         
-        
         this.ctx.fillStyle = GameConfig.COIN_COUNTER_COLOR;
         this.ctx.fillText(`${this.collectedCoins}`, GameConfig.COIN_COUNTER_POS_X - 25, GameConfig.COIN_COUNTER_POS_Y + 5);
         
         this.ctx.textAlign = "left";
     },
     
-    
-    
-    
     updateInput() {
-        
         this.keysPressedThisFrame['a'] = false;
         this.keysPressedThisFrame['d'] = false;
         this.keysPressedThisFrame[' '] = false;
@@ -1115,7 +1035,6 @@ window.Game = {
         this.keysPressedThisFrame['ArrowLeft'] = false;
         this.keysPressedThisFrame['ArrowRight'] = false;
 
-        
         if (this.keys['ArrowLeft'] || this.keys['a']) {
             this.player.velocityX -= this.currentBallConfig.ACCELERATION;
             if (this.keys['a'] && !this.keys['ArrowLeft']) {
@@ -1129,7 +1048,6 @@ window.Game = {
             }
         }
 
-        
         if (this.mobileControlsEnabled && this.touchActive) {
             if (this.touchDirection === -1) {
                 this.player.velocityX -= this.currentBallConfig.ACCELERATION;
@@ -1138,41 +1056,32 @@ window.Game = {
             }
         }
 
-        
         if (this.useAccelerometer) {
             if (Math.abs(this.tiltX) > 0.1) {
                 this.player.velocityX += this.tiltX * this.currentBallConfig.ACCELERATION * 2;
             }
         }
 
-        
         const maxSpeed = this.currentBallConfig.MAX_SPEED;
         if (this.player.velocityX > maxSpeed) this.player.velocityX = maxSpeed;
         if (this.player.velocityX < -maxSpeed) this.player.velocityX = -maxSpeed;
 
-        
         if (this.player.onGround) {
             this.player.velocityX *= this.currentBallConfig.GROUND_FRICTION;
         } else {
             this.player.velocityX *= this.currentBallConfig.AIR_RESISTANCE;
         }
 
-        
         this.autoJumpActive = this.state.settings.autoJump;
 
-        
         const canJump = this.player.onGround && this.player.velocityY >= 0;
 
-        
         if (this.autoJumpActive && canJump) {
             this.performJump();
-        } 
-        
-        else if (!this.autoJumpActive && (this.keys['ArrowUp'] || this.keys['w'] || this.keys[' ']) && canJump) {
+        } else if (!this.autoJumpActive && (this.keys['ArrowUp'] || this.keys['w'] || this.keys[' ']) && canJump) {
             this.performJump();
         }
     },
-    
     
     performJump() {
         const baseJumpForce = this.currentBallConfig.BASE_JUMP_FORCE;
@@ -1185,22 +1094,16 @@ window.Game = {
         this.player.onGround = false;
     },
 
-    
-    checkFloorCollisions() {
+    checkFloorCollisions(visibleFloors = this.floors) {
         const previousY = this.player.y - this.player.velocityY;
         const previousBottom = previousY + this.player.radius;
         const currentBottom = this.player.y + this.player.radius;
 
-        
         this.player.onGround = false;
 
-        
-        
         if (this.player.velocityY <= 0) {
-            
-            
-            for (const floor of this.floors) {
-                if (this.isPlayerOnFloor(floor, false)) { 
+            for (const floor of visibleFloors) {
+                if (this.isPlayerOnFloor(floor, false)) {
                     this.player.onGround = true;
                     break;
                 }
@@ -1208,8 +1111,7 @@ window.Game = {
             return;
         }
 
-        
-        for (const floor of this.floors) {
+        for (const floor of visibleFloors) {
             if (floor.fadeAlpha <= 0) continue;
             if (floor.isFading && floor.fadeAlpha < GameConfig.FADING_FLOOR_MIN_ALPHA_FOR_COLLISION) continue;
 
@@ -1219,7 +1121,6 @@ window.Game = {
 
             const floorTop = floor.y;
 
-            
             const leftBound = floor.x - this.player.radius;
             const rightBound = floor.x + floor.width + this.player.radius;
 
@@ -1227,9 +1128,7 @@ window.Game = {
                 continue;
             }
 
-            
             if (previousBottom <= floorTop && currentBottom >= floorTop) {
-                
                 this.player.y = floorTop - this.player.radius;
                 this.player.velocityY = 0;
                 this.player.onGround = true;
@@ -1248,7 +1147,6 @@ window.Game = {
         }
     },
 
-    
     isPlayerOnFloor(floor, allowNewLanding = true) {
         if (floor.fadeAlpha <= 0) return false;
         if (floor.isFading && floor.fadeAlpha < GameConfig.FADING_FLOOR_MIN_ALPHA_FOR_COLLISION) return false;
@@ -1256,40 +1154,33 @@ window.Game = {
         const floorTop = floor.y;
         const playerBottom = this.player.y + this.player.radius;
 
-        
         const verticalDistance = playerBottom - floorTop;
 
-        
         if (!allowNewLanding && verticalDistance < 0) {
             return false;
         }
 
-        
         if (verticalDistance < -5 || verticalDistance > 5) {
             return false;
         }
 
-        
         const isInXRange = this.player.x >= floor.x - this.player.radius && 
                           this.player.x <= floor.x + floor.width + this.player.radius;
 
         return isInXRange;
     },
 
-    
     checkWallCollisions() {
         const previousX = this.player.x - this.player.velocityX;
 
         const leftWallX = GameConfig.WALL_LEFT_X + GameConfig.WALL_THICKNESS + this.player.radius;
         const rightWallX = GameConfig.WALL_RIGHT_X - GameConfig.WALL_THICKNESS - this.player.radius;
 
-        
         const wallBounceFactor = this.currentBallConfig.WALL_BOUNCE_FACTOR;
         const minBounceVelocity = this.currentBallConfig.MIN_BOUNCE_VELOCITY;
         const wallBoostEnabled = this.currentBallConfig.WALL_BOOST_ENABLED;
         const wallBoostMinVelocity = this.currentBallConfig.WALL_BOOST_MIN_VELOCITY;
 
-        
         if (this.player.x < leftWallX) {
             if (GameConfig.CCD_ENABLED && Math.abs(this.player.velocityX) > GameConfig.CCD_MIN_VELOCITY_FOR_STEPS) {
                 const steps = GameConfig.CCD_MAX_STEPS;
@@ -1327,7 +1218,6 @@ window.Game = {
             }
         }
 
-        
         if (this.player.x > rightWallX) {
             if (GameConfig.CCD_ENABLED && Math.abs(this.player.velocityX) > GameConfig.CCD_MIN_VELOCITY_FOR_STEPS) {
                 const steps = GameConfig.CCD_MAX_STEPS;
@@ -1366,9 +1256,7 @@ window.Game = {
         }
     },
     
-    
     checkCannonCollisions() {
-        
         if (this.player.velocityY <= 0) return;
         
         const previousY = this.player.y - this.player.velocityY;
@@ -1390,19 +1278,14 @@ window.Game = {
                 cannonWidth = GameConfig.CANNON_HORIZONTAL_LENGTH;
             }
             
-            
             const canUseCannonForBoost = this.currentBallConfig.CAN_USE_CANNON !== false;
-            
             
             let collisionY;
             if (canUseCannonForBoost) {
-                
                 collisionY = cannonY;
             } else {
-                
                 collisionY = cannonY - GameConfig.CANNON_VERTICAL_LENGTH;
             }
-            
             
             const leftBound = cannonX - this.player.radius;
             const rightBound = cannonX + cannonWidth + this.player.radius;
@@ -1411,13 +1294,10 @@ window.Game = {
                 continue;
             }
             
-            
             if (previousBottom <= collisionY && currentBottom >= collisionY) {
-                
                 this.player.y = collisionY - this.player.radius;
                 
                 if (canUseCannonForBoost) {
-                    
                     this.player.velocityY = this.currentBallConfig.CANNON_BOOST_FORCE || GameConfig.CANNON_BOOST_FORCE;
                     this.player.onGround = false;
                     
@@ -1426,7 +1306,6 @@ window.Game = {
                         this.boostActivatedFrames = GameConfig.BOOST_ACTIVATED_DURATION * 3;
                     }
                 } else {
-                    
                     this.player.velocityY = 0;
                     this.player.onGround = true;
                 }
@@ -1436,24 +1315,17 @@ window.Game = {
         }
     },
 
-    
     checkLineIntersection(lineX1, lineX2, lineY) {
         const previousY = this.player.y - this.player.velocityY;
         const previousBottom = previousY + this.player.radius;
         const currentBottom = this.player.y + this.player.radius;
 
-        
         if ((previousBottom <= lineY && currentBottom >= lineY) ||
             (previousBottom >= lineY && currentBottom <= lineY)) {
-            
-            
             const t = (lineY - previousBottom) / (currentBottom - previousBottom);
-            
             
             const previousX = this.player.x - this.player.velocityX;
             const intersectX = previousX + (this.player.x - previousX) * t;
-            
-            
             
             const leftBound = lineX1 - this.player.radius;
             const rightBound = lineX2 + this.player.radius;
@@ -1463,7 +1335,6 @@ window.Game = {
 
         return false;
     },
-    
     
     checkCollisionWithCCD(startX, startY, endX, endY, radius, floorRect) {
         if (!GameConfig.CCD_ENABLED) {
@@ -1498,7 +1369,6 @@ window.Game = {
         return { collision: false };
     },
     
-    
     circleRectCollision(circleX, circleY, radius, rectX, rectY, rectWidth, rectHeight) {
         const closestX = Math.max(rectX, Math.min(circleX, rectX + rectWidth));
         const closestY = Math.max(rectY, Math.min(circleY, rectY + rectHeight));
@@ -1508,7 +1378,6 @@ window.Game = {
         
         return (distanceX * distanceX + distanceY * distanceY) <= (radius * radius);
     },
-    
     
     checkWallBoost() {
         if (!this.currentBallConfig.WALL_BOOST_ENABLED) return;
@@ -1531,21 +1400,16 @@ window.Game = {
         }
     },
     
-    
     activateWallBoost() {
         if (!this.canWallBoost || !this.wallBoostDirection) return;
         
-        
         if (this.mobileControlsEnabled) {
             this.performWallBoost();
-        } 
-        
-        else if ((this.wallBoostDirection === 'left' && this.keysPressedThisFrame['d']) || 
+        } else if ((this.wallBoostDirection === 'left' && this.keysPressedThisFrame['d']) || 
                  (this.wallBoostDirection === 'right' && this.keysPressedThisFrame['a'])) {
             this.performWallBoost();
         }
     },
-    
     
     performWallBoost() {
         const wallBoostVelocityX = this.currentBallConfig.WALL_BOOST_VELOCITY_X;
@@ -1569,15 +1433,11 @@ window.Game = {
         this.wallBoostDistance = 0;
     },
     
-    
-    
-    
     updateSpecialFloors() {
         for (let i = this.floors.length - 1; i >= 0; i--) {
             const floor = this.floors[i];
             
             if (floor.shouldRemove) {
-                
                 this.coins = this.coins.filter(coin => coin.floorNumber !== floor.number);
                 this.floors.splice(i, 1);
                 continue;
@@ -1641,7 +1501,6 @@ window.Game = {
         }
     },
     
-    
     updateFadingFloors() {
         if (!this.fadeProcessActive) return;
         
@@ -1682,14 +1541,12 @@ window.Game = {
                 }
                 
                 if (floor.fadeAlpha <= GameConfig.FLOOR_FADE_MIN_ALPHA) {
-                    
                     this.coins = this.coins.filter(coin => coin.floorNumber !== floor.number);
                     this.floors.splice(i, 1);
                 }
             }
         }
     },
-    
     
     updateDifficulty() {
         if (!GameConfig.DIFFICULTY_ENABLED) return;
@@ -1710,11 +1567,9 @@ window.Game = {
         }
     },
     
-    
     calculateDifficultyMultiplier(baseMultiplier) {
         return 1 + (this.currentDifficulty - 1) * (baseMultiplier - 1);
     },
-    
     
     startFloorFadeProcess() {
         if (this.fadeProcessActive) return;
@@ -1723,7 +1578,6 @@ window.Game = {
         this.floorFadeTimer = 0;
         this.nextFloorToFade = 0;
     },
-    
     
     updateBoostEffect() {
         if (this.boostActivated && this.boostActivatedFrames > 0) {
@@ -1734,13 +1588,10 @@ window.Game = {
         }
     },
     
-    
     updateMagnet() {
-        
         this.magnetActive = this.currentBallConfig.MAGNET_ENABLED;
         this.magnetRange = this.currentBallConfig.MAGNET_RANGE;
     },
-    
     
     updateCamera() {
         const playerScreenY = this.player.y;
@@ -1752,14 +1603,12 @@ window.Game = {
         }
     },
     
-    
     updateHeight() {
         this.currentHeight = Math.max(0, Math.round(this.startFloorLevel - this.player.y));
         
         if (this.currentHeight > this.maxJumpHeight) {
             this.maxJumpHeight = this.currentHeight;
         }
-        
         
         if (this.state.settings.debugInfo) {
             const heightEl = document.getElementById('height');
@@ -1768,7 +1617,6 @@ window.Game = {
             if (maxHeightEl) maxHeightEl.textContent = this.maxJumpHeight;
         }
     },
-    
     
     updateVelocityDisplay() {
         this.currentVelocityX = Math.abs(this.player.velocityX);
@@ -1780,7 +1628,6 @@ window.Game = {
         if (this.currentVelocityY > this.maxVelocityY) {
             this.maxVelocityY = this.currentVelocityY;
         }
-        
         
         if (this.state.settings.debugInfo) {
             const velocityXEl = document.getElementById('velocity-x');
@@ -1795,65 +1642,60 @@ window.Game = {
         }
     },
     
-    
-updateFloorDisplay() {
-    let currentFloor = 0;
-    let foundFloor = false;
-    
-    for (const floor of this.floors) {
-        if (this.player.onGround && 
-            this.player.y + this.player.radius >= floor.y &&
-            this.player.y + this.player.radius <= floor.y + floor.height &&
-            this.player.x >= floor.x &&
-            this.player.x <= floor.x + floor.width) {
-            currentFloor = floor.number;
-            foundFloor = true;
-            this.currentFloorIndex = currentFloor;
-            break;
-        }
-    }
-    
-    if (!foundFloor) {
-        currentFloor = Math.max(0, Math.floor((GameConfig.CANVAS_HEIGHT - 50 - this.player.y) / GameConfig.FLOOR_VERTICAL_SPACING));
-    }
-    
-    if (this.player.onGround && currentFloor > this.maxFloorReached) {
-        this.maxFloorReached = currentFloor;
+    updateFloorDisplay() {
+        let currentFloor = 0;
+        let foundFloor = false;
         
-        if (this.maxFloorReached >= GameConfig.FLOOR_FADE_START_AT_SCORE && !this.fadeProcessActive) {
-            this.startFloorFadeProcess();
-        }
-        
-        if (this.maxFloorReached > this.highestFloorEver) {
-            this.highestFloorEver = this.maxFloorReached;
-            this.saveHighScore(); 
-            
-            
-            if (window.Menu) {
-                window.Menu.state.bestScore = this.highestFloorEver;
-                window.Menu.updateMainMenu();
+        for (const floor of this.floors) {
+            if (this.player.onGround && 
+                this.player.y + this.player.radius >= floor.y &&
+                this.player.y + this.player.radius <= floor.y + floor.height &&
+                this.player.x >= floor.x &&
+                this.player.x <= floor.x + floor.width) {
+                currentFloor = floor.number;
+                foundFloor = true;
+                this.currentFloorIndex = currentFloor;
+                break;
             }
         }
-    }
-    
-    
-    if (this.state.settings.debugInfo) {
-        const currentFloorEl = document.getElementById('current-floor');
-        const maxFloorEl = document.getElementById('max-floor');
-        const highScoreEl = document.getElementById('high-score');
         
-        if (currentFloorEl) currentFloorEl.textContent = currentFloor;
-        if (maxFloorEl) maxFloorEl.textContent = this.maxFloorReached;
-        if (highScoreEl) highScoreEl.textContent = this.highestFloorEver;
-    }
-    
-    
-    if (window.Menu) {
-        window.Menu.state.scoreInGame = this.maxFloorReached;
-        window.Menu.updateGameHUD();
-    }
-},
-    
+        if (!foundFloor) {
+            currentFloor = Math.max(0, Math.floor((GameConfig.CANVAS_HEIGHT - 50 - this.player.y) / GameConfig.FLOOR_VERTICAL_SPACING));
+        }
+        
+        if (this.player.onGround && currentFloor > this.maxFloorReached) {
+            this.maxFloorReached = currentFloor;
+            
+            if (this.maxFloorReached >= GameConfig.FLOOR_FADE_START_AT_SCORE && !this.fadeProcessActive) {
+                this.startFloorFadeProcess();
+            }
+            
+            if (this.maxFloorReached > this.highestFloorEver) {
+                this.highestFloorEver = this.maxFloorReached;
+                this.saveHighScore();
+                
+                if (window.Menu) {
+                    window.Menu.state.bestScore = this.highestFloorEver;
+                    window.Menu.updateMainMenu();
+                }
+            }
+        }
+        
+        if (this.state.settings.debugInfo) {
+            const currentFloorEl = document.getElementById('current-floor');
+            const maxFloorEl = document.getElementById('max-floor');
+            const highScoreEl = document.getElementById('high-score');
+            
+            if (currentFloorEl) currentFloorEl.textContent = currentFloor;
+            if (maxFloorEl) maxFloorEl.textContent = this.maxFloorReached;
+            if (highScoreEl) highScoreEl.textContent = this.highestFloorEver;
+        }
+        
+        if (window.Menu) {
+            window.Menu.state.scoreInGame = this.maxFloorReached;
+            window.Menu.updateGameHUD();
+        }
+    },
     
     checkIfAnyFloorsLeft() {
         let lowestFloorY = -Infinity;
@@ -1880,7 +1722,6 @@ updateFloorDisplay() {
         return true;
     },
     
-    
     checkGameOver() {
         if (!GameConfig.GAME_OVER_ENABLED) return;
 
@@ -1888,29 +1729,23 @@ updateFloorDisplay() {
             this.gameOver = true;
             this.isGameOver = true;
 
-            
             if (this.maxFloorReached > this.highestFloorEver) {
                 this.highestFloorEver = this.maxFloorReached;
                 this.saveHighScore();
             }
 
-            
             if (window.Menu) {
                 window.Menu.gameOver();
             }
         }
     },
     
-    
-    
     update() {
         if (this.isPaused || this.isGameOver || !this.gameStarted) return;
         
         this.updateInput();
         
-        
         this.updateWind();
-        
         
         this.player.velocityY += this.currentBallConfig.GRAVITY;
         
@@ -1922,8 +1757,11 @@ updateFloorDisplay() {
         
         this.checkWallCollisions();
         this.checkCannonCollisions();
-        this.checkFloorCollisions();
-        this.checkCoinCollisions();
+        
+        // Użyj tylko widocznych obiektów dla kolizji
+        const { visibleFloors, visibleCoins } = this.getVisibleObjects();
+        this.checkFloorCollisions(visibleFloors);
+        this.checkCoinCollisions(visibleCoins);
         
         this.checkWallBoost();
         this.activateWallBoost();
@@ -1944,20 +1782,20 @@ updateFloorDisplay() {
     },
     
     render() {
-        
         this.ctx.fillStyle = GameConfig.CANVAS_BACKGROUND_COLOR;
         this.ctx.fillRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT);
         
         this.ctx.save();
         this.ctx.translate(0, this.cameraY);
         
-        
         this.ctx.fillStyle = GameConfig.WALL_COLOR;
         this.ctx.fillRect(0, -100000, GameConfig.WALL_THICKNESS, GameConfig.CANVAS_HEIGHT + 200000);
         this.ctx.fillRect(GameConfig.CANVAS_WIDTH - GameConfig.WALL_THICKNESS, -100000, GameConfig.WALL_THICKNESS, GameConfig.CANVAS_HEIGHT + 200000);
         
+        // Renderuj tylko widoczne obiekty
+        const { visibleFloors, visibleCoins } = this.getVisibleObjects();
         
-        for (const floor of this.floors) {
+        for (const floor of visibleFloors) {
             if (floor.fadeAlpha <= GameConfig.FLOOR_FADE_MIN_ALPHA) continue;
             
             this.ctx.globalAlpha = floor.fadeAlpha;
@@ -2003,23 +1841,19 @@ updateFloorDisplay() {
             this.ctx.globalAlpha = 1.0;
         }
         
-        
-        for (const floor of this.floors) {
+        for (const floor of visibleFloors) {
             if (floor.fadeAlpha > GameConfig.FLOOR_FADE_MIN_ALPHA) {
                 this.renderCannon(floor);
             }
         }
         
-        
-        this.renderCoins();
-        
+        this.renderCoins(visibleCoins);
         
         this.ctx.beginPath();
         this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2);
         this.ctx.fillStyle = this.currentBallConfig.COLOR;
         this.ctx.fill();
         this.ctx.closePath();
-        
         
         if (this.state.settings.debugInfo && GameConfig.SHOW_BOOST_HINT && this.canWallBoost) {
             this.ctx.beginPath();
@@ -2030,41 +1864,35 @@ updateFloorDisplay() {
             this.ctx.closePath();
         }
         
-        
         if (GameConfig.SHOW_BOOST_ACTIVATED && this.boostActivated) {
-            const effectRadius = this.player.radius + 5; 
+            const effectRadius = this.player.radius + 5;
             this.ctx.beginPath();
             this.ctx.arc(this.player.x, this.player.y, effectRadius, 0, Math.PI * 2);
             this.ctx.strokeStyle = GameConfig.BOOST_ACTIVATED_COLOR;
-            this.ctx.lineWidth = Math.max(2, this.player.radius * 0.1); 
+            this.ctx.lineWidth = Math.max(2, this.player.radius * 0.1);
             this.ctx.stroke();
             this.ctx.closePath();
         }
         
         this.ctx.restore();
         
-        
         this.renderCoinEffects();
-        
         
         if (this.state.settings.windDisplay) {
             this.renderWindArrow();
         }
         
-        
         if (this.state.settings.debugInfo) {
             this.renderCoinCounter();
+            this.showPerformanceInfo();
         }
         
-        
         if (this.state.settings.debugInfo) {
-            
             if (this.mobileControlsEnabled) {
                 this.ctx.fillStyle = '#4aff9a';
                 this.ctx.font = '14px monospace';
                 this.ctx.fillText('MOBILE CONTROLS: ON', 20, GameConfig.CANVAS_HEIGHT - 40);
             }
-            
             
             if (this.autoJumpActive) {
                 this.ctx.fillStyle = '#4aff9a';
@@ -2072,13 +1900,11 @@ updateFloorDisplay() {
                 this.ctx.fillText('AUTO JUMP: ON', 20, GameConfig.CANVAS_HEIGHT - 20);
             }
             
-            
             if (this.useAccelerometer) {
                 this.ctx.fillStyle = '#4aff9a';
                 this.ctx.font = '14px monospace';
                 this.ctx.fillText('ACCELEROMETER: ON', 20, GameConfig.CANVAS_HEIGHT - 60);
             }
-            
             
             if (GameConfig.SHOW_BOOST_HINT && this.canWallBoost && this.wallBoostDirection) {
                 this.ctx.fillStyle = GameConfig.BOOST_HINT_COLOR;
@@ -2086,13 +1912,11 @@ updateFloorDisplay() {
                 this.ctx.fillText(`BOOST! Press ${this.wallBoostDirection === 'left' ? 'D' : 'A'}`, 20, GameConfig.CANVAS_HEIGHT - 80);
             }
             
-            
             if (this.fadeProcessActive) {
                 this.ctx.fillStyle = "#ff6666";
                 this.ctx.font = "16px monospace";
                 this.ctx.fillText(`FLOORS FADING!`, GameConfig.CANVAS_WIDTH - 200, GameConfig.CANVAS_HEIGHT - 30);
             }
-            
             
             this.ctx.fillStyle = '#aaaaaa';
             this.ctx.font = '12px monospace';
@@ -2100,7 +1924,6 @@ updateFloorDisplay() {
                 GameConfig.CANVAS_WIDTH - 100, GameConfig.CANVAS_HEIGHT - 10);
         }
     },
-    
     
     renderCannon(floor) {
         if (!floor.hasCannon) return;
@@ -2129,13 +1952,11 @@ updateFloorDisplay() {
         this.ctx.globalAlpha = 1.0;
     },
     
-    
-    renderCoins() {
+    renderCoins(visibleCoins = this.coins) {
         if (!GameConfig.COINS_ENABLED) return;
         
-        for (const coin of this.coins) {
+        for (const coin of visibleCoins) {
             if (coin.collected) continue;
-            
             
             if (GameConfig.COIN_GLOW_SIZE > 0) {
                 this.ctx.beginPath();
@@ -2144,18 +1965,15 @@ updateFloorDisplay() {
                 this.ctx.fill();
             }
             
-            
             this.ctx.beginPath();
             this.ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
             this.ctx.fillStyle = GameConfig.COIN_OUTLINE_COLOR;
             this.ctx.fill();
             
-            
             this.ctx.beginPath();
             this.ctx.arc(coin.x, coin.y, coin.radius - GameConfig.COIN_OUTLINE_WIDTH, 0, Math.PI * 2);
             this.ctx.fillStyle = GameConfig.COIN_COLOR;
             this.ctx.fill();
-            
             
             this.ctx.beginPath();
             this.ctx.moveTo(coin.x, coin.y - coin.radius * 0.3);
@@ -2166,58 +1984,47 @@ updateFloorDisplay() {
             this.ctx.fill();
         }
     },
-    
 
-renderCoinEffects() {
-    if (!GameConfig.COIN_COLLECT_EFFECT_ENABLED) return;
-    
-    
-    this.ctx.save();
-    
-    
-    this.ctx.translate(0, this.cameraY);
-    
-    for (const effect of this.coinEffects) {
-        const progress = 1 - (effect.duration / effect.maxDuration);
-        const currentRadius = effect.radius * (1 + progress * (GameConfig.COIN_COLLECT_EFFECT_SIZE_MULTIPLIER - 1));
-        const alpha = 1 - progress;
+    renderCoinEffects() {
+        if (!GameConfig.COIN_COLLECT_EFFECT_ENABLED) return;
         
+        this.ctx.save();
+        this.ctx.translate(0, this.cameraY);
         
-        const color = this.getCoinEffectColor(progress);
-        
-        this.ctx.beginPath();
-        this.ctx.arc(effect.x, effect.y, currentRadius, 0, Math.PI * 2);
-        
-        
-        this.ctx.fillStyle = `rgba(${color}, ${alpha * 0.3})`; 
-        this.ctx.fill();
-        
-        this.ctx.strokeStyle = `rgba(${color}, ${alpha})`;
-        this.ctx.lineWidth = Math.max(2, effect.radius * 0.15); 
-        this.ctx.stroke();
-        
-        
-        if (progress < 0.5) {
-            this.drawSparkleEffect(effect.x, effect.y, currentRadius, alpha);
+        for (const effect of this.coinEffects) {
+            const progress = 1 - (effect.duration / effect.maxDuration);
+            const currentRadius = effect.radius * (1 + progress * (GameConfig.COIN_COLLECT_EFFECT_SIZE_MULTIPLIER - 1));
+            const alpha = 1 - progress;
+            
+            const color = this.getCoinEffectColor(progress);
+            
+            this.ctx.beginPath();
+            this.ctx.arc(effect.x, effect.y, currentRadius, 0, Math.PI * 2);
+            
+            this.ctx.fillStyle = `rgba(${color}, ${alpha * 0.3})`;
+            this.ctx.fill();
+            
+            this.ctx.strokeStyle = `rgba(${color}, ${alpha})`;
+            this.ctx.lineWidth = Math.max(2, effect.radius * 0.15);
+            this.ctx.stroke();
+            
+            if (progress < 0.5) {
+                this.drawSparkleEffect(effect.x, effect.y, currentRadius, alpha);
+            }
         }
-    }
-    
-    
-    this.ctx.restore();
-},
+        
+        this.ctx.restore();
+    },
 
-
-getCoinEffectColor(progress) {
-    
-    if (progress < 0.3) {
-        return "255, 255, 0"; 
-    } else if (progress < 0.6) {
-        return "255, 200, 0"; 
-    } else {
-        return "255, 150, 0"; 
-    }
-},
-
+    getCoinEffectColor(progress) {
+        if (progress < 0.3) {
+            return "255, 255, 0";
+        } else if (progress < 0.6) {
+            return "255, 200, 0";
+        } else {
+            return "255, 150, 0";
+        }
+    },
     
     drawSparkleEffect(x, y, radius, alpha) {
         const sparkleCount = 8;
@@ -2244,22 +2051,53 @@ getCoinEffectColor(progress) {
         this.ctx.restore();
     },
     
-    gameLoop() {
+    gameLoop(currentTime) {
         if (!this.gameLoopRunning) return;
         
-        this.update();
+        // Fixed timestep dla stabilnej fizyki
+        if (!this.lastFrameTime) this.lastFrameTime = currentTime;
+        const deltaTime = currentTime - this.lastFrameTime;
+        this.lastFrameTime = currentTime;
+        
+        // Limit FPS
+        this.accumulator += deltaTime;
+        
+        while (this.accumulator >= this.frameInterval) {
+            this.update();
+            this.accumulator -= this.frameInterval;
+        }
+        
         this.render();
         
-        setTimeout(() => {
-            requestAnimationFrame(this.gameLoop.bind(this));
-        }, 1000 / GameConfig.FPS);
+        requestAnimationFrame(this.gameLoop.bind(this));
     },
     
-    
-    
+    showPerformanceInfo() {
+        if (!this.state.settings.debugInfo) return;
+        
+        // Oblicz FPS
+        const now = performance.now();
+        if (!this.frameTimes) {
+            this.frameTimes = [];
+            this.lastFpsUpdate = now;
+        }
+        
+        this.frameTimes.push(now);
+        while (this.frameTimes[0] <= now - 1000) {
+            this.frameTimes.shift();
+        }
+        
+        const fps = this.frameTimes.length;
+        
+        // Wyświetl informacje
+        this.ctx.fillStyle = '#00ff00';
+        this.ctx.font = '12px monospace';
+        this.ctx.fillText(`FPS: ${fps}`, 10, 20);
+        this.ctx.fillText(`Obiekty: ${this.floors.length} floors, ${this.coins.length} coins`, 10, 40);
+        this.ctx.fillText(`Widoczne: ${this.getVisibleObjects().visibleFloors.length} floors, ${this.getVisibleObjects().visibleCoins.length} coins`, 10, 60);
+    },
     
     loadHighScore() {
-        
         const savedData = localStorage.getItem('icy_tower_game_data');
         if (savedData) {
             try {
@@ -2272,7 +2110,6 @@ getCoinEffectColor(progress) {
             }
         }
 
-        
         if (this.state.settings.debugInfo) {
             const highScoreEl = document.getElementById('high-score');
             if (highScoreEl) highScoreEl.textContent = this.highestFloorEver;
@@ -2280,9 +2117,7 @@ getCoinEffectColor(progress) {
     },
 
     saveHighScore() {
-        
         if (this.highestFloorEver > (this.state.bestScore || 0)) {
-            
             const savedData = localStorage.getItem('icy_tower_game_data');
             let data = {};
 
@@ -2294,13 +2129,10 @@ getCoinEffectColor(progress) {
                 }
             }
 
-            
             data.bestScore = this.highestFloorEver;
 
-            
             localStorage.setItem('icy_tower_game_data', JSON.stringify(data));
 
-            
             if (window.Menu) {
                 window.Menu.state.bestScore = this.highestFloorEver;
                 window.Menu.saveData();
@@ -2309,7 +2141,6 @@ getCoinEffectColor(progress) {
             console.log('Zapisano nowy rekord:', this.highestFloorEver);
         }
     },
-    
     
     loadTotalCoins() {
         if (!GameConfig.COINS_ENABLED) return;
@@ -2321,23 +2152,16 @@ getCoinEffectColor(progress) {
         }
     },
     
-    
     saveTotalCoins() {
         if (!GameConfig.COINS_ENABLED) return;
 
-        
         if (window.Menu) {
-            
             window.Menu.state.coinsInGame = this.collectedCoins;
         }
     },
     
-    
-    
-    
     updateGameHUD() {
-        
-        
+        // Placeholder - implementacja w Menu.js
     },
     
     stopGame() {
@@ -2347,7 +2171,6 @@ getCoinEffectColor(progress) {
         this.isGameOver = false;
     },
 
-    
     getLineIntersection(p0, p1, p2, p3) {
         const s1_x = p1.x - p0.x;
         const s1_y = p1.y - p0.y;
@@ -2382,4 +2205,4 @@ if (document.readyState === 'loading') {
     }
 }
 
-console.log('Game.js loaded successfully - Responsive version');
+console.log('Game.js loaded successfully - Responsive version with performance optimizations');
