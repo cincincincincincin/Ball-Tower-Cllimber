@@ -1270,29 +1270,44 @@ body.standalone #game-container {
     padding-bottom: 0;
     padding-left: 0;
     padding-right: 0;
+    width: 100%;
     height: 100%;
 }
 
 /* Specjalne ustawienia dla start screen w standalone */
 body.standalone #start-screen {
-    padding-bottom: 0px; /* Dodaj safe-area do padding-bottom */
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
+    width: 100%;
+    height: 100%;
 }
 
 /* Stats bar w standalone */
 body.standalone .stats-bar {
-    padding-bottom: 0px;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 /* Game screen w standalone */
 body.standalone #game-screen {
     width: 100%;
     height: 100%;
-    padding-bottom: 0px;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 /* Canvas w standalone */
 body.standalone #game-canvas {
     width: 100%;
     height: 100%;
-    padding-bottom: 0px;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
 }
