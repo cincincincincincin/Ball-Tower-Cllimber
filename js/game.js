@@ -1995,8 +1995,8 @@ window.Game = {
         
         
         this.ctx.fillStyle = GameConfig.WALL_COLOR;
-        this.ctx.fillRect(0, -100000, GameConfig.WALL_THICKNESS, GameConfig.CANVAS_HEIGHT + 200000);
-        this.ctx.fillRect(GameConfig.CANVAS_WIDTH - GameConfig.WALL_THICKNESS, -100000, GameConfig.WALL_THICKNESS, GameConfig.CANVAS_HEIGHT + 200000);
+        this.ctx.fillRect(0, -1000000, GameConfig.WALL_THICKNESS, GameConfig.CANVAS_HEIGHT + 2000000);
+        this.ctx.fillRect(GameConfig.CANVAS_WIDTH - GameConfig.WALL_THICKNESS, -1000000, GameConfig.WALL_THICKNESS, GameConfig.CANVAS_HEIGHT + 2000000);
         
         
         const { visibleFloors, visibleCoins } = this.getVisibleObjects();
