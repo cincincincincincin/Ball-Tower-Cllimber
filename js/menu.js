@@ -509,7 +509,6 @@ const Menu = {
             this.updateMainMenu();
             this.updateCoinsDisplay();
             
-            this.showNotification(`Unlocked ball: ${GameConfig.getBallDisplayName(ballType)}!`, 'success');
         } else if (this.state.unlockedBalls.includes(ballType)) {
             this.showNotification('Ball already unlocked!', 'warning');
         } else {
@@ -523,7 +522,6 @@ const Menu = {
             this.state.currentBall = ballType;
             this.saveData();
             this.updateBallsScreen();
-            this.showNotification(`Selected ball: ${GameConfig.getBallDisplayName(ballType)}`, 'success');
         } else {
             this.showNotification('Unlock this ball first!', 'warning');
         }
@@ -555,7 +553,6 @@ const Menu = {
             this.updateMainMenu();
             this.updateCoinsDisplay();
             
-            this.showNotification(`Purchased: ${upgradeDef.name} (level ${currentLevel + 1})`, 'success');
         } else {
             this.showNotification('You don\'t have enough coins!', 'error');
         }
@@ -570,7 +567,6 @@ const Menu = {
             this.updateUpgradesScreen();
             
             const state = upgrade.active ? 'enabled' : 'disabled';
-            this.showNotification(`Upgrade ${state}`, 'success');
         }
     },
 
@@ -603,7 +599,6 @@ const Menu = {
         
         this.applySettings();
     
-        this.showNotification('Game started! Use arrows or A/D to move.');
     },
 
     
