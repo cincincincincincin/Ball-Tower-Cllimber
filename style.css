@@ -1217,18 +1217,18 @@ body.standalone .game-over-content {
 
 @supports (padding: max(0px)) {
     body {
-        padding-left: min(0px, env(safe-area-inset-left));
-        padding-right: min(0px, env(safe-area-inset-right));
-        padding-top: min(0px, env(safe-area-inset-top));
-        padding-bottom: min(0px, env(safe-area-inset-bottom));
+        padding-left: 0px;
+        padding-right: 0px;
+        padding-top: 0px;
+        padding-bottom: 0px;
     }
     
     .stats-bar {
-        padding-bottom: max(2vh, env(safe-area-inset-bottom));
+        padding-bottom: 0px;
     }
     
     .hud-top {
-        padding-top: max(3vh, env(safe-area-inset-top));
+        padding-top: 0px;
     }
     
     body.standalone #game-container {
@@ -1280,24 +1280,24 @@ body.standalone #game-canvas {
 body.standalone #game-container,
 body.standalone .screen {
     padding-top: env(safe-area-inset-top) !important;
-    height: calc(100vh - env(safe-area-inset-bottom)) !important;
+    
 }
 
 
 body.standalone #game-screen {
     padding-top: env(safe-area-inset-top) !important;
-    height: calc(100vh - env(safe-area-inset-bottom)) !important;
+    
 }
 
 
 @supports (padding: max(0px)) {
     @media (orientation: portrait) {
         body.standalone {
-            padding-bottom: max(0px, env(safe-area-inset-bottom)) !important;
+            padding-bottom: 0px !important;
         }
         
         body.standalone #game-container {
-            margin-bottom: max(0px, env(safe-area-inset-bottom)) !important;
+            margin-bottom: 0px !important;
         }
     }
 }

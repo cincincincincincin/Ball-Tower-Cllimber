@@ -8,7 +8,7 @@ window.Game = {
         
         this.resizeCanvas();
         
-        // Event listeners for responsive behavior
+        
         window.addEventListener('resize', () => {
             this.resizeCanvas();
         });
@@ -49,57 +49,57 @@ window.Game = {
         const containerWidth = container.clientWidth;
         const containerHeight = container.height || container.clientHeight;
         
-        // Determine mode based on aspect ratio
-        const isMobilePortrait = containerHeight / containerWidth > 0.75; // Height/Width > 0.75 = mobile portrait
-        const isDesktopLandscape = containerWidth / containerHeight > 1.2; // Width/Height > 1.2 = desktop landscape
+        
+        const isMobilePortrait = containerHeight / containerWidth > 0.75; 
+        const isDesktopLandscape = containerWidth / containerHeight > 1.2; 
         
         let scale;
         let renderWidth, renderHeight;
         let offsetX = 0, offsetY = 0;
         
-        // Responsive scaling modes
-        if (true) { // Always enable responsive mode
+        
+        if (true) { 
             if (isMobilePortrait) {
-                // Mobile portrait mode - scale to width, crop top
+                
                 scale = containerWidth / GameConfig.CANVAS_WIDTH;
                 renderWidth = containerWidth;
                 renderHeight = GameConfig.CANVAS_HEIGHT * scale;
                 
-                // If rendered height is bigger than container, we need to crop top
+                
                 if (renderHeight > containerHeight) {
-                    // Negative offset to shift canvas up (crop top)
+                    
                     offsetY = containerHeight - renderHeight;
                 } else {
-                    // Center vertically if there's space
+                    
                     offsetY = (containerHeight - renderHeight) / 2;
                 }
                 
                 console.log(`Mobile portrait mode - scale to width: ${scale.toFixed(2)}, crop top: ${renderHeight > containerHeight}`);
                 
             } else if (isDesktopLandscape) {
-                // Desktop landscape mode - scale to height, side bars
+                
                 scale = containerHeight / GameConfig.CANVAS_HEIGHT;
                 renderWidth = GameConfig.CANVAS_WIDTH * scale;
                 renderHeight = containerHeight;
                 
-                // Center horizontally
+                
                 offsetX = (containerWidth - renderWidth) / 2;
                 
                 console.log(`Desktop landscape mode - scale to height: ${scale.toFixed(2)}, side bars`);
                 
             } else {
-                // Intermediate mode (e.g., tablet landscape) - maintain aspect ratio, center
+                
                 const targetRatio = GameConfig.CANVAS_WIDTH / GameConfig.CANVAS_HEIGHT;
                 const containerRatio = containerWidth / containerHeight;
                 
                 if (containerRatio > targetRatio) {
-                    // Container is wider than game - scale to height
+                    
                     scale = containerHeight / GameConfig.CANVAS_HEIGHT;
                     renderHeight = containerHeight;
                     renderWidth = GameConfig.CANVAS_WIDTH * scale;
                     offsetX = (containerWidth - renderWidth) / 2;
                 } else {
-                    // Container is taller than game - scale to width
+                    
                     scale = containerWidth / GameConfig.CANVAS_WIDTH;
                     renderWidth = containerWidth;
                     renderHeight = GameConfig.CANVAS_HEIGHT * scale;
@@ -109,7 +109,7 @@ window.Game = {
                 console.log(`Intermediate mode - aspect ratio scaling: ${scale.toFixed(2)}`);
             }
         } else {
-            // Legacy mode - maintain aspect ratio, center
+            
             const targetRatio = GameConfig.CANVAS_WIDTH / GameConfig.CANVAS_HEIGHT;
             const containerRatio = containerWidth / containerHeight;
             
@@ -126,38 +126,38 @@ window.Game = {
             }
         }
         
-        // Save mode information
+        
         this.isMobilePortrait = isMobilePortrait;
         this.isDesktopLandscape = isDesktopLandscape;
         this.currentScale = scale;
         
-        // Apply to canvas
+        
         this.canvas.style.width = renderWidth + 'px';
         this.canvas.style.height = renderHeight + 'px';
         this.canvas.width = GameConfig.CANVAS_WIDTH;
         this.canvas.height = GameConfig.CANVAS_HEIGHT;
         
-        // Position canvas
+        
         this.canvas.style.position = 'absolute';
         this.canvas.style.left = offsetX + 'px';
         this.canvas.style.top = offsetY + 'px';
         this.canvas.style.transform = 'none';
         
-        // Save for coordinate conversion
+        
         this.scaleFactor = scale;
         this.canvasStyleWidth = renderWidth;
         this.canvasStyleHeight = renderHeight;
         this.canvasOffsetX = offsetX;
         this.canvasOffsetY = offsetY;
         
-        // Save container dimensions for camera calculations
+        
         this.containerWidth = containerWidth;
         this.containerHeight = containerHeight;
         
-        // Update camera threshold based on visible screen height
+        
         this.updateCameraThreshold();
         
-        // Add CSS classes for styling
+        
         document.body.classList.toggle('mobile-portrait', isMobilePortrait);
         document.body.classList.toggle('desktop-landscape', isDesktopLandscape);
         
@@ -165,20 +165,20 @@ window.Game = {
     },
     
     updateCameraThreshold() {
-        // Dynamic camera threshold based on visible screen height (container height)
-        // For mobile portrait with crop top, we use the visible portion
-        const visibleScreenHeight = this.containerHeight || GameConfig.CANVAS_HEIGHT;
-        const baseThreshold = 200; // GameConfig.CAMERA_THRESHOLD;
-        const ratioThreshold = visibleScreenHeight * 0.25; // 25% of visible screen height
         
-        // Use the smaller of the two values, but not less than 150px
+        
+        const visibleScreenHeight = this.containerHeight || GameConfig.CANVAS_HEIGHT;
+        const baseThreshold = 200; 
+        const ratioThreshold = visibleScreenHeight * 0.25; 
+        
+        
         this.dynamicCameraThreshold = Math.max(150, Math.min(baseThreshold, ratioThreshold / this.scaleFactor));
         
         console.log(`Camera threshold updated: ${this.dynamicCameraThreshold}px (visible screen height: ${visibleScreenHeight}px, scale: ${this.scaleFactor.toFixed(2)})`);
     },
     
     getVisibleScreenRect() {
-        // Get the visible portion of the canvas (after cropping)
+        
         const container = document.getElementById('game-container');
         if (!container) {
             return {
@@ -189,22 +189,22 @@ window.Game = {
             };
         }
         
-        // Calculate visible area in screen pixels
+        
         let visibleX = 0;
         let visibleY = 0;
         let visibleWidth = this.canvasStyleWidth;
         let visibleHeight = this.canvasStyleHeight;
         
-        // Adjust for crop top in mobile portrait
+        
         if (this.isMobilePortrait && this.canvasOffsetY < 0) {
-            visibleY = -this.canvasOffsetY / this.scaleFactor; // Convert to game coordinates
-            visibleHeight = this.containerHeight / this.scaleFactor; // Visible portion
+            visibleY = -this.canvasOffsetY / this.scaleFactor; 
+            visibleHeight = this.containerHeight / this.scaleFactor; 
         }
         
-        // Adjust for side bars in desktop landscape
+        
         if (this.isDesktopLandscape && this.canvasOffsetX > 0) {
-            visibleX = 0; // Canvas is centered, we see full width
-            visibleWidth = GameConfig.CANVAS_WIDTH; // Full width is visible
+            visibleX = 0; 
+            visibleWidth = GameConfig.CANVAS_WIDTH; 
         }
         
         return {
@@ -342,16 +342,16 @@ window.Game = {
             }
         };
         
-        // Performance tracking
+        
         this.lastFrameTime = 0;
         this.accumulator = 0;
-        this.frameInterval = 1000 / 60; // 60 FPS
+        this.frameInterval = 1000 / 60; 
         this.frameTimes = [];
         this.lastFpsUpdate = 0;
         
-        // Responsive rendering
-        this.renderMarginTop = 100; // How much above screen to render
-        this.renderMarginBottom = 200; // How much below screen to render
+        
+        this.renderMarginTop = 100; 
+        this.renderMarginBottom = 200; 
         
         this.loadHighScore();
         this.loadTotalCoins();
@@ -416,7 +416,7 @@ window.Game = {
         });
         this.setupIOSAccelerometer();
         
-        // Debounced resize with mode detection
+        
         let resizeTimeout;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
@@ -624,15 +624,15 @@ window.Game = {
     },
     
     getVisibleObjects() {
-        // Calculate visible area in game space
+        
         const screenTop = -this.cameraY;
         const screenBottom = screenTop + (this.canvasStyleHeight / this.scaleFactor);
         
-        // Add render margins for optimization
+        
         const renderTop = screenTop - this.renderMarginTop;
         const renderBottom = screenBottom + this.renderMarginBottom;
         
-        // Filter only objects in visible area + margin
+        
         const visibleFloors = this.floors.filter(floor => 
             floor.y >= renderTop && floor.y <= renderBottom
         );
@@ -641,7 +641,7 @@ window.Game = {
             coin.y >= renderTop && coin.y <= renderBottom
         );
         
-        // Debug info
+        
         if (this.state.settings.debugInfo && performance.now() - (this.lastDebugTime || 0) > 1000) {
             console.log(`Visible area: ${Math.round(renderTop)} to ${Math.round(renderBottom)}, Objects: ${visibleFloors.length} floors, ${visibleCoins.length} coins`);
             this.lastDebugTime = performance.now();
@@ -1014,36 +1014,36 @@ window.Game = {
     
         if (!ballHasWind || !windIsActive || !windIsBlowing) return;
     
-        // Get the visible screen area
+        
         const visibleRect = this.getVisibleScreenRect();
         
-        // Calculate position based on visible screen area (not canvas)
-        // Position arrow at 80px from right edge and 100px from top of visible screen
+        
+        
         let arrowX, arrowY;
         const arrowSize = 25;
         const arrowLength = 40;
         
-        // Determine horizontal position based on wind direction
+        
         if (this.windDirection === 1) {
-            // Wind to right - arrow at right side of visible screen
+            
             arrowX = visibleRect.x + visibleRect.width - 40;
         } else {
-            // Wind to left - arrow at left side of visible screen
+            
             arrowX = visibleRect.x + 40;
         }
         
-        // Position vertically 100px from top of visible screen
+        
         arrowY = visibleRect.y + 100;
     
         this.ctx.save();
         this.ctx.translate(arrowX, arrowY);
         
-        // If wind blows to left, rotate arrow 180 degrees
+        
         if (this.windDirection === -1) {
             this.ctx.rotate(Math.PI);
         }
     
-        // Calculate wind force for opacity and size
+        
         let forceRatio = 0;
 
         if (this.windState === 'ramp_up') {
@@ -1082,7 +1082,7 @@ window.Game = {
         const displayValue = this.windForce*100;
         this.ctx.restore();
         
-        // Draw wind force text below arrow
+        
         this.ctx.fillStyle = "#87CEEB";
         this.ctx.font = "14px monospace";
         this.ctx.textAlign = "center";
@@ -1763,31 +1763,31 @@ window.Game = {
     },
     
     updateCamera() {
-        // Get visible screen area for camera calculations
+        
         const visibleRect = this.getVisibleScreenRect();
 
-        // Calculate player's position relative to the visible screen (in game coordinates)
-        // visibleRect.y - górna krawędź widocznego ekranu w świecie gry (po przycięciu)
-        // this.player.y - pozycja gracza w świecie gry
-        // Różnica między nimi pokazuje, jak daleko gracz jest od góry widocznego ekranu
+        
+        
+        
+        
         const distanceToTop = this.player.y - visibleRect.y;
 
-        // Use dynamic camera threshold (calculated based on visible screen height)
+        
         const threshold = this.dynamicCameraThreshold || 200;
 
-        // Camera should follow player when they get too close to the top of visible screen
-        // Jeśli gracz jest bliżej niż "threshold" od góry widocznego ekranu
+        
+        
         if (distanceToTop < threshold) {
-            // Przesuwamy kamerę w dół, aby gracz znalazł się na wysokości "threshold" od góry
-            // Nowa pozycja kamery = threshold - distanceToTop + current cameraY
-            // Ale musimy to zrobić inaczej - obliczamy, o ile trzeba przesunąć świat
+            
+            
+            
             this.cameraY = threshold - distanceToTop;
         } else {
-            // Gracz jest wystarczająco daleko od góry - nie ruszamy kamery
+            
             this.cameraY = 0;
         }
 
-        // Debug info
+        
         if (this.state.settings.debugInfo) {
             const cameraDebug = document.getElementById('camera-debug');
             if (cameraDebug) {
@@ -1963,7 +1963,7 @@ window.Game = {
         this.checkWallCollisions();
         this.checkCannonCollisions();
         
-        // Use only visible objects for collisions (performance optimization)
+        
         const { visibleFloors, visibleCoins } = this.getVisibleObjects();
         this.checkFloorCollisions(visibleFloors);
         this.checkCoinCollisions(visibleCoins);
@@ -1993,12 +1993,12 @@ window.Game = {
         this.ctx.save();
         this.ctx.translate(0, this.cameraY);
         
-        // Render walls (extended for camera movement)
+        
         this.ctx.fillStyle = GameConfig.WALL_COLOR;
         this.ctx.fillRect(0, -100000, GameConfig.WALL_THICKNESS, GameConfig.CANVAS_HEIGHT + 200000);
         this.ctx.fillRect(GameConfig.CANVAS_WIDTH - GameConfig.WALL_THICKNESS, -100000, GameConfig.WALL_THICKNESS, GameConfig.CANVAS_HEIGHT + 200000);
         
-        // Render only visible objects (performance optimization)
+        
         const { visibleFloors, visibleCoins } = this.getVisibleObjects();
         
         for (const floor of visibleFloors) {
@@ -2055,7 +2055,7 @@ window.Game = {
         
         this.renderCoins(visibleCoins);
         
-        // Render player
+        
         this.ctx.beginPath();
         this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2);
         this.ctx.fillStyle = this.currentBallConfig.COLOR;
@@ -2095,7 +2095,7 @@ window.Game = {
             this.showResponsiveInfo();
         }
         
-        // Debug info display
+        
         if (this.state.settings.debugInfo) {
             if (this.mobileControlsEnabled) {
                 this.ctx.fillStyle = '#4aff9a';
@@ -2127,7 +2127,7 @@ window.Game = {
                 this.ctx.fillText(`FLOORS FADING!`, GameConfig.CANVAS_WIDTH - 200, GameConfig.CANVAS_HEIGHT - 30);
             }
             
-            // Responsive info
+            
             this.ctx.fillStyle = '#aaaaaa';
             this.ctx.font = '12px monospace';
             this.ctx.fillText(`Scale: ${this.scaleFactor ? this.scaleFactor.toFixed(2) : '1.00'}`, 
@@ -2293,12 +2293,12 @@ window.Game = {
     gameLoop(currentTime) {
         if (!this.gameLoopRunning) return;
         
-        // Fixed timestep dla stabilnej fizyki
+        
         if (!this.lastFrameTime) this.lastFrameTime = currentTime;
         const deltaTime = currentTime - this.lastFrameTime;
         this.lastFrameTime = currentTime;
         
-        // Limit FPS
+        
         this.accumulator += deltaTime;
         
         while (this.accumulator >= this.frameInterval) {
@@ -2314,7 +2314,7 @@ window.Game = {
     showPerformanceInfo() {
         if (!this.state.settings.debugInfo) return;
         
-        // Oblicz FPS
+        
         const now = performance.now();
         if (!this.frameTimes) {
             this.frameTimes = [];
@@ -2328,7 +2328,7 @@ window.Game = {
         
         const fps = this.frameTimes.length;
         
-        // Wyświetl informacje
+        
         this.ctx.fillStyle = '#00ff00';
         this.ctx.font = '12px monospace';
         this.ctx.fillText(`FPS: ${fps}`, 10, 20);
@@ -2402,7 +2402,7 @@ window.Game = {
     },
     
     updateGameHUD() {
-        // Placeholder - implementacja w Menu.js
+        
     },
     
     stopGame() {

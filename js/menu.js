@@ -739,7 +739,7 @@ const Menu = {
         if (window.GameConfig) {
             GameConfig.AUTO_JUMP_ENABLED = this.state.settings.autoJump;
             GameConfig.USE_ACCELEROMETER = this.state.settings.accelerometer;
-            // Mobile controls zawsze włączone
+            
             GameConfig.MOBILE_CONTROLS_ENABLED = true;
 
             if (window.Game.applySettings) {
@@ -750,9 +750,9 @@ const Menu = {
         if (window.Game && window.Game.state) {
             window.Game.state.settings = {
                 ...this.state.settings,
-                mobileControls: true,     // Zawsze włączone
+                mobileControls: true,     
                 windDisplay: true,
-                debugInfo: false         // Zawsze włączone
+                debugInfo: false         
             };
         }
     },
