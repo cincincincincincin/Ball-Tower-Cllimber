@@ -1279,13 +1279,13 @@ body.standalone #game-canvas {
 
 body.standalone #game-container,
 body.standalone .screen {
-    padding-top: env(safe-area-inset-top) !important;
+    padding-top: 0px !important;
     
 }
 
 
 body.standalone #game-screen {
-    padding-top: env(safe-area-inset-top) !important;
+    padding-top: 0px !important;
     
 }
 
@@ -1300,4 +1300,48 @@ body.standalone #game-screen {
             margin-bottom: 0px !important;
         }
     }
+}
+
+/* Dodaj na końcu pliku CSS */
+
+/* FIX: Usunięcie czarnego paska na dole w trybie standalone */
+body.standalone {
+    padding-bottom: 0 !important;
+}
+
+body.standalone #game-container {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+}
+
+body.standalone #game-screen {
+    padding-bottom: 0 !important;
+}
+
+/* Upewnij się, że game-canvas wypełnia całą przestrzeń */
+body.standalone #game-canvas {
+    height: 100% !important;
+    bottom: 0 !important;
+}
+
+/* Usuń ewentualne marginesy z overlay menu */
+body.standalone .overlay-menu {
+    padding-bottom: 0 !important;
+}
+
+/* Fix dla stats-bar w trybie standalone */
+body.standalone .stats-bar {
+    padding-bottom: 2vh !important;
+    bottom: 0 !important;
+}
+
+/* Dodatkowe zabezpieczenie - reset wszystkich paddingów na dole */
+body.standalone .screen,
+body.standalone #start-screen,
+body.standalone #shop-screen,
+body.standalone #upgrades-screen,
+body.standalone #settings-screen {
+    padding-bottom: 0 !important;
 }
