@@ -609,7 +609,7 @@ window.Game = {
             this.state.settings = { ...settings };
             
             this.autoJumpActive = settings.autoJump;
-            this.mobileControlsEnabled = settings.mobileControls;
+            this.mobileControlsEnabled = settings.autoJump;
             this.useAccelerometer = settings.accelerometer;
 
             const debugInfo = document.getElementById('debug-info');
@@ -618,7 +618,7 @@ window.Game = {
             }
 
             GameConfig.AUTO_JUMP_ENABLED = settings.autoJump;
-            GameConfig.MOBILE_CONTROLS_ENABLED = settings.mobileControls;
+            GameConfig.MOBILE_CONTROLS_ENABLED = settings.autoJump;
             GameConfig.USE_ACCELEROMETER = settings.accelerometer;
         }
     },
