@@ -1,6 +1,6 @@
 {
-  "name": "Ball Tower Jumper",
-  "short_name": "Ball Tower Jumper",
+  "name": "Ball Tower Climber",
+  "short_name": "Ball Tower Climber",
   "description": "Jump and collect coins with different balls",
   "start_url": "./",
   "display": "standalone",
